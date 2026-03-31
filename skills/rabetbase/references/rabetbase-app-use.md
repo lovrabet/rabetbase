@@ -1,6 +1,6 @@
 # rabetbase app use
 
-切换默认应用（持久写入 `.lovrabet.json` 的 `defaultApp` 字段）。
+切换默认应用（持久写入 `.rabetbase.json` 的 `defaultApp` 字段）。
 
 ## 命令
 

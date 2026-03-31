@@ -1,6 +1,6 @@
 # rabetbase app remove
 
-从 `.lovrabet.json` 中移除一个应用配置。
+从 `.rabetbase.json` 中移除一个应用配置（与 `app add` / `app use` 相同，仅操作 `.rabetbase.json`）。
 
 ## 命令
 

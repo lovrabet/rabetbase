@@ -44,9 +44,9 @@ rabetbase bff save --file ./scripts/getUserInfo.js --id 42 --yes --non-interacti
 
 | 类型 | 路径 |
 |------|------|
-| ENDPOINT | `src/backend-function/endpoint/endpoint_<name>.js` |
-| HOOK | `src/backend-function/<tableName>/<tableName>_<hookName>.js` |
-| COMMON | `src/backend-function/common/common_<name>.js` |
+| ENDPOINT | `.rabetbase/bff/<appCode>/ENDPOINT/<name>.js` |
+| HOOK | `.rabetbase/bff/<appCode>/HOOK/<alias>/<operationType>/<functionNode>/<name>.js` |
+| COMMON | `.rabetbase/bff/<appCode>/COMMON/<name>.js` |
 
 ## 提示
 

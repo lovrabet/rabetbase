@@ -44,34 +44,45 @@
 
 ## 本地目录约定
 
-项目根目录统一使用 `src/backend-function/`：
+BFF 脚本统一存放在 `.rabetbase/bff/<appCode>/` 目录下，由 CLI 同步体系管理：
 
 ```text
-src/backend-function/
-├── <tableName>/
-│   ├── <tableName>_beforeFilter.js
-│   └── <tableName>_afterFilter.js
-├── endpoint/
-│   └── endpoint_<scriptName>.js
-└── common/
-    └── common_<scriptName>.js
+.rabetbase/bff/<appCode>/
+├── HOOK/
+│   └── <alias>/
+│       └── <operationType>/
+│           └── <functionNode>/
+│               └── <name>.js
+├── ENDPOINT/
+│   └── <scriptName>.js
+└── COMMON/
+    └── <scriptName>.js
 ```
 
 规则：
 
-* HOOK 放在 `src/backend-function/<tableName>/`
-* ENDPOINT 放在 `src/backend-function/endpoint/`
-* COMMON 放在 `src/backend-function/common/`
+* HOOK 放在 `.rabetbase/bff/<appCode>/HOOK/<alias>/<operationType>/<functionNode>/`
+* ENDPOINT 放在 `.rabetbase/bff/<appCode>/ENDPOINT/`
+* COMMON 放在 `.rabetbase/bff/<appCode>/COMMON/`
 * 本地文件是可选的人类辅助物，平台是唯一 source of truth
+
+### HOOK 目录名优先级
+
+HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
+
+1. **alias**（优先）：来自 `api.ts`（由 `rabetbase api pull` 生成），如 `customers`、`orders`
+2. **datasetCode**（兜底）：当 `api.ts` 不可用时，直接使用 32 位数据集编码
+
+推荐始终先执行 `rabetbase api pull` 以获得可读性更好的 alias 命名。
 
 ## 文件命名与函数命名
 
 | 类型 | 文件名 | 导出函数 |
 |------|--------|---------|
-| HOOK Before | `<tableName>_before<Operation>.js` | `before<Operation>` |
-| HOOK After | `<tableName>_after<Operation>.js` | `after<Operation>` |
-| ENDPOINT | `endpoint_<scriptName>.js` | `<scriptName>` |
-| COMMON | `common_<scriptName>.js` | `<scriptName>` |
+| HOOK Before | `<name>.js`（位于 `HOOK/<alias>/<operationType>/before/`） | `<name>` |
+| HOOK After | `<name>.js`（位于 `HOOK/<alias>/<operationType>/after/`） | `<name>` |
+| ENDPOINT | `<scriptName>.js`（位于 `ENDPOINT/`） | `<scriptName>` |
+| COMMON | `<scriptName>.js`（位于 `COMMON/`） | `<scriptName>` |
 
 常见 `Operation`：
 

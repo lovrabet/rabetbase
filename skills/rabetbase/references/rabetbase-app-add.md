@@ -1,6 +1,6 @@
 # rabetbase app add
 
-添加一个新应用到 `.lovrabet.json` 配置。如果是第一个应用，自动设为 `defaultApp`。
+添加一个新应用到 `.rabetbase.json`。如果是第一个应用，自动设为 `defaultApp`。其余 CLI 配置仍兼容读取 `.lovrabet.json`；`app` 子命令始终写入 `.rabetbase.json`。
 
 ## 命令
 

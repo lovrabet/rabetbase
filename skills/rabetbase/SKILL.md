@@ -19,8 +19,8 @@ metadata:
 ## 前置条件
 
 1. **认证**：`rabetbase auth` 通过浏览器完成 OAuth 登录
-2. **AppCode**：确保 `.lovrabet.json` 中设置了 `appcode`（单应用）或 `apps`（多应用），或通过 `--appcode <code>` / `--app <name>` 传入
-3. **配置文件**：`rabetbase project init` 初始化 `.lovrabet.json`
+2. **AppCode**：确保 `.rabetbase.json` 中设置了 `appcode`（单应用）或 `apps`（多应用），或通过 `--appcode <code>` / `--app <name>` 传入（旧名 `.lovrabet.json` 仍可读）
+3. **配置文件**：`rabetbase project init` 初始化 `.rabetbase.json`（旧名仍兼容读取）
 4. **多应用场景**：一个项目有多个应用时，先 `rabetbase app add` 配置各应用，再用 `--app <name>` 或 `rabetbase app use <name>` 切换
 
 ## Agent 快速执行顺序
@@ -118,7 +118,7 @@ const result = await client.bff.execute<DashboardData>({
 
 | 意图 | 推荐命令 | 备注 |
 |------|---------|------|
-| 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 模糊匹配 name/code/table/description |
+| 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 服务端模糊匹配；也可 `--code` 精确查 |
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
 | 查看 Dataset 操作定义 | [`rabetbase dataset operations --code xxx`](references/rabetbase-dataset-operations.md) | 获取 filter/getOne/create 等参数定义 |
 | 查看数据模型关系 | [`rabetbase dataset links`](references/rabetbase-dataset-links.md) | 跨表 JOIN 关系图 |
@@ -162,7 +162,7 @@ const result = await client.bff.execute<DashboardData>({
 
 `sql save` 内置 SQL 校验（与 `sql validate` 共用核心），DELETE / DDL 语句被自动阻止。
 
-配置 `riskLevel` 可限制允许执行的最高风险等级（`.lovrabet.json` 或 `RABETBASE_RISK_LEVEL`）。
+配置 `riskLevel` 可限制允许执行的最高风险等级（`.rabetbase.json` 或 `RABETBASE_RISK_LEVEL`；旧名 `.lovrabet.json` 仍可读）。
 
 ## 输出格式
 

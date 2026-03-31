@@ -76,7 +76,7 @@ AI 必须使用有业务语义的规范命名，严禁使用诸如 `test`、`tem
 
 ✅ **防御动作**：
 * 如果用户给出了不带 `LIMIT` 或全局匹配的 `UPDATE`，AI 必须主动补充约束条件或提示风险。
-* 高危 DDL/DML 不应通过 CLI 自动保存到平台，必须建议用户保存在本地 `src/custom_sql/` 进行 review。
+* 高危 DDL/DML 不应通过 CLI 自动保存到平台，必须建议用户保存在本地 `.rabetbase/sql/` 进行 review。
 
 ### BFF 高危操作识别
 

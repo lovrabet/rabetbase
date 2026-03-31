@@ -1,6 +1,6 @@
 # rabetbase app list
 
-列出 `.lovrabet.json` 中所有已配置的应用。
+列出项目根目录 `.rabetbase.json` 中所有已配置的应用。（`app` 子命令读写此文件；其余 CLI 配置仍兼容读取 `.lovrabet.json`。）
 
 ## 命令
 

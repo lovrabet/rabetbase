@@ -44,20 +44,20 @@
 * 必须包含 `description`、`scriptName`（与脚本中 `export default async function` 后的函数名一致）、`scriptType`（`ENDPOINT` 或 `COMMON`）
 
 ### 7. 写入本地
-保存成功后，将脚本内容写入本地文件，纳入 Git 版本管理。
-* ENDPOINT → `src/backend-function/endpoint/endpoint_<name>.js`
-* HOOK → `src/backend-function/<tableName>/<tableName>_<hookName>.js`
-* COMMON → `src/backend-function/common/common_<name>.js`
+保存成功后，将脚本内容写入本地文件，纳入 Git 版本管理。路径遵循 `.rabetbase/bff/<appCode>/` 目录约定（详见 `backend-function.md`）：
+* ENDPOINT → `.rabetbase/bff/<appCode>/ENDPOINT/<name>.js`
+* HOOK → `.rabetbase/bff/<appCode>/HOOK/<alias>/<operationType>/<functionNode>/<name>.js`
+* COMMON → `.rabetbase/bff/<appCode>/COMMON/<name>.js`
 * 若文件已存在，直接覆盖
 
 ## 冲突处理
 
 返回 `blocked: true` → 将当前脚本内容写入本地草稿文件，告知用户手动处理，不重试。
-草稿路径：`src/backend-function/endpoint/endpoint_<name>.draft.js` 或 HOOK 对应目录。
+草稿路径：在对应目录下使用 `.draft.js` 后缀。
 
 ## 本地文件
 
-正常流程：保存平台成功后写入本地，路径同 Step 7。
+正常流程：保存平台成功后写入本地，路径同 Step 7（`.rabetbase/bff/<appCode>/` 下）。
 例外场景：
 * 保存被 blocked → 写草稿（`.draft.js`），供人工处理
 * 用户主动要求"同步平台最新到本地" → 从平台拉取 → 覆盖本地
