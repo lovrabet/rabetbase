@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 3.0.0
+version: 2.0.2-beta.6
 description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、SQL 查询、BFF 脚本、代码生成。触发词：数据集、数据表、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen。"
 metadata:
   requires:
@@ -20,7 +20,7 @@ metadata:
 
 1. **认证**：`rabetbase auth` 通过浏览器完成 OAuth 登录
 2. **AppCode**：确保 `.rabetbase.json` 中设置了 `appcode`（单应用）或 `apps`（多应用），或通过 `--appcode <code>` / `--app <name>` 传入（旧名 `.lovrabet.json` 仍可读）
-3. **配置文件**：`rabetbase project init` 初始化 `.rabetbase.json`（旧名仍兼容读取）
+3. **配置文件**：`rabetbase project init` 初始化 `.rabetbase.json`（旧名仍兼容读取）。完整字段说明见 [`.rabetbase.json` 配置参考](references/rabetbase-config.md)
 4. **多应用场景**：一个项目有多个应用时，先 `rabetbase app add` 配置各应用，再用 `--app <name>` 或 `rabetbase app use <name>` 切换
 
 ## Agent 快速执行顺序
@@ -118,16 +118,22 @@ const result = await client.bff.execute<DashboardData>({
 
 | 意图 | 推荐命令 | 备注 |
 |------|---------|------|
+| 诊断配置问题 | [`rabetbase doctor`](references/rabetbase-doctor.md) | 打印合并配置、域名、认证状态 |
+| 更新 CLI 版本 | [`rabetbase update`](references/rabetbase-update.md) | 自动检测最新版本并升级 |
+| 修改配置文件 | [`rabetbase config set <key> <value>`](references/rabetbase-config.md) | 支持 `--global` 写全局配置 |
+| 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
 | 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 服务端模糊匹配；也可 `--code` 精确查 |
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
 | 查看 Dataset 操作定义 | [`rabetbase dataset operations --code xxx`](references/rabetbase-dataset-operations.md) | 获取 filter/getOne/create 等参数定义 |
 | 查看数据模型关系 | [`rabetbase dataset links`](references/rabetbase-dataset-links.md) | 跨表 JOIN 关系图 |
-| 查看现有 SQL | [`rabetbase sql list --name "xxx"`](references/rabetbase-sql-list.md) | 分页，按名称过滤 |
+| 生成 API 客户端代码 | [`rabetbase api pull`](references/rabetbase-api-pull.md) | 拉取数据集并生成 `src/api/` TypeScript 代码 |
+| 查看生成的 API 模型 | [`rabetbase api list`](references/rabetbase-api-list.md) | 列出已生成的数据模型 |
+| 查看现有 SQL | [`rabetbase sql list --name "xxx"`](references/rabetbase-sql-list.md) | 分页，按名称过滤，支持 `--app` 限定应用 |
 | 查看 SQL 详情 | [`rabetbase sql detail --sqlcode xxx`](references/rabetbase-sql-detail.md) | 含完整 SQL 内容和参数定义 |
 | 校验 SQL 内容 | [`rabetbase sql validate --file xxx`](references/rabetbase-sql-validate.md) | 类型检测、危险语句检查、参数提取 |
 | 保存/更新 SQL | [`rabetbase sql save --file xxx`](references/rabetbase-sql-save.md) | 内置校验，不可跳过 |
 | 执行 SQL 查询 | [`rabetbase sql exec --sqlcode xxx`](references/rabetbase-sql-exec.md) | 支持 `--params` JSON 参数 |
-| 查看现有 BFF | [`rabetbase bff list`](references/rabetbase-bff-list.md) | 按类型和名称过滤 |
+| 查看现有 BFF | [`rabetbase bff list`](references/rabetbase-bff-list.md) | 按类型和名称过滤，支持 `--app` 限定应用 |
 | 查看 BFF 详情 | [`rabetbase bff detail --id n`](references/rabetbase-bff-detail.md) | 含完整脚本内容 |
 | 保存/更新 BFF | [`rabetbase bff save --file xxx`](references/rabetbase-bff-save.md) | high-risk-write，需 `--yes` 确认 |
 | 生成 SDK 代码 | [`rabetbase codegen sdk --code xxx`](references/rabetbase-codegen-sdk.md) | 按操作生成 TypeScript |
@@ -136,7 +142,8 @@ const result = await client.bff.execute<DashboardData>({
 | 切换默认应用 | [`rabetbase app use <name>`](references/rabetbase-app-use.md) | 持久修改 defaultApp |
 | 添加应用 | [`rabetbase app add <name> --appcode <code>`](references/rabetbase-app-add.md) | 首个自动设为 default |
 | 移除应用 | [`rabetbase app remove <name>`](references/rabetbase-app-remove.md) | 移除后自动切换 default |
-| 临时切换应用执行 | 任何命令加 `--app <name>` | 不修改配置文件 |
+| 临时切换应用执行 | 任何命令加 `--app <name>` 或 `--appcode <code>` | 不修改配置文件 |
+| 查看配置文件格式 | [`.rabetbase.json` 配置参考](references/rabetbase-config.md) | 完整字段、优先级、环境变量 |
 
 ## 命令分组
 
@@ -144,8 +151,12 @@ const result = await client.bff.execute<DashboardData>({
 
 | 命令分组 | 说明 |
 |----------|------|
+| Self Update | [`update`](references/rabetbase-update.md) |
+| Diagnostics | [`doctor`](references/rabetbase-doctor.md) |
+| Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
 | app commands | [`list`](references/rabetbase-app-list.md) / [`use`](references/rabetbase-app-use.md) / [`add`](references/rabetbase-app-add.md) / [`remove`](references/rabetbase-app-remove.md) |
 | dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`links`](references/rabetbase-dataset-links.md) |
+| api commands | [`pull`](references/rabetbase-api-pull.md) / [`list`](references/rabetbase-api-list.md) |
 | sql commands | [`list`](references/rabetbase-sql-list.md) / [`detail`](references/rabetbase-sql-detail.md) / [`validate`](references/rabetbase-sql-validate.md) / [`save`](references/rabetbase-sql-save.md) / [`exec`](references/rabetbase-sql-exec.md) |
 | bff commands | [`list`](references/rabetbase-bff-list.md) / [`detail`](references/rabetbase-bff-detail.md) / [`save`](references/rabetbase-bff-save.md) |
 | codegen commands | [`sdk`](references/rabetbase-codegen-sdk.md) / [`sql`](references/rabetbase-codegen-sql.md) |
@@ -162,7 +173,7 @@ const result = await client.bff.execute<DashboardData>({
 
 `sql save` 内置 SQL 校验（与 `sql validate` 共用核心），DELETE / DDL 语句被自动阻止。
 
-配置 `riskLevel` 可限制允许执行的最高风险等级（`.rabetbase.json` 或 `RABETBASE_RISK_LEVEL`；旧名 `.lovrabet.json` 仍可读）。
+配置 `riskLevel` 可限制允许执行的最高风险等级（详见 [配置参考](references/rabetbase-config.md)）。
 
 ## 输出格式
 

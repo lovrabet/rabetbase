@@ -14,10 +14,27 @@ rabetbase bff list --name getUserInfo --format json
 
 | Flag | 类型 | 必填 | 默认 | 说明 |
 |------|------|------|------|------|
+| `--app <name>` | string | 否 | — | 多应用模式下指定应用名称 |
+| `--appcode <code>` | string | 否 | — | 直接指定 appcode |
 | `--type <type>` | string | 否 | `ENDPOINT` | 脚本类型：`ENDPOINT` / `COMMON` |
 | `--name <name>` | string | 否 | — | 按脚本名过滤 |
 | `--verbose` | boolean | 否 | — | 返回完整脚本对象 |
 | `--format <fmt>` | string | 否 | `pretty` | 输出格式 |
+
+## 多应用过滤
+
+多应用模式下：
+- 不加 `--app` / `--appcode`：遍历所有已配置应用，依次列出各应用的 BFF
+- 加 `--app <name>`：仅列出指定应用的 BFF
+- 加 `--appcode <code>`：反查到对应 app profile，使用其 cookie/env
+
+```bash
+# 仅列出 order 应用的 BFF
+rabetbase bff list --app order
+
+# 指定 appcode
+rabetbase bff list --appcode app-8b7d35bb
+```
 
 ## 输出
 
