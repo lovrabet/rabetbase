@@ -1,4 +1,17 @@
-# bff save
+# bff save（已废弃）
+
+> `bff save` 文档已废弃，不再作为推荐工作流。
+> 
+> 当前推荐的 BFF 流程是：
+> - 本地创建：`rabetbase bff new`
+> - 查看状态：`rabetbase bff status`
+> - 推送远端：`rabetbase bff push --yes`
+> - 拉取远端：`rabetbase bff pull`
+> - 删除脚本：`rabetbase bff delete --yes --target ...`
+>
+> 如果只是想“新建并同步”一个 BFF，请优先使用 `bff new + bff push`，不要继续基于 `bff save` 设计新流程。
+
+以下内容仅作为历史参考保留。
 
 创建或更新 BFF 脚本。不带 `--id` 为新建，带 `--id` 为更新。
 
@@ -60,3 +73,5 @@ rabetbase bff save --file ./scripts/getUserInfo.js --id 42 --yes --non-interacti
 - [SKILL.md](../SKILL.md)
 - [bff-creation-workflow.md](../guides/bff-creation-workflow.md)
 - [conflict-detection.md](../guides/conflict-detection.md)
+- [rabetbase-bff-new.md](./rabetbase-bff-new.md)
+- [rabetbase-bff-push.md](./rabetbase-bff-push.md)

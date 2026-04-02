@@ -97,7 +97,7 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 ## 强制工作流
 
 ```text
-理解需求 -> 校验数据集与字段 -> 选择脚本类型 -> 生成脚本（内存）-> 自检 -> 直接提交平台
+理解需求 -> 校验数据集与字段 -> 选择脚本类型 -> 生成本地脚本 -> 自检 -> status -> dry-run -> push/pull
 ```
 
 ### Step 1：理解需求
@@ -137,7 +137,7 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 
 ### Step 4：生成脚本
 
-在内存（对话上下文）中生成完整脚本，无需写入本地文件。
+在本地 `.rabetbase/bff/<appCode>/...` 下生成或修改完整脚本。
 
 脚本必须包含：
 
@@ -147,11 +147,11 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 * 数据集映射
 * 必要的错误处理
 
-本地文件为可选，仅在以下情况写入：
+本地文件是主工作副本：
 
-* 提交平台成功后 → 回写本地供人工查阅（正常路径）
-* 保存被 `blocked` → 写草稿（`endpoint_<name>.draft.js`）供人工处理
-* 用户要求"把平台最新同步到本地"
+* 新建时用 `rabetbase bff new`
+* 修改时直接编辑 `.rabetbase/bff/<appCode>/...`
+* 需要远端最新内容时先 `rabetbase bff pull`
 
 ### Step 5：自检
 
@@ -163,6 +163,28 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 * SQL 返回值是否按 BFF 语义处理
 * 是否误设置系统字段
 * 是否存在明显性能问题
+
+### Step 6：检查状态并预览
+
+至少执行：
+
+* `rabetbase bff status --format json`
+* `rabetbase bff push --type <type> --name <name> --dry-run --format json`
+
+确认：
+
+* 脚本进入 `added` / `modified`
+* 预览返回的 `lockKey`、`mode`、`status` 符合预期
+
+### Step 7：推送到平台
+
+确认无误后执行：
+
+* `rabetbase bff push --yes --type <type> --name <name> --format json`
+
+如果目标是同步远端到本地，则执行：
+
+* `rabetbase bff pull --format json`
 
 ## 顶部注释规范
 

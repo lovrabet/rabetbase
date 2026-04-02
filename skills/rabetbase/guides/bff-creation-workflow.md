@@ -9,7 +9,7 @@
 ## 工作流
 
 ```
-速查公共函数 → 确认需求 → 校验字段 → [按需]查平台 → 编写脚本 → 自检 → 保存到平台 → 写入本地
+速查公共函数 → 确认需求 → 校验字段 → [按需]查平台 → 编写本地脚本 → 自检 → status → dry-run → push/pull
 ```
 
 ### 0. 速查公共函数
@@ -37,36 +37,49 @@
 * BFF 中 `sql.execute` 返回数组，不是 `{ execSuccess, execResult }`
 * 参数校验、错误处理、脱敏
 
-### 6. 保存到平台
-执行 `rabetbase bff save --file <脚本文件路径> --yes --format json`：
-* 新建不传 `id`，更新传 `id`
-* 脚本文件中包含完整源码原文
-* 必须包含 `description`、`scriptName`（与脚本中 `export default async function` 后的函数名一致）、`scriptType`（`ENDPOINT` 或 `COMMON`）
+### 6. 检查本地状态
+执行 `rabetbase bff status --format json`：
+* 确认新增脚本进入 `added`
+* 确认修改脚本进入 `modified`
+* 若状态异常，先不要推送
 
-### 7. 写入本地
-保存成功后，将脚本内容写入本地文件，纳入 Git 版本管理。路径遵循 `.rabetbase/bff/<appCode>/` 目录约定（详见 `backend-function.md`）：
+### 7. 预览推送
+执行 `rabetbase bff push --type <type> --name <name> --dry-run --format json`：
+* 查看本次是 `create` 还是 `update`
+* 检查目标 `lockKey`、`filePath` 和预期状态
+* dry-run 不会上传远端，也不会改 lock
+
+### 8. 推送到平台
+执行 `rabetbase bff push --yes --type <type> --name <name> --format json`：
+* 成功项进入 `uploaded`
+* 未变更项进入 `skipped: unchanged`
+* 失败项进入 `failed`
+
+### 9. 本地文件
+脚本内容直接保存在本地文件中，纳入 Git 管理。路径遵循 `.rabetbase/bff/<appCode>/` 目录约定（详见 `backend-function.md`）：
 * ENDPOINT → `.rabetbase/bff/<appCode>/ENDPOINT/<name>.js`
 * HOOK → `.rabetbase/bff/<appCode>/HOOK/<alias>/<operationType>/<functionNode>/<name>.js`
 * COMMON → `.rabetbase/bff/<appCode>/COMMON/<name>.js`
-* 若文件已存在，直接覆盖
 
 ## 冲突处理
 
-返回 `blocked: true` → 将当前脚本内容写入本地草稿文件，告知用户手动处理，不重试。
-草稿路径：在对应目录下使用 `.draft.js` 后缀。
+若返回 `failed`：
+* 告知用户失败的 `lockKey` 和错误原因
+* 不要假装成功
+* 已成功推送的其他脚本不会自动回滚
 
 ## 本地文件
 
-正常流程：保存平台成功后写入本地，路径同 Step 7（`.rabetbase/bff/<appCode>/` 下）。
+正常流程：先在本地创建/修改，再通过 `push` 同步远端，路径同 Step 9（`.rabetbase/bff/<appCode>/` 下）。
 例外场景：
-* 保存被 blocked → 写草稿（`.draft.js`），供人工处理
-* 用户主动要求"同步平台最新到本地" → 从平台拉取 → 覆盖本地
+* 用户主动要求"同步平台最新到本地" → 从平台拉取 → 覆盖本地（`bff pull`）
+* 用户要求删除脚本 → `bff delete --yes --target ...`
 
 修改已有脚本时，从平台拉取最新内容。
 
 ## 修改已有脚本
 
-`rabetbase bff list --format json` → `rabetbase bff detail --id <id> --format json` 拉最新内容 → 修改 → 带 `id` 保存 → 写入本地。
+`rabetbase bff list --format json` → `rabetbase bff detail --id <id> --format json` 拉最新内容 → 如需覆盖本地则 `bff pull` → 修改本地文件 → `bff status` → `bff push --yes`
 
 ## BFF 语义差异
 

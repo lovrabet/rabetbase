@@ -37,7 +37,7 @@ metadata:
 3. **SQL 工作流严格分步**
    - 查现有 → 确认字段 → 编写 → 校验(`sql validate`) → 保存(`sql save`) → 测试(`sql exec`)
 4. **BFF 工作流严格分步**
-   - 查现有 → 确认字段 → 查公共函数 → 编写 → 预览(`--dry-run`) → 保存(`bff save --yes`)
+   - 查现有 → 确认字段 → 查公共函数 → 本地创建(`bff new`) → 检查状态(`bff status`) → 先预览(`--dry-run`) → 再拉取/推送/删除
 
 ## Agent 禁止行为
 
@@ -45,7 +45,7 @@ metadata:
 - **不要跳过 validate** — SQL 保存前必须通过 `sql validate` 或 `sql save --dry-run` 校验
 - **不要手动拼 API URL** — 所有操作通过 CLI 命令完成，不要直接调 HTTP 接口
 - **不要臆测 sqlCode / id** — 从 `sql list` 或 `bff list` 获取真实标识
-- **不要含糊处理保存失败** — `sql save` / `bff save` 返回 `blocked` 时必须明确告知用户
+- **不要含糊处理失败** — `sql save` 返回 `blocked` 或 `bff push` / `bff delete` 返回 `failed` 时必须明确告知用户
 - **不要在不确认表结构时就写 SQL** — 先 `dataset detail`，后写 SQL
 - **不要循环单条查询** — 用 SDK `filter + $in` 批量查询，不要 N+1
 - **不要把 MCP 工具名当 CLI 命令** — 使用 `rabetbase sql list`，不是 `list_sql_queries`
@@ -135,7 +135,11 @@ const result = await client.bff.execute<DashboardData>({
 | 执行 SQL 查询 | [`rabetbase sql exec --sqlcode xxx`](references/rabetbase-sql-exec.md) | 支持 `--params` JSON 参数 |
 | 查看现有 BFF | [`rabetbase bff list`](references/rabetbase-bff-list.md) | 按类型和名称过滤，支持 `--app` 限定应用 |
 | 查看 BFF 详情 | [`rabetbase bff detail --id n`](references/rabetbase-bff-detail.md) | 含完整脚本内容 |
-| 保存/更新 BFF | [`rabetbase bff save --file xxx`](references/rabetbase-bff-save.md) | high-risk-write，需 `--yes` 确认 |
+| 创建本地 BFF | [`rabetbase bff new --type ENDPOINT --name xxx`](references/rabetbase-bff-new.md) | 在 `.rabetbase/bff/<appCode>/...` 下创建脚手架 |
+| 查看 BFF 本地状态 | [`rabetbase bff status`](references/rabetbase-bff-status.md) | 检查 added / modified / unchanged / remoteOnly |
+| 拉取远端 BFF | [`rabetbase bff pull`](references/rabetbase-bff-pull.md) | 从远端同步到本地 |
+| 推送本地 BFF | [`rabetbase bff push --yes`](references/rabetbase-bff-push.md) | high-risk-write，需 `--yes` |
+| 删除 BFF | [`rabetbase bff delete --yes --target xxx`](references/rabetbase-bff-delete.md) | high-risk-write，删远端并清理本地 |
 | 生成 SDK 代码 | [`rabetbase codegen sdk --code xxx`](references/rabetbase-codegen-sdk.md) | 按操作生成 TypeScript |
 | 生成 SQL 调用代码 | [`rabetbase codegen sql --sqlcode xxx`](references/rabetbase-codegen-sql.md) | sdk/bff 两种 target |
 | 列出已配置应用 | [`rabetbase app list`](references/rabetbase-app-list.md) | 多应用模式 |
@@ -158,7 +162,7 @@ const result = await client.bff.execute<DashboardData>({
 | dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`links`](references/rabetbase-dataset-links.md) |
 | api commands | [`pull`](references/rabetbase-api-pull.md) / [`list`](references/rabetbase-api-list.md) |
 | sql commands | [`list`](references/rabetbase-sql-list.md) / [`detail`](references/rabetbase-sql-detail.md) / [`validate`](references/rabetbase-sql-validate.md) / [`save`](references/rabetbase-sql-save.md) / [`exec`](references/rabetbase-sql-exec.md) |
-| bff commands | [`list`](references/rabetbase-bff-list.md) / [`detail`](references/rabetbase-bff-detail.md) / [`save`](references/rabetbase-bff-save.md) |
+| bff commands | [`list`](references/rabetbase-bff-list.md) / [`detail`](references/rabetbase-bff-detail.md) / [`new`](references/rabetbase-bff-new.md) / [`status`](references/rabetbase-bff-status.md) / [`pull`](references/rabetbase-bff-pull.md) / [`push`](references/rabetbase-bff-push.md) / [`delete`](references/rabetbase-bff-delete.md) |
 | codegen commands | [`sdk`](references/rabetbase-codegen-sdk.md) / [`sql`](references/rabetbase-codegen-sql.md) |
 
 ## 风险控制
@@ -169,7 +173,7 @@ const result = await client.bff.execute<DashboardData>({
 |------|------|---------|
 | `read` | 只读查询，随时可执行 | 直接执行 |
 | `write` | 修改数据，如 `sql save` | 先 `--dry-run` 预览，再正式执行 |
-| `high-risk-write` | 影响运行时行为，如 `bff save` | 必须 `--yes` 确认或交互确认；CI 模式强制 `--yes` |
+| `high-risk-write` | 影响运行时行为，如 `bff push` / `bff delete` | 必须 `--yes` 确认或交互确认；CI 模式强制 `--yes` |
 
 `sql save` 内置 SQL 校验（与 `sql validate` 共用核心），DELETE / DDL 语句被自动阻止。
 
@@ -193,11 +197,11 @@ const result = await client.bff.execute<DashboardData>({
 | `validation_error` | 输入校验失败（含 SQL 类型阻止） | 检查 SQL 内容或参数格式 |
 | `api_error` | 后端 API 错误 | 检查 appcode、网络、权限 |
 | `cancelled` | 用户取消高风险操作 | 用 `--yes` 跳过确认，或修改 riskLevel |
-| `blocked` (sql save/bff save) | 平台冲突检测 | 告知用户手动在平台操作，写本地草稿 |
+| `blocked` (sql save) | 平台冲突检测 | 告知用户手动在平台操作，写本地草稿 |
 
 ## 冲突处理
 
-`sql save` / `bff save` 返回 `blocked: true` 时：
+`sql save` 返回 `blocked: true` 时：
 - 告知用户手动在平台操作
 - 将内容写入本地草稿文件（`.draft.sql` / `.draft.js`）
 - 禁止重试、禁止绕过
