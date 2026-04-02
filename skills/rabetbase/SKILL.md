@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.0.2-beta.6
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、SQL 查询、BFF 脚本、代码生成。触发词：数据集、数据表、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen。"
+version: 2.0.4-beta.4
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、SQL 查询、BFF 脚本、菜单同步、代码生成。触发词：数据集、数据表、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -20,7 +20,7 @@ metadata:
 
 1. **认证**：`rabetbase auth` 通过浏览器完成 OAuth 登录
 2. **AppCode**：确保 `.rabetbase.json` 中设置了 `appcode`（单应用）或 `apps`（多应用），或通过 `--appcode <code>` / `--app <name>` 传入（旧名 `.lovrabet.json` 仍可读）
-3. **配置文件**：`rabetbase project init` 初始化 `.rabetbase.json`（旧名仍兼容读取）。完整字段说明见 [`.rabetbase.json` 配置参考](references/rabetbase-config.md)
+3. **配置文件**：`rabetbase init` 初始化 `.rabetbase.json`（旧名仍兼容读取）。完整字段说明见 [`.rabetbase.json` 配置参考](references/rabetbase-config.md)
 4. **多应用场景**：一个项目有多个应用时，先 `rabetbase app add` 配置各应用，再用 `--app <name>` 或 `rabetbase app use <name>` 切换
 
 ## Agent 快速执行顺序
@@ -118,10 +118,18 @@ const result = await client.bff.execute<DashboardData>({
 
 | 意图 | 推荐命令 | 备注 |
 |------|---------|------|
+| 初始化项目 | [`rabetbase init`](references/rabetbase-init.md) | 智能检测旧配置，支持 `--appcode` 非交互 |
+| 创建新项目 | [`rabetbase project create`](references/rabetbase-project-create.md) | 支持 `--name` + `--appcode` 非交互 |
+| 从 lovrabet-cli 迁移 | [`rabetbase project upgrade`](references/rabetbase-project-upgrade.md) | 6 步自动迁移，`--yes` 跳过确认 |
+| 运行 package.json 脚本 | [`rabetbase run <script>`](references/rabetbase-run.md) | 自动检测包管理器，`start`/`dev` 前做版本检查 |
+| 安装 skill 包 | [`rabetbase skill install`](references/rabetbase-skill-install.md) | 全局安装 rabetbase skill |
+| 退出登录 | [`rabetbase auth logout`](references/rabetbase-auth-logout.md) | 删除本地认证 cookie |
 | 诊断配置问题 | [`rabetbase doctor`](references/rabetbase-doctor.md) | 打印合并配置、域名、认证状态 |
 | 更新 CLI 版本 | [`rabetbase update`](references/rabetbase-update.md) | 自动检测最新版本并升级 |
 | 修改配置文件 | [`rabetbase config set <key> <value>`](references/rabetbase-config.md) | 支持 `--global` 写全局配置 |
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
+| 同步菜单到平台 | [`rabetbase menu sync`](references/rabetbase-menu-sync.md) | 本地页面 → 平台菜单，支持交互/静默 |
+| 更新菜单 CDN URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 批量更新线上菜单资源地址 |
 | 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 服务端模糊匹配；也可 `--code` 精确查 |
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
 | 查看 Dataset 操作定义 | [`rabetbase dataset operations --code xxx`](references/rabetbase-dataset-operations.md) | 获取 filter/getOne/create 等参数定义 |
@@ -155,15 +163,21 @@ const result = await client.bff.execute<DashboardData>({
 
 | 命令分组 | 说明 |
 |----------|------|
+| Quick Start | [`init`](references/rabetbase-init.md) |
+| Project | [`create`](references/rabetbase-project-create.md) / [`upgrade`](references/rabetbase-project-upgrade.md) |
+| Run Scripts | [`run`](references/rabetbase-run.md) |
+| Authentication | [`auth login`](references/rabetbase-config.md) / [`auth logout`](references/rabetbase-auth-logout.md) |
 | Self Update | [`update`](references/rabetbase-update.md) |
 | Diagnostics | [`doctor`](references/rabetbase-doctor.md) |
 | Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
+| Menu | [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) |
 | app commands | [`list`](references/rabetbase-app-list.md) / [`use`](references/rabetbase-app-use.md) / [`add`](references/rabetbase-app-add.md) / [`remove`](references/rabetbase-app-remove.md) |
 | dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`links`](references/rabetbase-dataset-links.md) |
 | api commands | [`pull`](references/rabetbase-api-pull.md) / [`list`](references/rabetbase-api-list.md) |
 | sql commands | [`list`](references/rabetbase-sql-list.md) / [`detail`](references/rabetbase-sql-detail.md) / [`validate`](references/rabetbase-sql-validate.md) / [`save`](references/rabetbase-sql-save.md) / [`exec`](references/rabetbase-sql-exec.md) |
 | bff commands | [`list`](references/rabetbase-bff-list.md) / [`detail`](references/rabetbase-bff-detail.md) / [`new`](references/rabetbase-bff-new.md) / [`status`](references/rabetbase-bff-status.md) / [`pull`](references/rabetbase-bff-pull.md) / [`push`](references/rabetbase-bff-push.md) / [`delete`](references/rabetbase-bff-delete.md) |
 | codegen commands | [`sdk`](references/rabetbase-codegen-sdk.md) / [`sql`](references/rabetbase-codegen-sql.md) |
+| Skills | [`install`](references/rabetbase-skill-install.md) |
 
 ## 风险控制
 
