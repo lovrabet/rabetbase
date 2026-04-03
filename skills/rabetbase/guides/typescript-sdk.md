@@ -24,7 +24,7 @@ const client = createClient({
   appCode: "your-app-code",
   accessKey: process.env.RABETBASE_ACCESS_KEY, // 仅在服务端使用
   models: [
-    { tableName: "users", datasetCode: "abc123def456", alias: "users" }
+    { tableName: "users", datasetCode: "39f758e7b38c476b8bb3996771a601a1", alias: "users" }
   ],
 });
 ```
@@ -69,29 +69,29 @@ const result = await client.models.article.filter({
 });
 ```
 
-### 批量操作（SDK >= 1.2.0）
+### 写入与删除操作（SDK >= 1.2.0）
 
-从 SDK v1.2.0 开始，支持批量更新和批量删除操作，单次最多 **1000 条**记录。
+从 SDK v1.2.0 开始，update 和 delete 支持对象模式（推荐，与 BFF 一致）和兼容模式两种写法，单次最多 **1000 条**记录。
 
-#### 批量更新（Batch Update）
+#### 更新（Update）
 
 **接口**：
 ```typescript
 client.models.dataset_[code].update({
-  ids: (number | string)[],  // 记录 ID 数组（最多 1000 条）
-  data: Record<string, any>  // 要更新的字段
+  id: number | string | (number | string)[]; [key: string]: any
 })
 ```
 
 **示例**：
 ```typescript
-// ✅ 批量更新客户状态
-const result = await client.models.customer.update({
-  ids: [1, 2, 3, 4, 5],
-  data: {
-    status: 'active',
-    updateTime: new Date().toISOString()
-  }
+// 单条更新
+await client.models.customer.update({ id: 1001, status: 'active' });
+
+// 批量更新
+await client.models.customer.update({
+  id: [1, 2, 3, 4, 5],
+  status: 'active',
+  updateTime: new Date().toISOString()
 });
 ```
 
@@ -101,25 +101,26 @@ const result = await client.models.customer.update({
 - 不能批量修改主键字段
 - 不能将必填字段设置为空值
 
-#### 批量删除（Batch Delete）
+#### 删除（Delete）
 
 **接口**：
 ```typescript
-client.models.dataset_[code].delete({
-  ids: (number | string)[]  // 记录 ID 数组（最多 1000 条）
-})
+client.models.dataset_[code].delete({ id: number | string | (number | string)[] })
 ```
 
 **示例**：
 ```typescript
-// ✅ 批量删除不活跃用户
+// 单条删除
+await client.models.customer.delete({ id: 1001 });
+
+// 批量删除
 const inactiveUsers = await client.models.customer.filter({
   where: { lastLoginTime: { $lt: '2026-01-01' } },
   select: ['id']
 });
 
 await client.models.customer.delete({
-  ids: inactiveUsers.map(u => u.id)
+  id: inactiveUsers.map(u => u.id)
 });
 ```
 
@@ -136,10 +137,7 @@ await client.models.customer.delete({
 async function batchUpdate(ids: number[], batchSize = 1000) {
   for (let i = 0; i < ids.length; i += batchSize) {
     const batch = ids.slice(i, i + batchSize);
-    await client.models.customer.update({
-      ids: batch,
-      data: { status: 'processed' }
-    });
+    await client.models.customer.update({ id: batch, status: 'processed' });
     console.log(`已处理 ${i + batch.length} / ${ids.length}`);
   }
 }
@@ -157,10 +155,7 @@ client.registerModels({
 });
 
 // 使用别名批量操作
-await client.models.customer.update({
-  ids: [1, 2, 3],
-  data: { status: 'active' }
-});
+await client.models.customer.update({ id: [1, 2, 3], status: 'active' });
 ```
 
 ## 2. 自定义 SQL (SQL API)
@@ -209,7 +204,7 @@ console.log(dashboard.userCount);
 import { LovrabetError } from "@lovrabet/sdk";
 
 try {
-  const result = await client.models.users.getOne(id);
+  const result = await client.models.users.getOne({ id });
 } catch (error) {
   if (error instanceof LovrabetError) {
     console.error("HTTP/框架级错误:", error.message, error.code);

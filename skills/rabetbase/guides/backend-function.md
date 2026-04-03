@@ -18,7 +18,7 @@
 
 * 先校验数据集和字段，再写脚本
 * 所有脚本统一使用 `export default async function`
-* 前后端单条查询统一使用 `getOne`
+* 前后端单条查询统一使用 `getOne({ id })`
 * BFF 中的 SQL 返回值与前端 SDK 不同，不能混用
 * 平台自动维护字段不得手动设置
 * 发现明显性能问题时，必须先改写再继续
@@ -86,13 +86,12 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 
 常见 `Operation`：
 
-* `Filter`
-* `GetList`
+* `filter`
 * `getOne`
-* `Create`
-* `Update`
-* `Delete`
-* `Aggregate`
+* `create`
+* `update`
+* `delete`
+* `aggregate`
 
 ## 强制工作流
 
@@ -159,7 +158,7 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 
 * 函数名匹配（用于 `scriptName` 参数）
 * 顶部注释占位符已替换
-* 单条查询是否统一使用 `getOne`
+* 单条查询是否统一使用 `getOne({ id })`
 * SQL 返回值是否按 BFF 语义处理
 * 是否误设置系统字段
 * 是否存在明显性能问题
@@ -264,25 +263,25 @@ const TABLES = {
 };
 
 const models = context.client.models;
-const order = await models[TABLES.orders].getOne(123);
+const order = await models[TABLES.orders].getOne({ id: 123 });
 ```
 
 规则：
 
 * 必须使用 32 位数据集编码
 * 每个映射后写 `// 数据集: ... | 数据表: ...`
-* 查询单条统一使用 `getOne(id)`
+* 查询单条统一使用 `getOne({ id })`
 * 列表查询优先使用 `filter()`
 
 常用方法：
 
 | 方法 | 说明 |
 |------|------|
-| `getOne(id)` | 按主键查询单条 |
+| `getOne({ id })` | 按主键查询单条 |
 | `filter(params)` | 高级过滤查询 |
 | `create(data)` | 创建记录 |
-| `update(data)` | 更新记录 |
-| `delete(params)` | 删除记录 |
+| `update({ id, ...fields })` | 更新记录（id 支持数组批量，最多 1000 条） |
+| `delete({ id })` | 删除记录（id 支持数组批量，最多 1000 条） |
 
 不要再写：
 

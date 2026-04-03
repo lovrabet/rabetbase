@@ -22,7 +22,7 @@
 
 在编写任何数据访问代码前，**必须先完成以下检查**：
 
-- [ ] 使用 `rabetbase dataset detail --code <数据集编码> --format json` 获取数据集完整字段信息
+- [ ] 使用 `rabetbase dataset detail --code <数据集编码> --verbose --format json` 获取数据集完整字段信息
 - [ ] 核对字段名（区分大小写）、类型、是否必填
 - [ ] 分析数据集依赖关系（主外键约束）
 - [ ] 识别外键字段，确定下拉框数据来源
@@ -41,12 +41,12 @@ rabetbase dataset detail --code orders --format json
 
 **返回信息包含**：
 
-| 信息项 | 说明 | 用途 |
-|-------|------|------|
-| `fields` | 字段列表（名称、类型、是否必填） | 表单字段校验、查询条件 |
-| `dependencies` / `relations` | 主外键关系 | 下拉框数据来源、关联查询 |
-| `basic.database` | 数据库信息 | SQL 编写时使用 |
-| `basic.tableName` | 数据表名 | SQL 编写时使用 |
+| 信息项 | 路径 | 说明 | 用途 |
+|-------|------|------|------|
+| 数据集基础信息 | `data.dataset` / `data.modelId` | 数据集 ID、UUID code、名称 | 接口路径中的 modelCode 即为 UUID |
+| 字段列表 | `data.fields[]` | 列名、展示名、类型、主键标志、系统字段标志 | 表单字段校验、查询条件 |
+| 依赖关系 | `data.relations[]` | 主外键关系（无关联时为空数组） | 下拉框数据来源、关联查询 |
+| 数据库配置 | `data.dbtableConfig` | dbId、tableName、pkField、系统字段名 | SQL 编写时使用 |
 
 ---
 
@@ -57,44 +57,131 @@ rabetbase dataset detail --code orders --format json
 rabetbase dataset detail --code orders --format json
 ```
 
-**返回数据结构**：
+**返回数据结构**（以"迭代"数据集为例）：
 
 ```json
 {
-  "basic": {
-    "modelId": 1002742,
-    "modelCode": "orders",
-    "name": "订单",
-    "tableName": "orders",
-    "database": { "dbId": 123 }
-  },
-  "fields": [
-    {
-      "id": 1,
-      "code": "order_no",
-      "name": "订单号",
-      "type": "VARCHAR",
-      "required": true
+  "data": {
+    "modelId": 1004496,
+    "modelCode": "0b59efad4b184f3181470156ec19bf52",
+    "name": "迭代",
+    "dataset": {
+      "datasetId": 1004496,
+      "datasetCode": "0b59efad4b184f3181470156ec19bf52",
+      "datasetName": "迭代",
+      "tableName": "iterations",
+      "sourceType": "DB_TABLE"
     },
-    {
-      "id": 2,
-      "code": "customer_id",
-      "name": "客户ID",
-      "type": "NUMBER",
-      "required": true,
-      "extend": { "primaryKey": false }
+    "fields": [
+      {
+        "id": 724353,
+        "name": "id",
+        "displayName": "迭代ID",
+        "dbType": "BIGINT",
+        "doType": "NUMBER",
+        "pkField": true,
+        "autoIncrement": true,
+        "required": true,
+        "systemRetain": null,
+        "options": null
+      },
+      {
+        "id": 724354,
+        "name": "project_id",
+        "displayName": "项目ID",
+        "dbType": "BIGINT",
+        "doType": "NUMBER",
+        "pkField": false,
+        "required": true,
+        "systemRetain": null,
+        "options": null
+      },
+      {
+        "id": 724359,
+        "name": "status",
+        "displayName": "迭代状态",
+        "dbType": "ENUM",
+        "doType": "SELECT",
+        "pkField": false,
+        "required": true,
+        "systemRetain": null,
+        "options": [
+          { "label": "planning", "value": "planning", "children": null },
+          { "label": "in_progress", "value": "in_progress", "children": null }
+        ]
+      },
+      {
+        "id": 724361,
+        "name": "created_at",
+        "displayName": "创建时间",
+        "dbType": "DATETIME",
+        "doType": "DATETIME",
+        "pkField": false,
+        "required": true,
+        "systemRetain": "createTime",
+        "options": null
+      },
+      {
+        "id": 724362,
+        "name": "updated_at",
+        "displayName": "更新时间",
+        "dbType": "DATETIME",
+        "doType": "DATETIME",
+        "pkField": false,
+        "required": true,
+        "systemRetain": "updateTime",
+        "options": null
+      }
+    ],
+    "relations": [],
+    "dbtableConfig": {
+      "dbId": 10065,
+      "tableName": "iterations",
+      "pkField": "id",
+      "createTimeField": { "fieldName": "created_at", "fieldType": "DATETIME" },
+      "updateTimeField": { "fieldName": "updated_at", "fieldType": "DATETIME" },
+      "creatorIdField": { "fieldName": null },
+      "creatorNameField": { "fieldName": null }
     }
-  ],
-  "relations": [
-    {
-      "field": "customer_id",
-      "targetDataset": "customers",
-      "targetField": "id",
-      "relationType": "manyToOne"
-    }
-  ]
+  }
 }
 ```
+
+### 字段结构说明
+
+| 字段 | 含义 | 关键用途 |
+|------|------|---------|
+| `name` | **列名**（即接口参数中使用的字段名） | 查询/写入时用这个名字 |
+| `displayName` | 人类可读展示名 | 表单 label、错误提示 |
+| `dbType` | 数据库存储类型（BIGINT / VARCHAR / ENUM / DATE / DATETIME / TEXT） | SQL 编写时参考 |
+| `doType` | **API 层类型**（NUMBER / TEXT / SELECT / DATETIME） | 接口调用时的类型约束 |
+| `pkField` | `true` 表示主键字段 | 标识主键，不要在 create 时传入 |
+| `autoIncrement` | `true` 表示自增主键 | create 时绝对不传 |
+| `required` | 是否必填 | 表单校验、写入前检查 |
+| `systemRetain` | 系统自动维护字段标志：`"createTime"` / `"updateTime"` / `null` | 非 `null` 的字段由系统自动填写，**create/update 时不传** |
+| `options` | SELECT/ENUM 字段的枚举值数组 `{label, value, children}[]`；普通字段为 `null` | 下拉框直接使用，不需要额外请求 |
+
+### 识别系统字段的规则
+
+```
+fields[].systemRetain 的值：
+  "createTime"  → 创建时间字段，系统自动写入，create/update 不传
+  "updateTime"  → 更新时间字段，系统自动写入，create/update 不传
+  null          → 普通业务字段，需要手动传入
+```
+
+> 详见 `backend-function.md` 中的系统字段处理规范。
+
+### 数据库配置（`dbtableConfig`）关键字段
+
+| 路径 | 含义 | 用途 |
+|------|------|------|
+| `dbtableConfig.dbId` | 数据库 ID | SQL 编写时确定数据库 |
+| `dbtableConfig.tableName` | 实际数据库表名 | SQL 中的表名 |
+| `dbtableConfig.pkField` | 主键字段名（如 `"id"`） | JOIN 条件 |
+| `dbtableConfig.createTimeField.fieldName` | 创建时间字段名 | 筛选、排序 |
+| `dbtableConfig.updateTimeField.fieldName` | 更新时间字段名 | 筛选、排序 |
+| `dbtableConfig.creatorIdField.fieldName` | 创建人 ID 字段（`null` 表示未配置） | 权限过滤 |
 
 ### 错误处理
 
@@ -141,24 +228,28 @@ export default async function createOrder(params, context) {
    - 下拉框数据来自 products 表
    - 需要显示 product_name，存储 product_id
 
-3. status (无外键)
-   - 枚举字段，使用固定选项
+3. status (无外键，doType 为 SELECT)
+   - 枚举字段，直接使用 fields[].options 数组
+   - 不需要额外接口请求
 ```
 
 ### 下拉框数据来源推理
 
-| 字段类型 | 数据来源 | 处理方式 |
-|---------|---------|---------|
-| **外键字段** | 关联的数据集 | 调用关联数据集的 filter 接口 |
-| **枚举字段** | 字段定义的 options | 使用固定选项数组 |
-| **级联选择** | 父字段决定子字段 | 监听父字段变化，动态加载子选项 |
+| 字段类型 | 识别方式 | 数据来源 | 处理方式 |
+|---------|---------|---------|---------|
+| **外键字段** | `relations[]` 中有对应记录 | 关联的数据集 | 调用关联数据集的 filter 接口 |
+| **枚举字段** | `doType === "SELECT"` 且 `options` 非空 | `fields[].options` | 直接使用，无需额外请求 |
+| **级联选择** | 父字段决定子字段 | 父字段变化时动态加载 | 监听父字段变化，动态加载子选项 |
 
 **前端示例**：
 
 ```tsx
+// 分析：status 字段 doType === "SELECT"，options 已有枚举值
+// 直接从字段定义取，不需要接口请求
+const statusOptions = field.options.map(o => ({ label: o.label, value: o.value }));
+
 // 分析：customer_id 是外键，关联 customers 表
 // 需要获取客户列表作为下拉框数据
-
 const [customers, setCustomers] = useState([]);
 
 useEffect(() => {
@@ -183,7 +274,7 @@ const customerOptions = customers.map(c => ({
 // 分析：订单表 customer_id 是外键
 // 创建订单前需要校验客户是否存在
 
-const customer = await customerDS.getOne(params.customer_id);
+const customer = await customerDS.getOne({ id: params.customer_id });
 if (!customer) {
   throw new Error(`客户 ${params.customer_id} 不存在`);
 }
@@ -218,9 +309,9 @@ useEffect(() => {
 **前端**：
 
 ```tsx
-import { LovrabetClient } from '@lovrabet/sdk';
+import { createClient } from '@lovrabet/sdk';
 
-const client = new LovrabetClient({ appCode: 'your-app-code' });
+const client = createClient({ appCode: 'your-app-code' });
 
 // 查询列表
 const result = await client.models.dataset_XXXXXXXXXX.filter({
@@ -361,10 +452,11 @@ await context.client.sql.execute({
 
 - [ ] **已获取数据集详情**：使用 CLI 命令获取字段和依赖关系
 - [ ] **外键字段已识别**：下拉框数据来自关联数据集接口
-- [ ] **枚举字段已处理**：使用字段定义的 options
+- [ ] **枚举字段已处理**：直接使用 `fields[].options`，`doType === "SELECT"` 的字段无需额外接口
 - [ ] **未使用 mock 数据**：所有下拉框数据来自真实接口
 - [ ] **无循环访问**：优先使用多表关联查询，或使用批量查询
-- [ ] **字段名正确**：区分大小写，与数据集定义一致
+- [ ] **字段名正确**：使用 `fields[].name`（列名），区分大小写，与数据集定义一致
+- [ ] **系统字段已识别**：`systemRetain` 非 null 的字段（创建/更新时间等）不传入
 - [ ] **关联表使用表名**：多表关联时使用 `tableName.fieldName` 格式
 
 ### Backend Function 开发
@@ -372,15 +464,15 @@ await context.client.sql.execute({
 - [ ] **已获取数据集详情**：使用 CLI 命令获取字段和依赖关系
 - [ ] **主外键关系已分析**：理解表间关联关系
 - [ ] **外键校验已处理**：创建/更新前校验外键有效性
-- [ ] **系统字段未设置**：详见 `backend-function.md`
+- [ ] **系统字段未设置**：`pkField: true`、`autoIncrement: true`、`systemRetain` 非 null 的字段不传入，详见 `backend-function.md`
 - [ ] **无循环访问**：使用 filter + $in 批量查询
 - [ ] **批量操作已优化**：大量数据操作使用自定义 SQL
 
 ### SQL 开发
 
-- [ ] **已获取数据集详情**：确认字段名、类型
-- [ ] **必填字段已确认**：INSERT 包含所有必填字段（系统字段除外）
-- [ ] **主外键关系已分析**：JOIN 条件正确
+- [ ] **已获取数据集详情**：通过 `dbtableConfig.tableName` 确认表名，通过 `dbtableConfig.dbId` 确认数据库
+- [ ] **必填字段已确认**：INSERT 包含所有必填字段（`required: true` 且 `systemRetain` 为 null 的字段）
+- [ ] **主外键关系已分析**：JOIN 条件使用 `dbtableConfig.pkField`
 - [ ] **SQL 已验证**：使用 `rabetbase sql validate` 验证
 - [ ] **SELECT 已测试**：使用 `rabetbase sql exec` 测试
 

@@ -102,7 +102,7 @@ UserProfile.displayName = "用户详情";
 
 ## 前端 SDK 约束
 
-前端列表查询优先使用 `filter()`，单条主键查询使用 `getOne(id)`。
+前端列表查询优先使用 `filter()`，单条主键查询使用 `getOne({ id })`。
 
 示例：
 
@@ -112,7 +112,7 @@ const result = await client.models.customers.filter({
   select: ["id", "customer_name"],
 });
 
-const customer = await client.models.customers.getOne(customerId);
+const customer = await client.models.customers.getOne({ id: customerId });
 ```
 
 规则：

@@ -17,7 +17,7 @@ rabetbase dataset operations --code 097b7361b76c42bcb12b923fa5a08861 --operation
 | `--code <code>` | string | 与 alias 二选一 | — | Dataset code（32 位 hex UUID） |
 | `--alias <name>` | string | 与 code 二选一 | — | `api.ts` 中定义的别名 |
 | `--operation <name>` | string | 否 | — | 操作名（如 `filter` `getOne` `create` `update` `delete`） |
-| `--verbose` | boolean | 否 | — | 返回完整操作对象 |
+| `--verbose` | boolean | 否 | — | 返回完整操作对象（含 `requestFields` / `responseFields` / `path`） |
 | `--format <fmt>` | string | 否 | `pretty` | 输出格式 |
 
 ## 输出

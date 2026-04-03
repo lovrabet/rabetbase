@@ -55,7 +55,7 @@ metadata:
 遇到新需求时按优先级选择实现方式：
 
 1. **标准 SDK 接口**（filter/getOne/create 等）— 能用就不写 SQL
-2. **Aggregate 聚合接口** — 简单分组汇总
+2. **aggregate 聚合接口** — 简单分组汇总
 3. **自定义 SQL** — 复杂 JOIN、数据库函数、跨表统计
 4. **BFF** — 外部系统调用、跨表事务、复杂业务编排
 
@@ -72,7 +72,7 @@ const client = createClient({
 });
 ```
 
-### Filter 查询（最常用）
+### filter 查询（最常用）
 
 ```typescript
 const result = await client.models.users.filter({
@@ -111,7 +111,7 @@ const result = await client.bff.execute<DashboardData>({
 | | 前端 SDK | BFF (context.client) |
 |---|---------|---------------------|
 | SQL 返回值 | `{ execSuccess, execResult }` | 直接返回数组 `T[]` |
-| 单条查询 | `getOne(id)` | `getOne(id)` |
+| 单条查询 | `getOne({ id })` | `getOne({ id })` |
 | 调 BFF | `client.bff.execute({ scriptName, params })` | — |
 
 ## 意图 → 命令索引

@@ -7,7 +7,7 @@
 ```bash
 rabetbase bff new --type ENDPOINT --name getUserList --description "获取用户列表" --format json
 rabetbase bff new --type COMMON --name normalizePayload --format json
-rabetbase bff new --type HOOK --name beforeFilter --alias appUser --operation-type getList --function-node before --format json
+rabetbase bff new --type HOOK --name beforeFilter --alias appUser --operation-type filter --function-node before --format json
 ```
 
 ## 参数
@@ -19,7 +19,7 @@ rabetbase bff new --type HOOK --name beforeFilter --alias appUser --operation-ty
 | `--description <desc>` | string | 否 | — | 脚本描述 |
 | `--alias <alias>` | string | HOOK 时推荐 | — | 数据集 alias |
 | `--datasetcode <code>` | string | HOOK 兜底 | — | 数据集编码 |
-| `--operation-type <op>` | string | HOOK 必填 | — | 如 `getOne` / `getList` / `create` |
+| `--operation-type <op>` | string | HOOK 必填 | — | 如 `getOne` / `filter` / `create` |
 | `--function-node <node>` | string | HOOK 必填 | — | `before` / `after` |
 | `--format <fmt>` | string | 否 | `pretty` | 输出格式 |
 

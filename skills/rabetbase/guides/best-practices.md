@@ -90,7 +90,7 @@ AI 编写 BFF 代码时，必须养成防御性编程习惯，默认加上参数
 ```javascript
 // ❌ 高危：无验证，直接透传
 export default async function(params: any) {
-  return await client.models.customer.delete(params.id);
+  return await client.models.customer.delete({ id: params.id });
 }
 
 // ✅ 安全：带验证和异常处理
@@ -101,7 +101,7 @@ export default async function(params: any, context: any) {
   
   // 必须捕获异常，不要让内部堆栈直接抛给前端
   try {
-    return await context.client.models.customer.delete(params.id);
+    return await context.client.models.customer.delete({ id: params.id });
   } catch (err) {
     return { success: false, error: '删除失败' };
   }
