@@ -25,7 +25,7 @@ rabetbase dataset detail --code xxx --verbose --format json
 
 ## 提示
 
-- 写 SQL / BFF 前必须先调用此命令确认真实字段名和类型
+- 写 SQL / BFF 前必须先调用此命令确认真实字段名和类型，且需要 `--verbose`参数
 - `--alias` 需要先执行 `rabetbase api pull` 生成 `api.ts`
 - 使用 `--verbose` 获取关联关系、枚举定义等完整信息
 
