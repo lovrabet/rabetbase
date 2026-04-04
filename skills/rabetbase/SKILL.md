@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.0.4-beta.4
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、SQL 查询、BFF 脚本、菜单同步、代码生成。触发词：数据集、数据表、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade。"
+version: 2.0.10
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、SQL 查询、BFF 脚本、菜单同步、代码生成。触发词：数据集、数据表、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -14,14 +14,14 @@ metadata:
 > **前置条件：** 使用任何 API 命令前，需完成认证和配置（见下方）。
 > **执行前必做：** 执行任何命令前，必须先阅读对应命令的 reference 文档，再调用命令。
 > **命名约定：** 统一使用 `rabetbase <service> <command> [flags]` 格式。
-> **输出格式：** AI Agent 必须使用 `--format json` 获取结构化输出。
+> **输出格式：** AI Agent 需要结构化输出时，**优先 `--format compress`**（与 `json` 相同信封，单行紧凑、省 token）；需要人类可读缩进时用 **`--format json`**。可在 **`json` / `compress`** 上叠加 **`--jq '<expr>'`**（对最终打印的整条 JSON 做 jq；**优先使用依赖 `node-jq` 自带的 jq 二进制**，无需单独安装系统 jq；若安装时跳过了脚本且未装系统 jq，需补装或设置 `JQ_PATH`）。不确定当前 CLI 有哪些子命令或 flags 时，先跑 **`rabetbase schema`**（与 `--help` 同源的机器可读契约，无需登录）。
 
 ## 前置条件
 
 1. **认证**：`rabetbase auth` 通过浏览器完成 OAuth 登录
 2. **AppCode**：确保 `.rabetbase.json` 中设置了 `appcode`（单应用）或 `apps`（多应用），或通过 `--appcode <code>` / `--app <name>` 传入（旧名 `.lovrabet.json` 仍可读）
 3. **配置文件**：`rabetbase init` 初始化 `.rabetbase.json`（旧名仍兼容读取）。完整字段说明见 [`.rabetbase.json` 配置参考](references/rabetbase-config.md)
-4. **多应用场景**：一个项目有多个应用时，先 `rabetbase app add` 配置各应用，再用 `--app <name>` 或 `rabetbase app use <name>` 切换
+4. **多应用场景**：一个项目有多个应用时，先 `rabetbase app add <name> --appcode …` 配置各应用，再用 `--app <name>` 或 `rabetbase app use <name>` 切换
 
 ## Agent 快速执行顺序
 
@@ -31,9 +31,10 @@ metadata:
    - 复杂 JOIN / 数据库函数 → 自定义 SQL
    - 外部系统调用 / 跨表事务 / 复杂业务编排 → BFF
 2. **先拿元数据，再写代码**
-   - 至少先查 `rabetbase dataset detail --code xxx --format json` 获取表结构
+   - 至少先查 `rabetbase dataset detail --code xxx --format compress`（或 `json`）获取表结构
    - 跨表场景还需查目标表的结构
-   - 需要了解数据模型关系时用 `rabetbase dataset links --format json`
+   - 需要了解数据模型关系时用 `rabetbase dataset links --format compress`（或 `json`）
+   - 输出很大且只需子集时，在 `compress`/`json` 上加 `--jq '.data…'` 缩小结果
 3. **SQL 工作流严格分步**
    - 查现有 → 确认字段 → 编写 → 校验(`sql validate`) → 保存(`sql save`) → 测试(`sql exec`)
 4. **BFF 工作流严格分步**
@@ -124,7 +125,8 @@ const result = await client.bff.execute<DashboardData>({
 | 运行 package.json 脚本 | [`rabetbase run <script>`](references/rabetbase-run.md) | 自动检测包管理器，`start`/`dev` 前做版本检查 |
 | 安装 skill 包 | [`rabetbase skill install`](references/rabetbase-skill-install.md) | 全局安装 rabetbase skill |
 | 退出登录 | [`rabetbase auth logout`](references/rabetbase-auth-logout.md) | 删除本地认证 cookie |
-| 诊断配置问题 | [`rabetbase doctor`](references/rabetbase-doctor.md) | 打印合并配置、域名、认证状态 |
+| 诊断配置问题 | [`rabetbase doctor`](references/rabetbase-doctor.md) | 合并配置、各侧 JSON 语法、域名、认证状态 |
+| 导出命令契约（flags/risk 等） | [`rabetbase schema`](references/rabetbase-schema.md) | 与 `--help` 同源；**无需登录**；大结果用 `--format compress` |
 | 更新 CLI 版本 | [`rabetbase update`](references/rabetbase-update.md) | 自动检测最新版本并升级 |
 | 修改配置文件 | [`rabetbase config set <key> <value>`](references/rabetbase-config.md) | 支持 `--global` 写全局配置 |
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
@@ -150,10 +152,10 @@ const result = await client.bff.execute<DashboardData>({
 | 删除 BFF | [`rabetbase bff delete --yes --target xxx`](references/rabetbase-bff-delete.md) | high-risk-write，删远端并清理本地 |
 | 生成 SDK 代码 | [`rabetbase codegen sdk --code xxx`](references/rabetbase-codegen-sdk.md) | 按操作生成 TypeScript |
 | 生成 SQL 调用代码 | [`rabetbase codegen sql --sqlcode xxx`](references/rabetbase-codegen-sql.md) | sdk/bff 两种 target |
-| 列出已配置应用 | [`rabetbase app list`](references/rabetbase-app-list.md) | 多应用模式 |
+| 列出已配置应用 | [`rabetbase app list`](references/rabetbase-app-list.md) | 合并全局+项目；`data.items` + `meta`（路径、`definedIn`、`defaultAppSource`） |
 | 切换默认应用 | [`rabetbase app use <name>`](references/rabetbase-app-use.md) | 持久修改 defaultApp |
 | 添加应用 | [`rabetbase app add <name> --appcode <code>`](references/rabetbase-app-add.md) | 首个自动设为 default |
-| 移除应用 | [`rabetbase app remove <name>`](references/rabetbase-app-remove.md) | 移除后自动切换 default |
+| 移除应用 | [`rabetbase app remove <name>`](references/rabetbase-app-remove.md) | high-risk-write；移除后自动切换 default |
 | 临时切换应用执行 | 任何命令加 `--app <name>` 或 `--appcode <code>` | 不修改配置文件 |
 | 查看配置文件格式 | [`.rabetbase.json` 配置参考](references/rabetbase-config.md) | 完整字段、优先级、环境变量 |
 
@@ -168,6 +170,7 @@ const result = await client.bff.execute<DashboardData>({
 | Run Scripts | [`run`](references/rabetbase-run.md) |
 | Authentication | [`auth login`](references/rabetbase-config.md) / [`auth logout`](references/rabetbase-auth-logout.md) |
 | Self Update | [`update`](references/rabetbase-update.md) |
+| Schema | [`schema` / `schema export`](references/rabetbase-schema.md) |
 | Diagnostics | [`doctor`](references/rabetbase-doctor.md) |
 | Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
 | Menu | [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) |
@@ -195,11 +198,18 @@ const result = await client.bff.execute<DashboardData>({
 
 ## 输出格式
 
-| 格式 | 用途 | 示例 |
+声明式命令统一走 **标准信封**：`ok`、`command`、`risk`、可选 `data`（失败时可有 `error` 等，以实际输出为准）。
+
+| 格式 | 用途 | 说明 |
 |------|------|------|
-| `--format json` | AI Agent / 程序解析 | `{ "ok": true, "command": "...", "risk": "read", "data": {...} }` |
-| `--format pretty` | 人类阅读（默认） | 彩色文本输出 |
-| `--format table` | 列表数据展示 | 表格输出 |
+| **`--format compress`** | **AI / 脚本优先** | 与 `json` **语义相同**，**单行紧凑**、无缩进换行，显著省 token |
+| `--format json` | 程序解析、调试 | 同上信封，**缩进**，便于人工阅读 |
+| `--format pretty` | 人类阅读（未指定 format 时的常见默认） | 非 JSON 的彩色文本 |
+| `--format table` | 列表数据 | 表格 |
+
+**`--jq '<expr>'`**（全局）：仅配合 **`json` 或 `compress`**；对**最终打印的整段 JSON**执行 jq（表达式作用在信封上，例如取 `data` 内字段用 `.data.xxx`）。**jq 可执行文件**优先来自依赖 **`node-jq`** 安装时下载到 `node_modules/node-jq/bin/` 的版本；若无则使用 **`PATH` 上的 `jq`**。若使用 `npm install --ignore-scripts` 且未装系统 jq，需安装 jq 或设置环境变量 **`JQ_PATH`**。
+
+**不确定子命令、flags、risk、是否要 appcode**：执行 **`rabetbase schema`**（即 `schema export`，**无需认证**），输出与 `rabetbase --help` 同源的机器可读元数据；详见 [`references/rabetbase-schema.md`](references/rabetbase-schema.md) 与仓库 **`docs/user-guide/12-schema命令.md`**。
 
 ## 常见错误速查
 
@@ -215,11 +225,7 @@ const result = await client.bff.execute<DashboardData>({
 
 ## 冲突处理
 
-`sql save` 返回 `blocked: true` 时：
-- 告知用户手动在平台操作
-- 将内容写入本地草稿文件（`.draft.sql` / `.draft.js`）
-- 禁止重试、禁止绕过
-- 未保存成功时必须明确告知用户，禁止含糊带过
+`sql save` / `bff save` 返回 `blocked: true` 时：告知用户去平台处理或联系上次提交人；可写本地草稿；**禁止重试绕过、禁止粉饰为已保存**。完整分支表、响应 JSON 样例与沟通要求见 [`guides/conflict-detection.md`](guides/conflict-detection.md)。
 
 ## 前端页面规则
 
@@ -231,17 +237,19 @@ const result = await client.bff.execute<DashboardData>({
 
 ## 深入指南
 
-以下 guide 文件提供各主题的详细说明、完整示例和边界情况：
+**文档分层**：`references/` 按 **单条 CLI 命令**（执行前先读对应页）；`guides/` 按 **横切主题**（工作流、数据访问、前后端规范）。二者配合 SKILL 正文渐进披露。
 
-| 主题 | Guide |
-|------|-------|
-| SDK 完整参数与返回值 | [`typescript-sdk.md`](guides/typescript-sdk.md) |
-| SQL MyBatis 语法与动态 SQL | [`sql-mybatis.md`](guides/sql-mybatis.md) |
-| 前端页面开发约束 | [`frontend-development.md`](guides/frontend-development.md) |
-| 故障诊断手册 | [`troubleshooting.md`](guides/troubleshooting.md) |
-| BFF 脚本编写规范 | [`backend-function.md`](guides/backend-function.md) |
-| 数据接口访问规范 | [`data-api-guidelines.md`](guides/data-api-guidelines.md) |
-| SQL 创建工作流细则 | [`sql-creation-workflow.md`](guides/sql-creation-workflow.md) |
-| BFF 创建工作流细则 | [`bff-creation-workflow.md`](guides/bff-creation-workflow.md) |
-| 冲突检测与处理 | [`conflict-detection.md`](guides/conflict-detection.md) |
-| 开发质量与最佳实践 | [`best-practices.md`](guides/best-practices.md) |
+以下 guide 提供详细说明、示例与边界情况：
+
+| 主题 | Use when | Guide |
+|------|----------|-------|
+| SDK 完整参数与返回值 | 初始化 client、filter/create、sql.execute、bff.execute、错误处理 | [`typescript-sdk.md`](guides/typescript-sdk.md) |
+| SQL MyBatis 与动态 SQL | 写自定义 SQL、`<if>`/`<foreach>`、参数绑定 | [`sql-mybatis.md`](guides/sql-mybatis.md) |
+| 前端页面开发约束 | React 页、表单、列表、与数据集绑定 | [`frontend-development.md`](guides/frontend-development.md) |
+| 故障诊断 | CLI/登录/数据集/保存失败排障 | [`troubleshooting.md`](guides/troubleshooting.md) |
+| BFF 脚本规范 | HOOK/ENDPOINT/COMMON、`context.client`、目录与注释模板 | [`backend-function.md`](guides/backend-function.md) |
+| 数据接口访问 | 先 detail 再编码、外键/枚举、禁止 N+1、批量与关联查询 | [`data-api-guidelines.md`](guides/data-api-guidelines.md) |
+| SQL 创建工作流 | list → validate → save → exec 全链路 | [`sql-creation-workflow.md`](guides/sql-creation-workflow.md) |
+| BFF 创建工作流 | new → status → dry-run → pull/push | [`bff-creation-workflow.md`](guides/bff-creation-workflow.md) |
+| 冲突检测与保存 | `blocked`、未保存时的用户沟通、响应结构 | [`conflict-detection.md`](guides/conflict-detection.md) |
+| 质量与最佳实践 | 审查 SQL/BFF、命名、高危边界、描述字段 | [`best-practices.md`](guides/best-practices.md) |

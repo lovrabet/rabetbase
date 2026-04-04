@@ -67,14 +67,14 @@ rabetbase project init
 
 每个 app profile 可单独覆盖顶层字段。CLI 运行时根据 `--app <name>` 或 `defaultApp` 选择激活的 profile。
 
-管理命令：
+管理命令（声明式 flags，非位置参数）：
 
 ```bash
 rabetbase app add order --appcode app-order-001 --env daily
 rabetbase app add product --appcode app-product-002
 rabetbase app use order
 rabetbase app list
-rabetbase app remove product
+rabetbase app remove product --yes
 ```
 
 ## 字段说明
@@ -250,7 +250,9 @@ rabetbase config list
 rabetbase doctor
 ```
 
-输出包括：CLI 版本、配置文件路径、合并后的所有配置项（appCode / env / cookie / apiDomain 等）、API 域名、认证状态。
+输出包括：CLI 版本、配置文件路径、**各侧配置文件 JSON 语法是否合法**（非法则该侧内容在合并时会被忽略）、合并后的所有配置项（appCode / env / cookie / apiDomain 等）、API 域名、认证状态。
+
+多应用列表与来源说明见 [`rabetbase app list`](rabetbase-app-list.md)（`items` / `meta` / `definedIn`）。
 
 ## 独立部署场景
 

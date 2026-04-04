@@ -1,18 +1,22 @@
 # rabetbase app remove
 
-从 `.rabetbase.json` 中移除一个应用配置（与 `app add` / `app use` 相同，仅操作 `.rabetbase.json`）。
+从配置中移除一个应用。**位置参数** `<name>`；**风险等级 `high-risk-write`**，非交互环境需加 **`--yes`** 确认（或与运行时交互确认）。
+
+名称须在合并后的 `apps` 中存在；删除落盘规则与 `app use` 相同（`--global` 或按项目/全局中该名的定义位置）。
 
 ## 命令
 
 ```bash
-rabetbase app remove <name>
+rabetbase app remove <name> [--global] [--yes]
 ```
 
 ## 参数
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| `<name>` | string | **必填** — 要移除的应用名 |
+| `<name>` | string | **必填** — 要移除的应用名（位置参数） |
+| `--global` | boolean | 从全局配置中移除（与默认落盘规则二选一；显式 `--global` 时操作全局文件） |
+| `--yes` | boolean | 跳过高风险交互确认（CI / 脚本必填） |
 
 ## 输出
 

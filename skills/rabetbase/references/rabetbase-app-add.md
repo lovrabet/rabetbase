@@ -1,29 +1,32 @@
 # rabetbase app add
 
-添加一个新应用到 `.rabetbase.json`。如果是第一个应用，自动设为 `defaultApp`。其余 CLI 配置仍兼容读取 `.lovrabet.json`；`app` 子命令始终写入 `.rabetbase.json`。
+添加一个新应用到配置文件。默认写入**项目** `process.cwd()` 下解析到的配置文件（一般为 `.rabetbase.json`）；加 **`--global`** 则只写 `~/.rabetbase.json`。若是第一个应用，自动设为 `defaultApp`。其余 CLI 配置仍兼容读取 `.lovrabet.json`。
+
+应用名 **`<name>` 为位置参数**，与 `app use` / `app remove` 一致。
 
 ## 命令
 
 ```bash
-rabetbase app add <name> --appcode <code> [--env <env>] [--apiDir <dir>] [--cookie ...] [--riskLevel ...]
+rabetbase app add <name> --appcode <code> [--env <env>] [--apiDir <dir>] [--global] [--cookie ...] [--riskLevel ...]
 ```
 
 ## 参数
 
 | 参数 | 类型 | 说明 |
 |------|------|------|
-| `<name>` | string | **必填** — 应用名（自定义标识，如 `order`、`product`） |
+| `<name>` | string | **必填（位置参数）** — 应用名（自定义标识，如 `order`、`product`） |
 | `--appcode` | string | **必填** — 应用的 App Code |
+| `--global` | boolean | 写入全局配置而非项目配置 |
 | `--env` | string | 目标环境（`daily` / `production`） |
 | `--apiDir` | string | API 目录路径 |
 | `--cookie` | string | 该应用专用 Cookie |
 | `--accessKey` | string | 该应用专用 Access Key |
-| `--format` | string | 输出格式 |
+| `--defaultFormat` | string | 写入该 app profile 的默认输出格式（与命令行 `--format` 不同） |
 | `--pageSize` | number | 分页条数 |
 | `--riskLevel` | string | 风险等级 |
 | `--locale` | string | 地区设置 |
 
-> 除 `--appcode` 必填外，其余均可选。未指定的字段将继承顶层共享值。
+> 除 `<name>` 与 `--appcode` 必填外，其余均可选。未指定的字段将继承顶层共享值。
 
 ## 输出
 

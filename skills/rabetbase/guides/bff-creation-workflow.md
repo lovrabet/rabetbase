@@ -19,7 +19,7 @@
 写码前必须明确：类型（ENDPOINT/HOOK/COMMON）、函数名、入参、返回结构、涉及的数据集。缺失则先问用户。
 
 ### 2. 校验字段
-执行 `rabetbase dataset detail --code <数据集编码> --verbose --format json` 确认字段名、类型、枚举值、关联关系。禁止凭经验猜字段名。
+执行 `rabetbase dataset detail --code <数据集编码> --format json` 确认字段名、类型、枚举值、关联关系。禁止凭经验猜字段名。
 
 ### 3. 查平台（按需）
 * 新建 → 跳过

@@ -4,6 +4,14 @@
 >
 > 前置阅读：`data-api-guidelines.md`
 
+## 阅读指南（按需跳转）
+
+| 需求 | 位置 |
+|------|------|
+| CLI 信封、`datasetId`、`dbtableConfig` ↔ `data.dbtable`、OpenAPI 对照 | [`references/rabetbase-dataset-detail.md`](../references/rabetbase-dataset-detail.md) |
+| 前后端数据访问、外键、性能 | [`data-api-guidelines.md`](data-api-guidelines.md) |
+| HOOK/ENDPOINT 目录、注释模板、`context.client`、事务 | 下文 |
+
 ## 何时使用
 
 当任务满足任一条件时，必须阅读并遵守本指南：
@@ -41,6 +49,8 @@
 | ENDPOINT | `https://app.lovrabet.com/app/{appCode}/data/backend-function` |
 
 其中 `datasetId` 需要通过 `rabetbase dataset detail --code xxx --format json` 获取。
+
+**平台 URL / OpenAPI `get-driven-data` 与 CLI `data` 的字段对应**（含 `datasetId`、`dbtable`）：见 [`references/rabetbase-dataset-detail.md`](../references/rabetbase-dataset-detail.md)。
 
 ## 本地目录约定
 

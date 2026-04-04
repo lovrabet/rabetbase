@@ -1,6 +1,6 @@
 # dataset list
 
-列出当前 App 下所有 Dataset，支持服务端过滤。
+列出当前 App 下所有 Dataset，支持服务端过滤。返回**精简列表**（每行含 `id`、`name`、`code`、`db`、`table`、`fields` 字段名列表等）；单数据集的完整结构请用 **`dataset detail`**。
 
 ## 命令
 
@@ -18,12 +18,11 @@ rabetbase dataset list --format table
 |------|------|------|------|------|
 | `--name <name>` | string | 否 | — | 按名称模糊过滤（服务端） |
 | `--code <code>` | string | 否 | — | 按 dataset code 精确过滤（服务端） |
-| `--verbose` | boolean | 否 | — | 返回完整 dataset 对象 |
 | `--format <fmt>` | string | 否 | `pretty` | 输出格式：`json` / `pretty` / `table` |
 
 ## 输出
 
-默认返回精简列表（id, name, code, description, source, db, table, fields）。`--verbose` 返回原始完整对象。
+默认返回精简列表（`id`, `name`, `code`, `description`, `source`, `db`, `table`, `datasetKey`, `pk`, `fields` 为字段名字符串数组）。需要完整字段定义、操作、关联页等请执行 `rabetbase dataset detail --code …`。
 
 ## 提示
 
@@ -32,6 +31,7 @@ rabetbase dataset list --format table
 - `--name` 为模糊匹配，适合搜索探索
 - 两者可组合使用，同时传递时取交集
 - AI Agent 推荐始终使用 `--format json`
+- 列表项较多时可用 `--jq` 只取需要的键，例如：`--jq '.data.datasets[] | {code, name}'`
 
 ## 参考
 
