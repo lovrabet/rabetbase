@@ -13,6 +13,9 @@ rabetbase api pull
 # 指定输出目录
 rabetbase api pull --output ./src/generated/api/
 
+# 多应用：默认只解析「项目级」apps；与全局合并配置一起拉取时加 --global
+rabetbase api pull --global
+
 # 多应用模式：指定某个应用
 rabetbase api pull --app order
 rabetbase api pull --appcode app-order-001
@@ -23,13 +26,14 @@ rabetbase api pull --appcode app-order-001
 | 参数 | 说明 |
 |------|------|
 | `--output <dir>` | 输出目录，默认 `./src/api/` |
+| `--global` | 多应用时从「全局+项目」合并配置解析 `apps`（默认仅项目级 `apps`） |
 | `--app <name>` | 多应用模式下，指定应用名称 |
 | `--appcode <code>` | 直接指定 appcode，跳过配置查找 |
 
 ## 多应用过滤
 
 多应用模式下：
-- **不加 `--app` / `--appcode`**：遍历所有已配置应用，逐个拉取
+- **不加 `--app` / `--appcode`**：遍历已配置应用（默认仅 **项目** `.rabetbase.json` 中的 `apps`；若需包含全局里合并进来的应用，加 **`--global`**）
 - **加 `--app <name>`**：仅拉取指定应用
 - **加 `--appcode <code>`**：反查到对应 app profile，使用其 cookie/env/apiDir
 

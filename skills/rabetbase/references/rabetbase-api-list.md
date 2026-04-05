@@ -12,6 +12,9 @@ rabetbase api list
 rabetbase api list --app order
 rabetbase api list --appcode app-order-001
 
+# 多应用：与全局合并配置一起列出时加 --global（默认仅项目级 apps）
+rabetbase api list --global
+
 # JSON 格式输出
 rabetbase api list --format json
 ```
@@ -20,6 +23,7 @@ rabetbase api list --format json
 
 | 参数 | 说明 |
 |------|------|
+| `--global` | 多应用时从「全局+项目」合并配置解析 `apps`（默认仅项目级 `apps`） |
 | `--app <name>` | 多应用模式下，指定应用名称 |
 | `--appcode <code>` | 直接指定 appcode |
 | `--format json` | JSON 格式输出（用于脚本解析） |
@@ -38,7 +42,7 @@ rabetbase api list --format json
 ## 多应用过滤
 
 多应用模式下：
-- **不加 `--app` / `--appcode`**：遍历所有已配置应用，依次列出
+- **不加 `--app` / `--appcode`**：遍历已配置应用（默认仅 **项目** `apps`；需包含全局合并进来的应用时加 **`--global`**）
 - **加 `--app <name>`**：仅列出指定应用的模型
 - **加 `--appcode <code>`**：反查到对应 app profile，使用其 cookie/env
 
