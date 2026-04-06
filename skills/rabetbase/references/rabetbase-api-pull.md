@@ -26,7 +26,7 @@ rabetbase api pull --appcode app-order-001
 | 参数 | 说明 |
 |------|------|
 | `--output <dir>` | 输出目录，默认 `./src/api/` |
-| `--global` | 多应用时从「全局+项目」合并配置解析 `apps`（默认仅项目级 `apps`） |
+| `--global` | 多应用时从「全局+项目」合并配置解析 `apps`（默认仅项目级 `apps`）。若项目配置了 `inherit: false`，见下节 |
 | `--app <name>` | 多应用模式下，指定应用名称 |
 | `--appcode <code>` | 直接指定 appcode，跳过配置查找 |
 
@@ -36,6 +36,17 @@ rabetbase api pull --appcode app-order-001
 - **不加 `--app` / `--appcode`**：遍历已配置应用（默认仅 **项目** `.rabetbase.json` 中的 `apps`；若需包含全局里合并进来的应用，加 **`--global`**）
 - **加 `--app <name>`**：仅拉取指定应用
 - **加 `--appcode <code>`**：反查到对应 app profile，使用其 cookie/env/apiDir
+
+## 与 `inherit: false` 的关系
+
+项目 `.rabetbase.json` 顶层若设置 **`"inherit": false`**，表示**不合并** `~/.rabetbase.json`（仅用当前目录配置文件）。
+
+此时：
+
+- **`api pull` 使用的 cookie、apiDir、appcode 等**均来自**项目文件**，不会混入全局。
+- **`--global` 不会「绕过」`inherit`**：多应用解析走的合并结果与 `readRawConfig()` 一致，在 `inherit: false` 下**仍然只有项目里的 `apps`**，与不加 `--global` 时相同；加 `--global` 并不能把全局已登记的应用再合并进来。
+
+若需要临时拉全局里的应用，应去掉项目里的 `inherit: false`，或把对应 app 写进项目配置。
 
 ## 风险等级
 

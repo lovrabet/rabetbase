@@ -91,6 +91,7 @@ rabetbase app remove product --yes
 | `format` | string | — | 默认输出格式。可选值：`json`、`pretty`、`table`。不设则命令默认 `pretty` |
 | `pageSize` | number | — | 默认分页大小，用于 `sql list` 等分页命令 |
 | `riskLevel` | string | `"high-risk-write"` | 允许执行的最高风险等级。可选值：`read`、`write`、`high-risk-write`。兼容旧名 `maxRisk` |
+| `inherit` | boolean | `true` | 为 `false` 时当前项目**不合并** `~/.rabetbase.json`（仅用本目录配置文件，避免全局登记的 `apps`/cookie 等干扰）。省略或 `true` 为默认合并行为 |
 | `apiDir` | string | `"./src/api"` | `api pull` 生成代码的输出目录 |
 | `template_base_url` | string | 平台默认 CDN | 模板 CDN 基础 URL，一般无需修改 |
 | `defaultApp` | string | — | 多应用模式下的默认应用名称 |
