@@ -22,6 +22,9 @@ metadata:
 2. **AppCode**：确保 `.rabetbase.json` 中设置了 `appcode`（单应用）或 `apps`（多应用），或通过 `--appcode <code>` / `--app <name>` 传入（旧名 `.lovrabet.json` 仍可读）
 3. **配置文件**：`rabetbase init` 初始化 `.rabetbase.json`（旧名仍兼容读取）。完整字段说明见 [`.rabetbase.json` 配置参考](references/rabetbase-config.md)
 4. **多应用场景**：一个项目有多个应用时，先 `rabetbase app add <name> --appcode …` 配置各应用，再用 `--app <name>` 或 `rabetbase app use <name>` 切换
+5. **本地 SQL / BFF 目录（团队约定）**：新建或长期维护的源文件应落在 CLI 与 `bff status` / `sql pull` 一致的路径，避免写在 `src/`、`queries/` 等随意目录后再迁移。
+   - **SQL**：项目根 **`.rabetbase/sql/<sqlName>.sql`**（及例外草稿 `.draft.sql`）。`sql validate`、`sql save --file` 应指向该目录下的文件。
+   - **BFF**：**`.rabetbase/bff/<appCode>/...`**（由 `bff new` 创建或 `bff pull` 同步；与 `bff status` / `bff push` 扫描范围一致）。详见 [`guides/sql-creation-workflow.md`](guides/sql-creation-workflow.md)、[`guides/bff-creation-workflow.md`](guides/bff-creation-workflow.md)。
 
 ## Agent 快速执行顺序
 
@@ -140,6 +143,7 @@ const result = await client.bff.execute<DashboardData>({
 | 查看生成的 API 模型 | [`rabetbase api list`](references/rabetbase-api-list.md) | 列出已生成的数据模型 |
 | 查看现有 SQL | [`rabetbase sql list --name "xxx"`](references/rabetbase-sql-list.md) | 分页，按名称过滤，支持 `--app` 限定应用 |
 | 查看 SQL 详情 | [`rabetbase sql detail --sqlcode xxx`](references/rabetbase-sql-detail.md) | 含完整 SQL 内容和参数定义 |
+| 拉取远端 SQL 到本地 | [`rabetbase sql pull`](references/rabetbase-sql-pull.md) | 写入 `.rabetbase/sql/`，含 `@lovrabet` 头注释 |
 | 校验 SQL 内容 | [`rabetbase sql validate --file xxx`](references/rabetbase-sql-validate.md) | 类型检测、危险语句检查、参数提取 |
 | 保存/更新 SQL | [`rabetbase sql save --file xxx`](references/rabetbase-sql-save.md) | 内置校验，不可跳过 |
 | 执行 SQL 查询 | [`rabetbase sql exec --sqlcode xxx`](references/rabetbase-sql-exec.md) | 支持 `--params` JSON 参数 |
@@ -177,7 +181,7 @@ const result = await client.bff.execute<DashboardData>({
 | app commands | [`list`](references/rabetbase-app-list.md) / [`use`](references/rabetbase-app-use.md) / [`add`](references/rabetbase-app-add.md) / [`remove`](references/rabetbase-app-remove.md) |
 | dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`links`](references/rabetbase-dataset-links.md) |
 | api commands | [`pull`](references/rabetbase-api-pull.md) / [`list`](references/rabetbase-api-list.md) |
-| sql commands | [`list`](references/rabetbase-sql-list.md) / [`detail`](references/rabetbase-sql-detail.md) / [`validate`](references/rabetbase-sql-validate.md) / [`save`](references/rabetbase-sql-save.md) / [`exec`](references/rabetbase-sql-exec.md) |
+| sql commands | [`list`](references/rabetbase-sql-list.md) / [`detail`](references/rabetbase-sql-detail.md) / [`pull`](references/rabetbase-sql-pull.md) / [`validate`](references/rabetbase-sql-validate.md) / [`save`](references/rabetbase-sql-save.md) / [`exec`](references/rabetbase-sql-exec.md) |
 | bff commands | [`list`](references/rabetbase-bff-list.md) / [`detail`](references/rabetbase-bff-detail.md) / [`new`](references/rabetbase-bff-new.md) / [`status`](references/rabetbase-bff-status.md) / [`pull`](references/rabetbase-bff-pull.md) / [`push`](references/rabetbase-bff-push.md) / [`delete`](references/rabetbase-bff-delete.md) |
 | codegen commands | [`sdk`](references/rabetbase-codegen-sdk.md) / [`sql`](references/rabetbase-codegen-sql.md) |
 | Skills | [`install`](references/rabetbase-skill-install.md) |

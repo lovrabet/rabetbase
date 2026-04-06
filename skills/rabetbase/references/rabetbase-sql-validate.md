@@ -2,17 +2,21 @@
 
 校验 SQL 内容（类型检测、参数提取、危险语句检查），不实际保存。与 `sql save` 内置校验共用同一个核心。
 
+## 本地路径约定
+
+从文件校验时，团队约定使用项目根 **`.rabetbase/sql/<sqlName>.sql`**（与 `sql save`、`sql pull` 一致）。内联 `--sql` 不受此限。
+
 ## 命令
 
 ```bash
 # 从文件校验
-rabetbase sql validate --file ./queries/getUserList.sql --format json
+rabetbase sql validate --file .rabetbase/sql/getUserList.sql --format json
 
 # 内联 SQL 校验
 rabetbase sql validate --sql "SELECT * FROM users WHERE id = #{userId}" --format json
 
 # 带 schema 交叉校验
-rabetbase sql validate --file ./queries/report.sql --schemas datasetCode1,datasetCode2 --format json
+rabetbase sql validate --file .rabetbase/sql/report.sql --schemas datasetCode1,datasetCode2 --format json
 ```
 
 ## 参数

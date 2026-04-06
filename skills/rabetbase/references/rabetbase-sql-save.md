@@ -4,20 +4,24 @@
 
 > **风险等级：write** — 建议先 `--dry-run` 预览。
 
+## 本地路径约定
+
+团队约定：`--file` 指向项目根下 **`.rabetbase/sql/<sqlName>.sql`**（与 `sql pull` 落盘、`guides/sql-creation-workflow.md` 一致）。示例路径如下；勿默认长期使用 `queries/` 等随意目录。
+
 ## 命令
 
 ```bash
 # 新建
-rabetbase sql save --file ./queries/getUserList.sql --sqlname getUserList --format json
+rabetbase sql save --file .rabetbase/sql/getUserList.sql --sqlname getUserList --format json
 
 # 更新
-rabetbase sql save --file ./queries/getUserList.sql --sqlcode 2305f915-dd48cd4c --format json
+rabetbase sql save --file .rabetbase/sql/getUserList.sql --sqlcode 2305f915-dd48cd4c --format json
 
 # 先预览
-rabetbase sql save --file ./queries/getUserList.sql --sqlcode 2305f915-dd48cd4c --dry-run --format json
+rabetbase sql save --file .rabetbase/sql/getUserList.sql --sqlcode 2305f915-dd48cd4c --dry-run --format json
 
 # CI 模式
-rabetbase sql save --file ./queries/getUserList.sql --sqlcode 2305f915-dd48cd4c --non-interactive --format json
+rabetbase sql save --file .rabetbase/sql/getUserList.sql --sqlcode 2305f915-dd48cd4c --non-interactive --format json
 ```
 
 ## 参数

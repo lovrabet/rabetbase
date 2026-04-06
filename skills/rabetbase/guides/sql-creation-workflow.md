@@ -25,7 +25,9 @@
 ### 3. 校验字段
 执行 `rabetbase dataset detail --code <数据集编码> --format json` 确认表名、字段名、字段类型。禁止凭经验猜。
 
-### 4. 编写 SQL
+### 4. 编写 SQL（规范路径）
+在项目根 **`.rabetbase/sql/<sqlName>.sql`** 创建或编辑文件（与 `sql pull` 落盘、`sql save --file` 约定一致）。**不要**默认把长期源文件放在 `queries/`、`src/` 等目录；临时文件若在其他路径编写，纳入 Git 前应迁入 `.rabetbase/sql/`。
+
 编写完整 SQL，带 `@lovrabet` 头注释：
 ```sql
 -- @lovrabet.sqlName: <领域>-<用途>
@@ -43,11 +45,9 @@
 ### 7. 测试
 保存成功后执行 `rabetbase sql exec --sqlcode <sqlCode> --format json` 验证。失败则修正 → validate → save → execute。
 
-### 8. 写入本地
-测试通过后，将 SQL 内容写入本地文件，纳入 Git 版本管理。
-路径：`.rabetbase/sql/<sqlName>.sql`
-头注释须含 `@lovrabet.sqlName`、`@lovrabet.sqlCode`（从保存响应获取）、`@lovrabet.description`。
-若文件已存在，直接覆盖。
+### 8. 纳入版本管理
+若全流程已在 **`.rabetbase/sql/<sqlName>.sql`** 中编辑，测试通过后只需确认头注释完整并提交 Git。头注释须含 `@lovrabet.sqlName`、`@lovrabet.sqlCode`（从保存响应获取）、`@lovrabet.description`。
+若曾在临时路径编写，须将最终内容迁入 `.rabetbase/sql/` 再纳入版本管理。
 
 ## 非 SELECT 语句
 
@@ -65,9 +65,9 @@ DELETE / DDL（DROP / ALTER / CREATE / TRUNCATE）属高风险，不走自动保
 正常流程：保存平台 + 测试通过后写入本地，路径及格式同 Step 8。
 例外场景：
 * 保存被 blocked 或属于 DELETE/DDL → 写草稿（`.draft.sql`），供人工处理
-* 用户主动要求"同步平台最新到本地" → 从平台拉取 → 覆盖本地
+* 用户主动要求"同步平台最新到本地" → 执行 `rabetbase sql pull`（或 `sql detail` 查看后手工写入）→ 覆盖/生成 `.rabetbase/sql/` 下文件
 
-修改已有 SQL 时，从平台拉取最新内容。
+修改已有 SQL 时，从平台拉取最新内容（`sql pull` 或 `sql list` + `sql detail`）。
 
 ## SQL 调用差异
 
