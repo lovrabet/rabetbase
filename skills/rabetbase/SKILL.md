@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.0.10
+version: 2.0.12
 description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、SQL 查询、BFF 脚本、菜单同步、代码生成。触发词：数据集、数据表、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress。"
 metadata:
   requires:
@@ -25,6 +25,7 @@ metadata:
 5. **本地 SQL / BFF 目录（团队约定）**：新建或长期维护的源文件应落在 CLI 与 `bff status` / `sql pull` 一致的路径，避免写在 `src/`、`queries/` 等随意目录后再迁移。
    - **SQL**：项目根 **`.rabetbase/sql/<sqlName>.sql`**（及例外草稿 `.draft.sql`）。`sql validate`、`sql save --file` 应指向该目录下的文件。
    - **BFF**：**`.rabetbase/bff/<appCode>/...`**（由 `bff new` 创建或 `bff pull` 同步；与 `bff status` / `bff push` 扫描范围一致）。详见 [`guides/sql-creation-workflow.md`](guides/sql-creation-workflow.md)、[`guides/bff-creation-workflow.md`](guides/bff-creation-workflow.md)。
+6. **可选：`lovrabet` CLI 查数** — 若本机已安装 **`@lovrabet/lovrabet-cli`**（命令 **`lovrabet`**）且 **版本 ≥ 2.0**（`lovrabet --version`），可用 **`lovrabet data filter` / `lovrabet data getOne`** 按 SDK 语义在终端查看真实行数据与 JSON，便于调试；**非人人安装**，未安装或版本低于 2.0 时仅用 `rabetbase` 即可。详见 [`guides/data-api-guidelines.md`](guides/data-api-guidelines.md) 中「可选：`lovrabet` CLI 查数」。
 
 ## Agent 快速执行顺序
 
@@ -38,6 +39,7 @@ metadata:
    - 跨表场景还需查目标表的结构
    - 需要了解数据模型关系时用 `rabetbase dataset links --format compress`（或 `json`）
    - 输出很大且只需子集时，在 `compress`/`json` 上加 `--jq '.data…'` 缩小结果
+   - **（可选）** 若环境已安装 **`lovrabet` ≥ 2.0**，可用 `lovrabet data filter` / `data getOne` 对数据集做与 SDK 同语义的终端查数；**不要**假设用户已安装或版本够新，见 [`guides/data-api-guidelines.md`](guides/data-api-guidelines.md)
 3. **SQL 工作流严格分步**
    - 查现有 → 确认字段 → 编写 → 校验(`sql validate`) → 保存(`sql save`) → 测试(`sql exec`)
 4. **BFF 工作流严格分步**
@@ -252,7 +254,7 @@ const result = await client.bff.execute<DashboardData>({
 | 前端页面开发约束 | React 页、表单、列表、与数据集绑定 | [`frontend-development.md`](guides/frontend-development.md) |
 | 故障诊断 | CLI/登录/数据集/保存失败排障 | [`troubleshooting.md`](guides/troubleshooting.md) |
 | BFF 脚本规范 | HOOK/ENDPOINT/COMMON、`context.client`、目录与注释模板 | [`backend-function.md`](guides/backend-function.md) |
-| 数据接口访问 | 先 detail 再编码、外键/枚举、禁止 N+1、批量与关联查询 | [`data-api-guidelines.md`](guides/data-api-guidelines.md) |
+| 数据接口访问 | 先 detail 再编码、外键/枚举、禁止 N+1、批量与关联查询；可选 `lovrabet data` 查数（**`lovrabet` CLI ≥ 2.0** 且已安装） | [`data-api-guidelines.md`](guides/data-api-guidelines.md) |
 | SQL 创建工作流 | list → validate → save → exec 全链路 | [`sql-creation-workflow.md`](guides/sql-creation-workflow.md) |
 | BFF 创建工作流 | new → status → dry-run → pull/push | [`bff-creation-workflow.md`](guides/bff-creation-workflow.md) |
 | 冲突检测与保存 | `blocked`、未保存时的用户沟通、响应结构 | [`conflict-detection.md`](guides/conflict-detection.md) |

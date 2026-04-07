@@ -33,6 +33,44 @@
 
 ---
 
+## 先判定数据访问路线
+
+在决定写 SQL、BFF 还是直接查数据前，先看 `rabetbase dataset detail --code <数据集编码> --format json` 的 `source`：
+
+| `source` | 建议路线 |
+|----------|----------|
+| `METADATA` | **不要默认走 SQL**；优先 `filter` / `getOne` / 标准数据接口 |
+| `CUSTOM` / `DB` | 可继续评估 SQL、BFF 或标准数据接口 |
+
+---
+
+## 可选：`lovrabet` CLI 查数（`data filter` / `data getOne`）
+
+本 skill 的**主路径**始终基于 **`rabetbase`**（`dataset detail`、`sql exec` 等），**不要求**安装其它 CLI。
+
+若开发者本机已单独安装 **Lovrabet 运行时 CLI**（npm 包 **`@lovrabet/lovrabet-cli`**，命令名 **`lovrabet`**），可在终端用 **`lovrabet data filter`**、**`lovrabet data getOne`** 按 **与 `@lovrabet/sdk` 相同的语义** 查询数据集行数据，并直接查看 JSON 结构，便于与前端 / BFF 里的 `filter`、`getOne` 对照调试。
+
+**版本要求：须 `lovrabet` CLI ≥ 2.0**（主版本 2 及以上）。低于 2.0 的旧包**没有**与本文一致的 `data filter` / `data getOne` 能力（或行为不同），请勿按本节操作；请升级：`npm install -g @lovrabet/lovrabet-cli@^2.0.0`（或 `latest`）。自检：`lovrabet --version`。
+
+**注意：**
+
+| 点 | 说明 |
+|----|------|
+| **非必备** | 团队未必全局安装 `lovrabet`；**不要**在文档或 Agent 流程里把 `lovrabet` 写成前置条件。 |
+| **≥ 2.0** | 本节所述 `data` 子命令以 **2.0+** 为准；版本不符时先升级，勿将异常当作 skill 错误。 |
+| **未安装时** | 仍用 `rabetbase dataset detail` 拿结构；要看真实数据可用 **`rabetbase sql exec`**（已有对应 `sqlCode`）、或平台控制台；勿假设用户会去装第二个 CLI。 |
+| **配置与认证** | `lovrabet` 与 `rabetbase` 的配置项、鉴权方式**可能不完全相同**，需按各自 CLI 文档分别配置；勿照搬一条 `rabetbase` 的 flag 就认为 `lovrabet` 等价。 |
+| **详细用法** | 以 `lovrabet data --help`、`lovrabet data filter --help` 为准（参数多为 `--code` + `--params` JSON）。 |
+
+示例（仅作形态参考，需本机已安装且已登录/配置）：
+
+```bash
+lovrabet data filter --code <数据集code> --params '{"where":{...},"currentPage":1,"pageSize":10}' --format json
+lovrabet data getOne --code <数据集code> --params '{"id":123}' --format json
+```
+
+---
+
 ## 步骤 1: 获取数据集详情
 
 ```bash
@@ -40,6 +78,12 @@ rabetbase dataset detail --code orders --format json
 ```
 
 字段表、归一化规则、`dbtable`、jq 示例：**见 [`references/rabetbase-dataset-detail.md`](../references/rabetbase-dataset-detail.md)**。
+
+做行数据验证时，补一个现实预期：
+
+- **不要默认 `filter()` 返回完整字段**。列表接口常为展示做裁剪，某些字段可能缺失。
+- 需要确认“某条记录的完整字段”或依赖关键字段时，优先 `getOne({ id })`。
+- 遇到 `USER` 类型字段时，留意同名的 `_label` 扩展对象（如 `creator_id_label`、`assignee_id_label`），很多展示信息已在其中，无需立刻反查 SQL 或额外写 BFF。
 
 ### 错误处理
 

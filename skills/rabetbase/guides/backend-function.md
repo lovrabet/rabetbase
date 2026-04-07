@@ -31,6 +31,7 @@
 * 平台自动维护字段不得手动设置
 * 发现明显性能问题时，必须先改写再继续
 * 新建与长期维护的 BFF 源文件**仅**在 **`.rabetbase/bff/<appCode>/...`**（`bff new` / `bff pull` 与 `bff status` 扫描范围）；不要写在 `src/` 等目录，详见 [`bff-creation-workflow.md`](bff-creation-workflow.md)
+* BFF 脚本只写**纯 JavaScript（ESM）**，支持到 **ES2023** 特性，不支持 TypeScript
 
 ## 脚本类型
 
@@ -162,6 +163,13 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 * 新建时用 `rabetbase bff new`
 * 修改时直接编辑 `.rabetbase/bff/<appCode>/...`
 * 需要远端最新内容时先 `rabetbase bff pull`
+
+如果 BFF 行为与预期不符，或 `push` 显示 `unchanged` 但效果没变，先确认远端实际运行的是哪份代码：
+
+* `rabetbase bff detail --id <id> --format json`
+* 必要时再 `rabetbase bff pull --format json` 同步远端到本地
+
+先确认“远端现在是什么”，再决定是否继续改本地、查页面或查锁状态。
 
 ### Step 5：自检
 
