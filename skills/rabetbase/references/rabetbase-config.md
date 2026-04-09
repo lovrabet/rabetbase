@@ -84,7 +84,7 @@ rabetbase app remove product --yes
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `appcode` | string | — | **必填**（单应用模式）。应用代码，从 Lovrabet 平台获取。兼容旧名 `app` |
-| `env` | string | `"production"` | 环境。可选值：`production`、`daily`。`online` 会自动映射为 `production` |
+| `env` | string | `"production"` | 环境。可选值：`production`、`daily`（配置文件若仍为旧值 `online`，加载时会规范为 `production`） |
 | `locale` | string | `"en-US"` | 语言设置 |
 | `cookie` | string | — | 内联 session cookie。设置后优先于 `~/.lovrabet/cookie` 文件 |
 | `accessKey` | string | — | Access Key 认证（预留，未来替代 cookie） |
@@ -216,15 +216,17 @@ rabetbase dataset list --app product
 写入配置项：
 
 ```bash
-# 写入项目级配置（默认）
+# 写入项目级配置（默认；须在能解析到项目 .rabetbase.json 的目录下执行）
 rabetbase config set apiDomain https://custom-api.example.com
 rabetbase config set env daily
 
-# 写入全局配置（在任何目录下均可）
+# 写入全局配置（任意目录）
 rabetbase config set apiDomain https://custom-api.example.com --global
 ```
 
-`config set` 默认写入项目配置（当前目录有 `.rabetbase.json`）；加 `--global` 则写入 `~/.rabetbase.json`。
+`config set` **默认写入项目**配置文件（当前工作目录能解析到 `.rabetbase.json` 等）；加 **`--global`** 则写入 **`~/.rabetbase.json`**。
+
+若当前目录**没有**项目配置文件且**未**指定 `--global`，CLI **拒绝执行**并提示使用 `--global` 或先 `rabetbase init`，**不会**静默改全局。
 
 ### config get
 

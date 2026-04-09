@@ -1,44 +1,55 @@
 # rabetbase app list
 
-列出**合并后**多应用配置中的全部应用：与 CLI 运行时一致，合并 **全局** `~/.rabetbase.json`（或同目录下首个匹配的旧名）与**项目** `process.cwd()` 下的配置文件。`app add` 默认写项目文件（`--global` 写全局）。`app use` / `app remove` 按应用名所在层与 `--global` 决定写入项目或全局文件（见各子命令 reference）。
+列出已配置应用。默认与 CLI 运行时一致：**合并**全局 `~/.rabetbase.json`（或同目录下首个匹配的旧名）与**项目**当前目录下的配置文件。
+
+- **不加 flag**：合并视图（global + project）。
+- **`--global`**：仅列出**全局**文件中的应用。
+- **`--project`**：仅列出**项目**文件中的应用（与 `--global` 互斥）。
+
+`app add` 默认写项目（`--global` 写全局）。`app use` / `app remove` 的落盘规则见各子命令 reference。
 
 ## 命令
 
 ```bash
 rabetbase app list
+rabetbase app list --global
+rabetbase app list --project
 ```
 
 > **说明：** `App Management` 未设置默认子命令，单独执行 `rabetbase app`（无子命令）会打印该分组的帮助，**不会**自动执行 `list`。必须显式写 `app list`。
 
 ## 参数
 
-无额外参数。
+| Flag | 说明 |
+|------|------|
+| `--global` | 仅全局配置中的应用 |
+| `--project` | 仅项目配置中的应用 |
 
 ## 结构化输出（`--format json` / `compress`）
 
-多应用模式下，`data` 为对象（**不是**顶层数组），便于携带元信息：
+`data` 为对象（**不是**顶层数组），包含 `items` 与 `meta`：
 
 | 字段 | 说明 |
 |------|------|
 | `items` | 应用条目数组 |
-| `meta` | `globalPath`、`projectPath`（解析到的配置文件路径，无则为 `null`）、`defaultApp`、`defaultAppSource`（`project` \| `global` \| `null`） |
+| `meta` | **合并视图**：`globalPath`、`projectPath`、`defaultApp`（无命名默认时为**有效 appcode**）、`defaultAppSource`（`project` \| `global` \| `null`）。**`--global` / `--project`**：`scope`、`configPath` |
 
 每个 `items[]` 元素除 `name`、`appcode`、`env` 等外，另有：
 
 | 字段 | 说明 |
 |------|------|
-| `definedIn` | `global` — 仅出现在全局配置；`project` — 仅项目；`both` — 两边都有同名 key（合并后以项目 profile 为准） |
+| `named` | `true` — 来自 `apps` 中的命名应用；`false` — 仅顶层 `appcode`/`app` 的**旧版单应用**行（`name` 可能为 `null`） |
+| `definedIn` | `global` / `project` / `both`（合并视图下；单边视图下为对应侧） |
 | `isDefault` | 是否为当前解析出的默认应用 |
-| `isCurrent` | 是否为当前激活应用 |
+| `isCurrent` | 是否为当前激活应用（合并视图） |
 
-**jq 示例**（只取应用名）：`--format json --jq '.data.items[].name'`
+**jq 示例**（只取命名应用名）：`--format json --jq '.data.items[] | select(.named) | .name'`
 
-单应用模式（无 `apps`、仅有顶层 `appcode`）：`data` 仍为单应用说明对象（`mode: "single-app"` 等）。  
 无任何应用时：`data` 可能为空数组 `[]`（见命令 `message`）。
 
 ## 人类可读（`pretty` / `table`）
 
-先打印全局/项目配置文件路径、当前 **Default app** 及默认来自哪一侧文件，再列出各应用。
+合并视图：先打印全局/项目配置文件路径、当前 **Default app**（及来源），再列出各应用。`--global` / `--project` 时元信息对应该单层。
 
 ## 提示
 
