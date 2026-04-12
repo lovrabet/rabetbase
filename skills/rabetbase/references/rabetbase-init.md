@@ -66,7 +66,7 @@ rabetbase init --project
 
 - 这是新用户首次使用的推荐入口命令
 - CI/CD 场景必须传 `--appcode`
-- 已有配置时先删除或使用 `config set` 修改
+- 已有配置时先删除，或用 `config set env ...` / `app add` / `app use` 修改；`config set appcode` 仅适合单应用场景，会写成 `apps + defaultApp`
 
 ## 参考
 

@@ -19,13 +19,15 @@ metadata:
 ## 前置条件
 
 1. **认证**：`rabetbase auth` 通过浏览器完成 OAuth 登录
-2. **AppCode**：确保 `.rabetbase.json` 中设置了 `appcode`（单应用）或 `apps`（多应用），或通过 `--appcode <code>` / `--app <name>` 传入（旧名 `.lovrabet.json` 仍可读）
+2. **AppCode**：确保 `.rabetbase.json` 中设置了 `apps + defaultApp`（推荐）或兼容读取的顶层 `appcode`，或通过 `--appcode <code>` / `--app <name>` 传入（旧名 `.lovrabet.json` 仍可读）
 3. **配置文件**：`rabetbase init` 初始化 `.rabetbase.json`（旧名仍兼容读取）。完整字段说明见 [`.rabetbase.json` 配置参考](references/rabetbase-config.md)
 4. **多应用场景**：一个项目有多个应用时，先 `rabetbase app add <name> --appcode …` 配置各应用，再用 `--app <name>` 或 `rabetbase app use <name>` 切换
-5. **本地 SQL / BFF 目录（团队约定）**：新建或长期维护的源文件应落在 CLI 与 `bff status` / `sql pull` 一致的路径，避免写在 `src/`、`queries/` 等随意目录后再迁移。
+5. **平台发现**：当你不知道当前登录账号能访问哪些应用时，先 `rabetbase app remote`；它查询平台目录，不修改本地配置
+6. **本地配置视图**：当你要确认当前项目或全局已经登记了哪些应用、默认应用是谁时，用 `rabetbase app list`。`rabetbase app` 本身只显示帮助，不等价于 `app list`
+7. **本地 SQL / BFF 目录（团队约定）**：新建或长期维护的源文件应落在 CLI 与 `bff status` / `sql pull` 一致的路径，避免写在 `src/`、`queries/` 等随意目录后再迁移。
    - **SQL**：项目根 **`.rabetbase/sql/<sqlName>.sql`**（及例外草稿 `.draft.sql`）。`sql validate`、`sql save --file` 应指向该目录下的文件。
    - **BFF**：**`.rabetbase/bff/<appCode>/...`**（由 `bff new` 创建或 `bff pull` 同步；与 `bff status` / `bff push` 扫描范围一致）。详见 [`guides/sql-creation-workflow.md`](guides/sql-creation-workflow.md)、[`guides/bff-creation-workflow.md`](guides/bff-creation-workflow.md)。
-6. **可选：`lovrabet` CLI 查数** — 若本机已安装 **`@lovrabet/lovrabet-cli`**（命令 **`lovrabet`**）且 **版本 ≥ 2.0**（`lovrabet --version`），可用 **`lovrabet data filter` / `lovrabet data getOne`** 按 SDK 语义在终端查看真实行数据与 JSON，便于调试；**非人人安装**，未安装或版本低于 2.0 时仅用 `rabetbase` 即可。详见 [`guides/data-api-guidelines.md`](guides/data-api-guidelines.md) 中「可选：`lovrabet` CLI 查数」。
+8. **可选：`lovrabet` CLI 查数** — 若本机已安装 **`@lovrabet/lovrabet-cli`**（命令 **`lovrabet`**）且 **版本 ≥ 2.0**（`lovrabet --version`），可用 **`lovrabet data filter` / `lovrabet data getOne`** 按 SDK 语义在终端查看真实行数据与 JSON，便于调试；**非人人安装**，未安装或版本低于 2.0 时仅用 `rabetbase` 即可。详见 [`guides/data-api-guidelines.md`](guides/data-api-guidelines.md) 中「可选：`lovrabet` CLI 查数」。
 
 ## Agent 快速执行顺序
 
@@ -45,6 +47,31 @@ metadata:
    - 查现有 → 确认字段 → 编写 → 校验(`sql validate`) → 保存(`sql save`) → 测试(`sql exec`)
 4. **BFF 工作流严格分步**
    - 查现有 → 确认字段 → 查公共函数 → 本地创建(`bff new`) → 检查状态(`bff status`) → 先预览(`--dry-run`) → 再拉取/推送/删除
+
+## 应用决议指引
+
+1. **已明确 appcode**
+   - 用户直接给了 `app-xxxx`
+   - 或当前命令已经显式传了 `--appcode`
+   - 直接执行目标命令，不需要先查 `rabetbase app remote`
+
+2. **已明确本地应用名**
+   - 当前项目 `.rabetbase.json` 已有 `apps + defaultApp`
+   - 或用户给了 `--app <name>`
+   - 先用 `rabetbase app list` 验证本地配置，再执行目标命令
+
+3. **只知道业务名称，不知道能访问哪个应用**
+   - 先 `rabetbase app remote --format compress`
+   - 从平台目录里确认当前登录账号可访问的应用
+   - 再决定是否需要 `rabetbase app add` / `rabetbase app use`，或临时传 `--appcode`
+
+4. **不要混淆两种视图**
+   - `rabetbase app list`：本地配置视图，回答“当前项目/全局登记了哪些应用”
+   - `rabetbase app remote`：平台目录视图，回答“当前登录账号能访问哪些应用”
+
+5. **当两边不一致时**
+   - 平台上有，本地没有：说明还没登记到本地配置，可用 `rabetbase app add`
+   - 本地有，平台上查不到：说明当前账号可能无权限，或本地配置已过时，应先核对权限与 appcode
 
 ## 数据库连接（`db`）
 
@@ -182,6 +209,8 @@ const result = await client.bff.execute<DashboardData>({
 | 生成 SDK 代码 | [`rabetbase codegen sdk --code xxx`](references/rabetbase-codegen-sdk.md) | 按操作生成 TypeScript |
 | 生成 SQL 调用代码 | [`rabetbase codegen sql --sqlcode xxx`](references/rabetbase-codegen-sql.md) | sdk/bff 两种 target |
 | 列出已配置应用 | [`rabetbase app list`](references/rabetbase-app-list.md) | 默认合并视图；`--global` / `--project` 限定单层；`items[].named`、`meta` 见 reference |
+| 发现平台可访问应用 | `rabetbase app remote` | 查询当前登录账号在平台上的应用目录，不修改本地配置 |
+| 查看 app 服务帮助 | `rabetbase app` | 只显示 `app` 子命令帮助，不等价于 `app list` |
 | 切换默认应用 | [`rabetbase app use <name>`](references/rabetbase-app-use.md) | 持久修改 defaultApp |
 | 添加应用 | [`rabetbase app add <name> --appcode <code>`](references/rabetbase-app-add.md) | 首个自动设为 default |
 | 移除应用 | [`rabetbase app remove <name>`](references/rabetbase-app-remove.md) | high-risk-write；移除后自动切换 default |
@@ -203,7 +232,7 @@ const result = await client.bff.execute<DashboardData>({
 | Diagnostics | [`doctor`](references/rabetbase-doctor.md) |
 | Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
 | Menu | [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) |
-| app commands | [`list`](references/rabetbase-app-list.md) / [`use`](references/rabetbase-app-use.md) / [`add`](references/rabetbase-app-add.md) / [`remove`](references/rabetbase-app-remove.md) |
+| app commands | [`list`](references/rabetbase-app-list.md) / `remote` / [`use`](references/rabetbase-app-use.md) / [`add`](references/rabetbase-app-add.md) / [`remove`](references/rabetbase-app-remove.md) |
 | dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`links`](references/rabetbase-dataset-links.md) |
 | Database Connections (`db`) | [`list`](references/rabetbase-db-list.md) / [`detail`](references/rabetbase-db-detail.md) / [`create`](references/rabetbase-db-create.md) / [`update`](references/rabetbase-db-update.md) / [`delete`](references/rabetbase-db-delete.md) / [`test`](references/rabetbase-db-test.md) / [`analyze`](references/rabetbase-db-analyze.md) / [`tables`](references/rabetbase-db-tables.md) / [`diff`](references/rabetbase-db-diff.md) |
 | api commands | [`pull`](references/rabetbase-api-pull.md) / [`list`](references/rabetbase-api-list.md) |

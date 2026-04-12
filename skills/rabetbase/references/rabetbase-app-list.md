@@ -16,7 +16,7 @@ rabetbase app list --global
 rabetbase app list --project
 ```
 
-> **说明：** `App Management` 未设置默认子命令，单独执行 `rabetbase app`（无子命令）会打印该分组的帮助，**不会**自动执行 `list`。必须显式写 `app list`。
+> **说明：** `rabetbase app` 本身只显示 `app` 服务帮助；查看本地配置中的应用请显式执行 `rabetbase app list`。查询平台可访问应用请执行 `rabetbase app remote`。
 
 ## 参数
 
@@ -55,6 +55,7 @@ rabetbase app list --project
 
 - 若列表与预期不符，先检查项目或全局 JSON **是否为合法 JSON**（例如尾随逗号会导致该侧配置被忽略）；`rabetbase doctor` 的 **Config JSON** 段可检测语法。
 - 无 `apps` 时显示单应用信息，并提示可用 `app add` 迁移到多应用模式。
+- 如果你想知道“当前登录账号在平台上还能访问哪些应用”，不要看 `app list`，而应执行 `rabetbase app remote`。
 
 ## 参考
 

@@ -38,7 +38,7 @@
 | 类型 | 作用 | 路径 / 触发方式 | 查询方式 |
 |------|------|----------------|----------|
 | HOOK | 挂在标准数据接口前后执行 | Before / After | 通过数据集详情 |
-| ENDPOINT | 独立业务端点 | `POST /api/{appCode}/endpoint/{scriptName}` | `rabetbase bff list --format json`（默认） |
+| ENDPOINT | 独立业务端点 | `POST /api/endpoint/{appCode}/{scriptName}` | `rabetbase bff list --format json`（默认） |
 | COMMON | 公共函数，供其他脚本 import 复用 | 被其他 BFF 引用 | `rabetbase bff list --format json`（type=COMMON） |
 
 写 BFF 前，先查一下公共函数列表（`rabetbase bff list --format json`），看是否有可复用的工具函数。
@@ -245,7 +245,7 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 /**
  * 脚本功能描述
  *
- * [接口路径] POST /api/{appCode}/endpoint/{scriptName}
+ * [接口路径] POST /api/endpoint/{appCode}/{scriptName}
  * [平台配置] https://app.lovrabet.com/app/{appCode}/data/backend-function
  *
  * [HTTP 请求体参数]

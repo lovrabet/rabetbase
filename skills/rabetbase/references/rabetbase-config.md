@@ -2,6 +2,10 @@
 
 项目级配置文件，放在项目根目录。CLI 启动时自动读取，全局配置（`~/.rabetbase.json`）作为 fallback。
 
+这份文件描述的是**本地配置模型**：默认应用、应用名到 `appcode`/`env`/`apiDir` 的映射，以及输出格式、风险等级、认证信息等本地偏好。
+
+它**不是**平台应用目录。若要查看当前登录账号在平台上能访问哪些应用，应使用 `rabetbase app remote`，而不是直接查看 `.rabetbase.json`。
+
 兼容旧名：`.lovrabet.json`、`.lovrabetrc`（按优先级 `.rabetbase.json` > `.lovrabet.json` > `.lovrabetrc`，首个存在的生效）。
 
 ## 初始化
@@ -10,11 +14,29 @@
 rabetbase project init
 ```
 
-交互式创建 `.rabetbase.json`，写入 `appcode` 和 `env`。
+交互式创建 `.rabetbase.json`，新写入优先使用 canonical 的 `apps + defaultApp` 结构；旧的顶层 `appcode` 仍兼容读取。
 
-## 单应用模式
+## canonical 主模型
 
-最简配置，只需 `appcode` 和 `env`：
+当前推荐、也是所有新写入默认采用的结构，是 **`apps + defaultApp`**：
+
+```json
+{
+  "defaultApp": "main",
+  "apps": {
+    "main": {
+      "appcode": "app-7786baaf",
+      "env": "daily"
+    }
+  }
+}
+```
+
+CLI 对旧版顶层 `appcode` 仍兼容读取，但它已经不是推荐主模型。
+
+## 兼容读取的单应用模式
+
+兼容读取的最简配置只需 `appcode` 和 `env`：
 
 ```json
 {
@@ -83,12 +105,12 @@ rabetbase app remove product --yes
 
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `appcode` | string | — | **必填**（单应用模式）。应用代码，从 Lovrabet 平台获取。兼容旧名 `app` |
+| `appcode` | string | — | 顶层单应用兼容字段。新写入优先使用 `apps + defaultApp`。兼容旧名 `app` |
 | `env` | string | `"production"` | 环境。可选值：`production`、`daily`（配置文件若仍为旧值 `online`，加载时会规范为 `production`） |
 | `locale` | string | `"en-US"` | 语言设置 |
 | `cookie` | string | — | 内联 session cookie。设置后优先于 `~/.lovrabet/cookie` 文件 |
 | `accessKey` | string | — | Access Key 认证（预留，未来替代 cookie） |
-| `format` | string | — | 默认输出格式。可选值：`json`、`pretty`、`table`。不设则命令默认 `pretty` |
+| `format` | string | — | 默认输出格式。可选值：`json`、`pretty`、`compress`。不设则命令默认 `compress` |
 | `pageSize` | number | — | 默认分页大小，用于 `sql list` 等分页命令 |
 | `riskLevel` | string | `"high-risk-write"` | 允许执行的最高风险等级。可选值：`read`、`write`、`high-risk-write`。兼容旧名 `maxRisk` |
 | `inherit` | boolean | `true` | 为 `false` 时当前项目**不合并** `~/.rabetbase.json`（仅用本目录配置文件，避免全局登记的 `apps`/cookie 等干扰）。省略或 `true` 为默认合并行为 |
