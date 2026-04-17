@@ -31,7 +31,7 @@ rabetbase project upgrade --yes
 | 3 | 删除旧 IDE skill 文件 | 移除 `.cursor/rules/lovrabet_rules.mdc`、`.claude/skills/lovrabet` 等 |
 | 4 | 清理 MCP 配置 | 从 `.cursor/mcp.json` 移除引用 `@lovrabet/dataset-mcp-server` 的条目 |
 | 5 | 移除旧 skill | `npx skills remove lovrabet/lovrabet-skill` |
-| 6 | 安装新 skill | `npx skills add lovrabet/rabetbase --global` |
+| 6 | 安装新 skill | `npx skills add lovrabet/rabetbase -g -y` |
 
 ## 分析报告
 

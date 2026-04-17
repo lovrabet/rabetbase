@@ -32,7 +32,7 @@ metadata:
 ## Skill Freshness
 
 - **本地 repo 与 CLI 契约优先** — 若已安装的全局 skill 描述与当前仓库 `skills/rabetbase/`、`rabetbase --help`、`rabetbase schema` 不一致，以**当前仓库内容和 CLI 实际输出**为准。
-- **发现 skill 过期时应主动刷新** — 若不一致已经影响当前任务判断，且用户没有禁止网络/环境变更，应主动执行 `rabetbase skill install`；等价的显式非交互命令是 `npx -y skills add lovrabet/rabetbase --global -y`。
+- **发现 skill 过期时应主动刷新** — 若不一致已经影响当前任务判断，且用户没有禁止网络/环境变更，应主动执行 `rabetbase skill install`；等价的显式非交互命令是 `npx skills add lovrabet/rabetbase -g -y`。
 - **刷新后必须重新读取** — 刷新完成后，重新打开当前 `SKILL.md` 与所需 reference，再继续执行任务，避免沿用旧记忆。
 - **刷新失败也不能回退到旧结论** — 若安装失败，明确告诉用户“本地全局 skill 可能过期”，并继续以仓库内 `skills/rabetbase/` 和 `rabetbase schema` 作为 source of truth。
 

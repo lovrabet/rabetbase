@@ -13,7 +13,7 @@ rabetbase skill install
 rabetbase skills
 
 # 等价的显式非交互命令
-npx -y skills add lovrabet/rabetbase --global -y
+npx skills add lovrabet/rabetbase -g -y
 ```
 
 ## 参数
@@ -22,11 +22,11 @@ npx -y skills add lovrabet/rabetbase --global -y
 
 ## 行为
 
-默认执行 `npx -y skills add lovrabet/rabetbase --global`，全局安装 rabetbase skill。
+默认执行 `npx skills add lovrabet/rabetbase -g -y`，全局安装 rabetbase skill。
 
 若需要在文档、脚本或 AI 引导里显式表达“无交互刷新”，可使用：
 
-`npx -y skills add lovrabet/rabetbase --global -y`
+`npx skills add lovrabet/rabetbase -g -y`
 
 若设置了环境变量 `RABETBASE_SKIP_NPX_SKILLS=1`，则跳过安装（假定 skill 已存在）。
 

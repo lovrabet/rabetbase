@@ -24,7 +24,7 @@
 推荐在项目根目录使用 `skills` CLI 安装：
 
 ```bash
-npx skills add lovrabet/rabetbase
+npx skills add lovrabet/rabetbase -g -y
 ```
 
 安装后，Skill 位于 `skills/rabetbase/` 下，遵循标准技能包结构。
