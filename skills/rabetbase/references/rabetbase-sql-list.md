@@ -15,8 +15,6 @@ rabetbase sql list --page 2 --pagesize 20 --format json
 
 | Flag | 类型 | 必填 | 默认 | 说明 |
 |------|------|------|------|------|
-| `--app <name>` | string | 否 | — | 多应用模式下指定应用名称 |
-| `--appcode <code>` | string | 否 | — | 直接指定 appcode |
 | `--sqlcode <code>` | string | 否 | — | 按 SQL code 过滤（格式：`xxxxxxxx-xxxxxxxx`） |
 | `--name <name>` | string | 否 | — | 按名称过滤 |
 | `--page <n>` | number | 否 | `1` | 页码 |
@@ -26,17 +24,18 @@ rabetbase sql list --page 2 --pagesize 20 --format json
 
 ## 多应用过滤
 
-多应用模式下：
-- 不加 `--app` / `--appcode`：遍历所有已配置应用，依次列出各应用的 SQL
-- 加 `--app <name>`：仅列出指定应用的 SQL
-- 加 `--appcode <code>`：反查到对应 app profile，使用其 cookie/env
+`sql list` 总是查询**当前已经决议到的单个应用**：
+
+- 默认使用当前项目 `defaultApp`
+- 传 `--app <name>` 时，切到指定本地应用名
+- 传 `--appcode <code>` 时，直接使用指定 appcode
 
 ```bash
 # 仅列出 order 应用的 SQL
 rabetbase sql list --app order
 
 # 指定 appcode
-rabetbase sql list --appcode app-8b7d35a1
+rabetbase sql list --appcode app-xxxxxxxx
 ```
 
 ## 输出

@@ -1,6 +1,6 @@
 # sql pull
 
-将远端自定义 SQL 同步到本地 **`<项目根>/.rabetbase/sql/`**（与 skills 中「写入本地」路径一致）。
+将远端自定义 SQL 同步到本地 **`<项目根>/.rabetbase/sql/<appCode>/<dbName|db-<id>>/`**，并刷新 `.rabetbase/sql.lock.json`。
 
 ## 命令
 
@@ -23,21 +23,30 @@ rabetbase sql pull --force --format json
 
 ## 输出文件
 
-每条 SQL 写入一个 `.sql` 文件，文件名由 `sqlName` 安全化得到；同名冲突时自动追加 `__<sqlCode去横线>` 后缀。
+每条 SQL 会写入：
 
-文件头部包含：
+```text
+.rabetbase/sql/<appCode>/<dbName|db-<id>>/<sqlCode>_<sqlName>.sql|xml
+```
 
-- `-- @lovrabet.sqlName`
+文件头部会自动补齐：
+
 - `-- @lovrabet.sqlCode`
+- `-- @lovrabet.sqlName`
+- `-- @lovrabet.dbId`
+- `-- @lovrabet.dbName`
+- `-- @lovrabet.mode`
+- `-- @lovrabet.syncedAt`
 - `-- @lovrabet.description`
 
-正文为远端 `sqlContent`。
+正文为远端 `sqlContent`；同时会更新 `.rabetbase/sql.lock.json` 中的 `path / hash / remoteId / version / dbId / sqlName / mode`。
 
 ## 行为说明
 
-- 本地已与远端内容一致：计入 `skipped: unchanged`
+- 本地文件与远端生成内容完全一致：计入 `skipped: unchanged`
 - 本地存在且与远端不同、未加 `--force`：跳过并提示 `local differs from remote`
 - `--force` 且存在需覆盖的本地文件时：交互模式下会先确认（非交互需显式 `--force`）
+- 即使本地 `status` 为 `unchanged`，若远端后来被平台侧改动，`pull --dry-run` 仍可能提示冲突；这说明是“远端漂移”，不是 CLI 入口故障
 
 ## 参考
 

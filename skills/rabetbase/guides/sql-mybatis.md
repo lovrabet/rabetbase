@@ -1,6 +1,6 @@
 # SQL CLI 命令与 MyBatis 语法指南
 
-> 目标：指导 AI 如何正确使用 CLI 命令来完成 SQL 的查询、验证、保存与测试，并提供平台支持的 MyBatis 动态 SQL 语法参考。
+> 目标：指导 AI 如何正确使用 CLI 命令来完成 SQL 的查询、本地同步、验证、推送与测试，并提供平台支持的 MyBatis 动态 SQL 语法参考。
 >
 > 前置阅读：`sql-creation-workflow.md`（整体流程）、`data-api-guidelines.md`（字段约束）
 
@@ -25,21 +25,42 @@
 * **提取项**：
   * 真实表名：`basic.tableName`
   * 真实字段列表：`fields` 下的 `code`、`type`、`required`
-  * 数据库 ID：`basic.database.dbId`（验证与保存时需要）
+  * 数据库 ID：`basic.database.dbId`（`sql create` 时需要）
 
-### 3. `rabetbase sql validate --file xxx --format json`
-* **用途**：保存前的强制卡点。
-* **参数**：传入 SQL 内容文件和 `dbId`。
+### 3. `rabetbase sql pull --sqlcode xxx` / `rabetbase sql create --name ... --db-id ... --mode ...`
+* **用途**：把 SQL 先落到本地同步目录，再编辑。
+* **动作**：
+  * 修改已有 SQL → 先 `sql pull --sqlcode <sqlCode>`
+  * 新建 SQL → 先 `sql create --name <sqlName> --db-id <dbId> --mode sql|mybatisXml`
+* **目录**：长期维护的文件统一放在 `.rabetbase/sql/<appCode>/<dbName|db-<id>>/<sqlCode>_<sqlName>.sql|xml`
+
+### 4. `rabetbase sql validate --file xxx --format json`
+* **用途**：推送前的建议卡点。
 * **动作**：如果 `valid: false`，必须根据 `errors` 提示修改 SQL 内容，然后重新执行此命令，直到通过。
 
-### 4. `rabetbase sql save --file xxx --format json`
-* **用途**：将验证通过的 SELECT 语句保存到平台。
-* **限制**：INSERT / UPDATE / DELETE / DDL 等会引发异常或被拦截，应将 SQL 内容写入本地草稿文件（`.draft.sql`）并告知用户。
-* **冲突处理**：如果返回 `blocked: true`，说明有作者冲突，将 SQL 内容写入本地草稿文件，**严禁重试**，直接告知开发者手动操作。
+### 5. `rabetbase sql status --format json`
+* **用途**：确认当前本地文件是否被识别为 `modified` / `added` / `missing` / `unchanged`。
+* **动作**：若状态与预期不符，先解释原因再继续，不要跳过状态检查直接推送。
 
-### 5. `rabetbase sql exec --sqlcode xxx --format json`
-* **用途**：保存成功后的功能测试。
-* **动作**：测试失败（如语法错、数据不符合预期）时，必须在内存中修改 SQL -> 重新 validate -> 重新 save -> 重新 execute，形成闭环。
+### 6. `rabetbase sql push --sqlcode xxx --dry-run|--yes --format json`
+* **用途**：将同步目录中的本地文件上传到平台。
+* **动作**：
+  * 先 `--dry-run` 看预览
+  * 再 `--yes` 正式执行
+* **补充**：
+  * 文件名变化会驱动远端 `sqlName` 更新
+  * 文件移动到新的数据库目录时，会尝试按目录重绑 `dbId`
+  * 如果提示 `missing remote version`，先执行 `sql pull`
+
+### 7. `rabetbase sql exec --sqlcode xxx --format json`
+* **用途**：推送成功后的功能测试。
+* **动作**：测试失败（如语法错、数据不符合预期）时，必须在本地文件中修改 SQL -> 重新 validate -> 重新 status -> 重新 push -> 重新 execute，形成闭环。
+
+### 8. `rabetbase sql save`（已废弃）
+* **用途**：不要再作为主路径使用。
+* **替代**：
+  * 新建 SQL → `sql create`
+  * 修改已有 SQL → 编辑同步目录文件后 `sql push`
 
 ---
 
@@ -104,7 +125,7 @@ ORDER BY id DESC
 
 ## 禁止事项
 
-* ❌ 禁止在未执行 `rabetbase sql validate` 通过前，直接执行 `rabetbase sql save`
+* ❌ 禁止在未执行 `rabetbase sql validate` 通过前，直接执行 `rabetbase sql push`
 * ❌ 禁止在 `<if>` 标签的参数绑定中漏写 `jdbcType`
 * ❌ 禁止在简单固定参数（不在标签内）里加 `jdbcType`
 * ❌ 禁止把 `<` 或 `>` 直接写在 SQL 正文中（必须用 `&lt;` / `&gt;`）

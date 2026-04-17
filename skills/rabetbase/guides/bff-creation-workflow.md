@@ -29,7 +29,7 @@
 命中同名脚本时，停下问用户：修改还是另起新名。
 
 ### 4. 编写脚本（规范路径）
-新建脚本应使用 **`rabetbase bff new`**，在 **`.rabetbase/bff/<appCode>/...`** 下生成脚手架后再编辑（路径与 `bff status` / `bff push` 一致）。**不要**在 `src/` 或仓库任意目录手写 BFF 再期望被 CLI 识别。
+新建脚本应使用 **`rabetbase bff create`**，在 **`.rabetbase/bff/<appCode>/...`** 下生成脚手架后再编辑（路径与 `bff status` / `bff push` 一致）。**不要**在 `src/` 或仓库任意目录手写 BFF 再期望被 CLI 识别。
 已有脚本仅在上述 BFF 树内修改；与 `backend-function.md` 中的目录约定一致。
 
 ### 5. 自检

@@ -33,7 +33,7 @@ rabetbase bff list --name getUserInfo --format json
 rabetbase bff list --app order
 
 # 指定 appcode
-rabetbase bff list --appcode app-8b7d35bb
+rabetbase bff list --appcode app-xxxxxxxx
 ```
 
 ## 输出

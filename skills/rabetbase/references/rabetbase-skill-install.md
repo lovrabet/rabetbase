@@ -1,6 +1,6 @@
 # skill install
 
-安装官方 rabetbase skill 包。
+安装、重装或刷新官方 rabetbase skill 包。
 
 > **风险等级：write** — 全局安装 npm 包。
 
@@ -11,6 +11,9 @@ rabetbase skill install
 
 # 别名
 rabetbase skills
+
+# 等价的显式非交互命令
+npx -y skills add lovrabet/rabetbase --global -y
 ```
 
 ## 参数
@@ -19,7 +22,11 @@ rabetbase skills
 
 ## 行为
 
-执行 `npx -y skills add lovrabet/rabetbase --global`，全局安装 rabetbase skill。
+默认执行 `npx -y skills add lovrabet/rabetbase --global`，全局安装 rabetbase skill。
+
+若需要在文档、脚本或 AI 引导里显式表达“无交互刷新”，可使用：
+
+`npx -y skills add lovrabet/rabetbase --global -y`
 
 若设置了环境变量 `RABETBASE_SKIP_NPX_SKILLS=1`，则跳过安装（假定 skill 已存在）。
 
@@ -32,7 +39,8 @@ rabetbase skills
 ## 提示
 
 - 通常在 `rabetbase project upgrade` 的第 6 步自动执行
-- 手动执行仅当 skill 丢失或需要重装时
+- 手动执行适用于 skill 丢失、需要重装、或发现本地 skill 描述与当前仓库命令不一致时
+- 若判断安装的全局 skill 已过期，先执行本命令，再重新读取 `skills/rabetbase/SKILL.md` 与所需 reference
 - `rabetbase skills` 是 deprecated alias
 
 ## 参考

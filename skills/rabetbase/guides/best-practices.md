@@ -20,8 +20,8 @@
 
 本文件仅补充执行习惯：
 
-- **SQL**：写前先 `sql list` 查复用；统计类 SQL 主动对齐历史口径，**不一致时告知开发者**。源文件落在 **`.rabetbase/sql/`**（与 `sql save` / `sql pull` 约定一致）。
-- **BFF**：写前先 `bff list` 防重复；若逻辑可复用，**建议**抽公共函数或 service 层。脚本**仅**在 **`.rabetbase/bff/<appCode>/...`** 下维护（见 `bff new`）。
+- **SQL**：写前先 `sql list` 查复用；统计类 SQL 主动对齐历史口径，**不一致时告知开发者**。长期维护的源文件落在 **`.rabetbase/sql/<appCode>/<dbName|db-<id>>/`**（与 `sql create` / `sql pull` / `sql push` / `sql status` 约定一致）。
+- **BFF**：写前先 `bff list` 防重复；若逻辑可复用，**建议**抽公共函数或 service 层。脚本**仅**在 **`.rabetbase/bff/<appCode>/...`** 下维护（见 `bff create`）。
 
 ### Step 3：前端页面呈现
 - 只有在后端的模型和接口选型彻底理清、确认可用之后，**最后一步**才是编写前端 React 页面。
@@ -75,7 +75,7 @@ AI 必须使用有业务语义的规范命名，严禁使用诸如 `test`、`tem
 
 ✅ **防御动作**：
 * 如果用户给出了不带 `LIMIT` 或全局匹配的 `UPDATE`，AI 必须主动补充约束条件或提示风险。
-* 高危 DDL/DML 不应通过 CLI 自动保存到平台，必须建议用户保存在本地 `.rabetbase/sql/` 进行 review。
+* 高危 DDL/DML 不应通过 CLI 自动保存到平台，必须建议用户保存在本地 `.rabetbase/sql/` 同步目录或 `.draft.sql` 草稿中进行 review。
 
 ### BFF 高危操作识别
 

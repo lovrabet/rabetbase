@@ -1,13 +1,13 @@
-# bff new
+# bff create
 
 在本地脚手架创建一个新的 BFF 脚本文件。
 
 ## 命令
 
 ```bash
-rabetbase bff new --type ENDPOINT --name getUserList --description "获取用户列表" --format json
-rabetbase bff new --type COMMON --name normalizePayload --format json
-rabetbase bff new --type HOOK --name beforeFilter --alias appUser --operation-type filter --function-node before --format json
+rabetbase bff create --type ENDPOINT --name getUserList --description "获取用户列表" --format json
+rabetbase bff create --type COMMON --name normalizePayload --format json
+rabetbase bff create --type HOOK --name beforeFilter --alias appUser --operation-type filter --function-node before --format json
 ```
 
 ## 参数
@@ -43,4 +43,3 @@ BFF 源码**仅**应在此目录树内创建与长期维护（与 `bff status` /
 
 - [SKILL.md](../SKILL.md)
 - [bff-creation-workflow.md](../guides/bff-creation-workflow.md)
-
