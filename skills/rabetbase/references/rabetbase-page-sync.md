@@ -1,6 +1,6 @@
 # page sync
 
-将数据集字段变更同步到已存在的 DOV2 标准页。
+将数据集字段变更同步到已存在的智能列表页（Smart List Page，DOV2 `smart_page`）。
 
 ## 命令
 
@@ -21,8 +21,8 @@ rabetbase page sync --datasetcode 097b7361b76c42bcb12b923fa5a08861 --dry-run --f
 
 ## 行为说明
 
-- 该命令面向**已有标准页**的增量同步场景。
-- CLI 会先检查数据集下是否存在未删除的关联标准页。
+- 该命令面向**已有智能列表页**的增量同步场景。
+- CLI 会先检查数据集下是否存在未删除的关联智能列表页。
 - 若当前没有可同步页面，命令会 fail-fast，并提示改走 `rabetbase page generate-start --datasetcode <code>` 这条异步生成路径；具体轮询与回查流程见 [page-development-workflow.md](../guides/page-development-workflow.md)。
 
 ## 提示

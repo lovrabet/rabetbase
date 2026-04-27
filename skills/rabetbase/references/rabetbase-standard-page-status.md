@@ -1,6 +1,6 @@
 # page standard-page-status
 
-查询某个数据集当前标准页事实快照。
+查询某个数据集当前智能列表页（Smart List Page）事实快照。
 
 ## 命令
 
@@ -12,7 +12,7 @@ rabetbase page standard-page-status --alias order --format json
 ## 行为说明
 
 - 该命令只返回**页面事实**：
-  - 标准页组
+  - 智能列表页组
   - 是否完整
   - 残留页
   - 菜单事实
@@ -22,7 +22,7 @@ rabetbase page standard-page-status --alias order --format json
 ## 适用场景
 
 - 生成前判断是否允许继续 `generate-start`
-- 生成完成后确认是否真的形成完整标准页组
+- 生成完成后确认是否真的形成完整智能列表页组
 - 排查为什么当前数据集被判定为 `blocked_*`
 
 ## 参考

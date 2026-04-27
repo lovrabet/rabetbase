@@ -1,6 +1,6 @@
 # page generate-status
 
-查询标准页生成任务状态。
+查询智能列表页（Smart List Page）生成任务状态。
 
 ## 命令
 
@@ -18,7 +18,7 @@ rabetbase page generate-status --datasetcode 097b7361b76c42bcb12b923fa5a08861 --
 ## 行为说明
 
 - 命令查询的是**任务状态**，不是页面事实。
-- 当任务进入成功终态时，CLI 会补查 `standard-page-status`，把页面事实一并附在结果里，方便你直接判断是否形成完整标准页组。
+- 当任务进入成功终态时，CLI 会补查 `standard-page-status`，把页面事实一并附在结果里，方便你直接判断是否形成完整智能列表页组。
 - 若任务仍在 `PENDING/RUNNING`，结果会保持机器可读的 `status / nextAction / query`。
 
 ## 参考

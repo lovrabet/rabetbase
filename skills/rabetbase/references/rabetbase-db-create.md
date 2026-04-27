@@ -22,7 +22,7 @@ rabetbase db create \
 
 可选：`--dbparam` 连接串附加参数、`--dbdesc` 描述、`--autostart` 创建成功后自动发起 schema 分析（等同再执行一次 `db analyze-start`）。若分析启动失败，连接仍已创建，响应中会含 `data.analysisStartWarning`。写操作支持 **`--dry-run`** 预览请求体（密码不落盘）。
 
-兼容说明：`/smartapi/dblink/create` 的返回 `data` 可能有两种结构：`id`（number/string）或对象（`{ id, ... }`）。`rabetbase db create` 两种都兼容，都会解析出连接 `id` 并继续后续流程（含 `--autostart`）。
+成功响应会返回连接信息与 `data.links.databasePage`，用于引导用户按需打开数据库连接页查看新建连接。
 
 ## 参数（节选）
 
@@ -34,6 +34,15 @@ rabetbase db create \
 | `--username` / `--password` | 是 | 凭据 |
 | `--dbversion` | 否 | 默认 `8.0` |
 | `--autostart` | 否 | 创建后是否自动启动分析 |
+
+## 输出链接
+
+`data.links.databasePage` 会按当前环境生成：
+
+```text
+daily      https://daily.lovrabet.com/web-app/app/<appCode>/data/database
+production https://app.lovrabet.com/app/<appCode>/data/database
+```
 
 ## 校验
 

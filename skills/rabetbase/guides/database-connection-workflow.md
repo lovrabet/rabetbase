@@ -1,6 +1,6 @@
 # 数据库连接（db）工作流
 
-前置知识：`auth` 已登录、当前上下文有 **appcode**（`.rabetbase.json` 或 `--appcode`）。详见 [SKILL.md](../SKILL.md)「前置条件」。
+前置知识：`auth` 已登录，并已通过 `.rabetbase.json` 或 `--appcode` 提供 **appcode**。详见 [SKILL.md](../SKILL.md)「前置条件」。
 
 ## 解决什么问题
 
@@ -52,11 +52,12 @@ db diff --id <id>        # 可选：看与上次分析的 schema 差异
 
 ```text
 db create --dbname … --dbtype MYSQL --dburl host:port --username … --password … [--autostart]
-  → 记下返回 connection.id 或 data 中的 id
+  → 记下返回的 data.connection.id；可把 data.links.databasePage 返回给用户按需查看
 db test --id <id>        # 可选
 db analyze-start --id <id>
-  → 记下 data.planId
+  → 记下 data.planId；把 data.links.erPage 返回给用户确认 ER 图
 db analyze-status --id <id> --plan <planId>   # 轮询直到终态
+  → 终态成功后检查并返回 data.links.erPage，引导用户确认 ER 图与数据集同步结果
 ```
 
 ### C. 改连接再测
@@ -77,6 +78,7 @@ db delete --id <id> --yes    # high-risk-write，非交互必须 --yes
 
 - **写 SQL 前要 `dbId`**：`dataset detail --code …` 里 `db.id`；或 `db list` 的 `id` 与数据集侧 `dbId` 对应。
 - **看模型关系**：仍用 `dataset links`（需要 `--db` 时，id 或名称可与 `db list` 对照）。
+- **给用户确认页面**：DB 更新或分析完成后返回 `data.links.erPage`；新建连接后返回 `data.links.databasePage`。
 - **不确定 flags**：`rabetbase schema`（无需登录）查契约。
 
 ## 输出格式

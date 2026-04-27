@@ -1,6 +1,6 @@
 # page pull
 
-拉取 DOV2 标准页的 formal schema 到本地 **`.rabetbase/page/<appCode>/`**，进入 `pull -> IDE 编辑 -> push` 工作流。
+拉取智能列表页（Smart List Page，DOV2 `smart_page`）的 formal schema 到本地 **`.rabetbase/page/<appCode>/`**，进入 `pull -> IDE 编辑 -> push` 工作流。
 
 ## 命令
 

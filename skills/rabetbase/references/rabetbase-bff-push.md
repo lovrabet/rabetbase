@@ -42,6 +42,8 @@ rabetbase bff push --yes --type HOOK --name beforeFilter --format json
 - `--dry-run` 不会上传远端，也不会改 lock
 - 精确推单个函数时用 `--type + --name`
 - HOOK 推送依赖数据集 alias / datasetCode 和 operationType/functionNode
+- 推送成功只代表研发态脚本已同步；如需确认运行态生效，使用运行态验证（例如 `lovrabet bff exec --name <functionName> --params '<json>' --format compress`）
+- 管理态已同步但运行态仍旧版本时，按传播延迟 / 缓存延迟处理：等待后重试，必要时对目标脚本精确执行 `--force` 推送；仍不生效时记录平台运行态缓存风险
 
 ## 参考
 

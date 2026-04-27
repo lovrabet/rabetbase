@@ -1,7 +1,7 @@
 ---
 name: rabetbase
 version: 2.1.2
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、标准页面、SQL 查询、BFF 脚本、菜单同步、代码生成。触发词：数据集、数据表、标准页面、page generate-start、page generate-status、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress。"
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、智能列表页、Smart List Page、page generate-start、page generate-status、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -14,7 +14,7 @@ metadata:
 > **前置条件：** 使用任何 API 命令前，需完成认证和配置（见下方）。
 > **执行前必做：** 执行任何命令前，必须先阅读对应命令的 reference 文档，再调用命令。
 > **命名约定：** 统一使用 `rabetbase <service> <command> [flags]` 格式。
-> **输出格式：** AI Agent 需要结构化输出时，**优先 `--format compress`**（与 `json` 相同信封，单行紧凑、省 token）；需要人类可读缩进时用 **`--format json`**。可在 **`json` / `compress`** 上叠加 **`--jq '<expr>'`**（对最终打印的整条 JSON 做 jq；**优先使用依赖 `node-jq` 自带的 jq 二进制**，无需单独安装系统 jq；若安装时跳过了脚本且未装系统 jq，需补装或设置 `JQ_PATH`）。不确定当前 CLI 有哪些子命令或 flags 时，先跑 **`rabetbase schema`**（与 `--help` 同源的机器可读契约，无需登录）。
+> **输出格式：** AI Agent 需要结构化输出时，**优先 `--format compress`**（与 `json` 相同信封，单行紧凑、省 token）；需要人类可读缩进时用 **`--format json`**。可在 **`json` / `compress`** 上叠加 **`--jq '<expr>'`**（对最终打印的整条 JSON 做 jq；二进制查找顺序为 **`JQ_PATH` → CLI 内置 sidecar jq → `PATH` 上的 jq**，通常无需单独安装系统 jq）。不确定当前 CLI 有哪些子命令或 flags 时，先跑 **`rabetbase schema`**（与 `--help` 同源的机器可读契约，无需登录）。
 
 ## 前置条件
 
@@ -39,7 +39,7 @@ metadata:
 ## Agent 快速执行顺序
 
 1. **判断需求类型**
-   - 标准数据 CRUD → SDK filter/getOne/create/update/delete
+   - Instant API 标准数据记录操作 → SDK filter/getOne/create/update/delete
    - 简单聚合 → SDK aggregate
    - 复杂 JOIN / 数据库函数 → 自定义 SQL
    - 外部系统调用 / 跨表事务 / 复杂业务编排 → BFF
@@ -55,10 +55,11 @@ metadata:
    - `sql save` 已废弃；用户若提到它，直接引导迁移到 `sql create` / `sql push`
 4. **BFF 工作流严格分步**
    - 查现有 → 确认字段 → 查公共函数 → 本地创建(`bff create`) → 检查状态(`bff status`) → 先预览(`--dry-run`) → 再拉取/推送/删除
-5. **标准页面（page）工作流**
+   - 推送完成只代表研发态脚本已同步；若用户要确认运行态效果，显式交接到运行态验证（如可用的 `lovrabet bff exec`），不要把运行态 smoke 伪装成 `rabetbase` 已完成
+5. **智能列表页（Smart List Page，page）工作流**
    - 工作流判断先看 [`guides/page-development-workflow.md`](guides/page-development-workflow.md)
-   - `page` 命令职责分离：[`page generate-start`](references/rabetbase-page-generate-start.md) 负责提交或复用任务，[`page generate-status`](references/rabetbase-page-generate-status.md) 负责查询任务状态，[`page standard-page-status`](references/rabetbase-standard-page-status.md) 负责查询标准页事实
-   - 数据集字段变更后同步已有标准页：[`page sync`](references/rabetbase-page-sync.md)
+   - `page` 命令职责分离：[`page generate-start`](references/rabetbase-page-generate-start.md) 负责提交或复用任务，[`page generate-status`](references/rabetbase-page-generate-status.md) 负责查询任务状态，[`page standard-page-status`](references/rabetbase-standard-page-status.md) 负责查询智能列表页事实
+   - 数据集字段变更后同步已有智能列表页：[`page sync`](references/rabetbase-page-sync.md)
    - 本地 schema 开发：[`page pull`](references/rabetbase-page-pull.md) → IDE 编辑 → [`page push`](references/rabetbase-page-push.md)
    - 需要理解 formal schema 组件语义时，再按需阅读 `knowledge/page-schema/` 下的 PageSchema 组件资料；不要把它与 `rabetbase page` 命令 reference 混淆
 
@@ -94,7 +95,8 @@ metadata:
 - **入口**：先 [`db list`](references/rabetbase-db-list.md) 取 `id` 与 `latestAnalysisTraceId`（如有）。
 - **只读常用**：[`db detail`](references/rabetbase-db-detail.md)、[`db test`](references/rabetbase-db-test.md)、[`db tables`](references/rabetbase-db-tables.md)、[`db diff`](references/rabetbase-db-diff.md)（`--table` 为表名**子串**过滤，分页用 `--page` / `--pagesize`）。
 - **分析任务**：`db analyze-start` / `analyze-cancel` / `analyze-status`（plan/trace 来源见下）。
-- **写入**：[`db create`](references/rabetbase-db-create.md) / [`db update`](references/rabetbase-db-update.md) / [`db delete`](references/rabetbase-db-delete.md)（高危删连需确认）；`create`/`update` 支持 **`--dry-run`** 预览。`db create` 已兼容后端 `data` 可能返回两种结构：`id`（number/string）或对象（`{ id, ... }`）。
+- **ER 图引导**：`db analyze-status` 终态成功后，检查并转述 `data.links.erPage`；若没有 `data.links`，补 `--appcode` 或进入已配置 app 的项目上下文后重查。
+- **写入**：[`db create`](references/rabetbase-db-create.md) / [`db update`](references/rabetbase-db-update.md) / [`db delete`](references/rabetbase-db-delete.md)（高危删连需确认）；`create`/`update` 支持 **`--dry-run`** 预览。`db create` 成功后返回连接信息与数据库连接页链接。
 - **横切流程与 trace/plan**：[`database-connection-workflow.md`](guides/database-connection-workflow.md)。**单命令细则**见 `references/rabetbase-db-*.md`（与仓库 `src/commands/db/` 一一对应）。
 
 ## 配置作用域原则（`--global`）
@@ -195,6 +197,7 @@ const result = await client.bff.execute<DashboardData>({
 | 安装 / 重装 / 刷新 skill 包 | [`rabetbase skill install`](references/rabetbase-skill-install.md) | 全局安装或刷新 rabetbase skill；发现本地 skill 过期时优先执行 |
 | 退出登录 | [`rabetbase auth logout`](references/rabetbase-auth-logout.md) | 删除本地认证 cookie |
 | 诊断配置问题 | [`rabetbase doctor`](references/rabetbase-doctor.md) | 合并配置、各侧 JSON 语法、域名、认证状态 |
+| 上报平台问题 | [`rabetbase issue report`](references/rabetbase-issue-report.md) | 由 Skill 先组织 Markdown 上下文，再写入平台 Issue 采集链路 |
 | 导出命令契约（flags/risk 等） | [`rabetbase schema`](references/rabetbase-schema.md) | 与 `--help` 同源；**无需登录**；大结果用 `--format compress` |
 | 更新 CLI 版本 | [`rabetbase update`](references/rabetbase-update.md) | 自动检测最新版本并升级 |
 | 修改配置文件 | [`rabetbase config set <key> <value>`](references/rabetbase-config.md) | 默认写项目；无项目配置且未 `--global` 会拒绝；`--global` 写 `~/.rabetbase.json` |
@@ -205,10 +208,11 @@ const result = await client.bff.execute<DashboardData>({
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
 | 查看 Dataset 操作定义 | [`rabetbase dataset operations --code xxx`](references/rabetbase-dataset-operations.md) | 获取 filter/getOne/create 等参数定义 |
 | 查看数据模型关系 | [`rabetbase dataset links`](references/rabetbase-dataset-links.md) | 跨表 JOIN 关系图 |
-| 首次生成标准页 | [`rabetbase page generate-start --datasetcode <code>`](references/rabetbase-page-generate-start.md) | 提交或复用服务端异步任务 |
-| 查询标准页生成任务状态 | [`rabetbase page generate-status --datasetcode <code> --operation-id <id>`](references/rabetbase-page-generate-status.md) | 查询 job 状态，支持 `operationId` / `clientOperationId` |
-| 查询标准页事实快照 | [`rabetbase page standard-page-status --datasetcode <code>`](references/rabetbase-standard-page-status.md) | 查询标准页四件套、残留页与菜单事实 |
-| 同步已有标准页 | [`rabetbase page sync --datasetcode <code>`](references/rabetbase-page-sync.md) | 数据集字段变更后同步到关联标准页 |
+| 管理单条数据模型关系 | [`rabetbase dataset link-create/update/delete`](references/rabetbase-dataset-link-mutations.md) | 单条 ER 关系写入；先 `links` 确认 `fromTable/fromColumn/toTable/toColumn`，不要解析字符串 key |
+| 首次生成智能列表页 | [`rabetbase page generate-start --datasetcode <code>`](references/rabetbase-page-generate-start.md) | 提交或复用服务端异步任务 |
+| 查询智能列表页生成任务状态 | [`rabetbase page generate-status --datasetcode <code> --operation-id <id>`](references/rabetbase-page-generate-status.md) | 查询 job 状态，支持 `operationId` / `clientOperationId` |
+| 查询智能列表页事实快照 | [`rabetbase page standard-page-status --datasetcode <code>`](references/rabetbase-standard-page-status.md) | 查询智能列表页四件套、残留页与菜单事实 |
+| 同步已有智能列表页 | [`rabetbase page sync --datasetcode <code>`](references/rabetbase-page-sync.md) | 数据集字段变更后同步到关联智能列表页 |
 | 拉取页面 schema 到本地 | [`rabetbase page pull --id <pageId>`](references/rabetbase-page-pull.md) | 写入 `.rabetbase/page/<appCode>/`，进入本地编辑工作流 |
 | 推送本地页面 schema | [`rabetbase page push --id <pageId>`](references/rabetbase-page-push.md) | 推送后自动回拉 canonical schema 覆盖本地 |
 | 数据库连接（dblink）/ 测连 / 结构分析 | [`rabetbase db list`](references/rabetbase-db-list.md) 起 | **`id`**、**trace/plan id** 怎么拿见 [database-connection-workflow.md](guides/database-connection-workflow.md)；各子命令见 `references/rabetbase-db-*.md` |
@@ -255,10 +259,11 @@ const result = await client.bff.execute<DashboardData>({
 | Self Update | [`update`](references/rabetbase-update.md) |
 | Schema | [`schema` / `schema export`](references/rabetbase-schema.md) |
 | Diagnostics | [`doctor`](references/rabetbase-doctor.md) |
+| Platform Issue | [`report`](references/rabetbase-issue-report.md) |
 | Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
 | Menu | [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) |
 | app commands | [`list`](references/rabetbase-app-list.md) / `remote` / [`use`](references/rabetbase-app-use.md) / [`add`](references/rabetbase-app-add.md) / [`remove`](references/rabetbase-app-remove.md) |
-| dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`links`](references/rabetbase-dataset-links.md) |
+| dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`links`](references/rabetbase-dataset-links.md) / [`link-create/update/delete`](references/rabetbase-dataset-link-mutations.md) |
 | page commands | [`generate-start`](references/rabetbase-page-generate-start.md) / [`generate-status`](references/rabetbase-page-generate-status.md) / [`standard-page-status`](references/rabetbase-standard-page-status.md) / [`sync`](references/rabetbase-page-sync.md) / [`pull`](references/rabetbase-page-pull.md) / [`push`](references/rabetbase-page-push.md) |
 | Database Connections (`db`) | [`list`](references/rabetbase-db-list.md) / [`detail`](references/rabetbase-db-detail.md) / [`create`](references/rabetbase-db-create.md) / [`update`](references/rabetbase-db-update.md) / [`delete`](references/rabetbase-db-delete.md) / [`test`](references/rabetbase-db-test.md) / [`analyze`](references/rabetbase-db-analyze.md) / [`tables`](references/rabetbase-db-tables.md) / [`diff`](references/rabetbase-db-diff.md) |
 | api commands | [`pull`](references/rabetbase-api-pull.md) / [`list`](references/rabetbase-api-list.md) |
@@ -292,7 +297,7 @@ const result = await client.bff.execute<DashboardData>({
 | `--format pretty` | 人类阅读（未指定 format 时的常见默认） | 非 JSON 的彩色文本 |
 | `--format table` | 列表数据 | 表格 |
 
-**`--jq '<expr>'`**（全局）：仅配合 **`json` 或 `compress`**；对**最终打印的整段 JSON**执行 jq（表达式作用在信封上，例如取 `data` 内字段用 `.data.xxx`）。**jq 可执行文件**优先来自依赖 **`node-jq`** 安装时下载到 `node_modules/node-jq/bin/` 的版本；若无则使用 **`PATH` 上的 `jq`**。若使用 `npm install --ignore-scripts` 且未装系统 jq，需安装 jq 或设置环境变量 **`JQ_PATH`**。
+**`--jq '<expr>'`**（全局）：仅配合 **`json` 或 `compress`**；对**最终打印的整段 JSON**执行 jq（表达式作用在信封上，例如取 `data` 内字段用 `.data.xxx`）。**jq 可执行文件**按 **`JQ_PATH` → CLI 内置 sidecar jq → `PATH` 上的 jq** 的顺序解析。若显式设置了 **`JQ_PATH`**，它必须指向一个真实可执行文件；否则命令会直接报错，不会静默回退。
 
 **不确定子命令、flags、risk、是否要 appcode**：执行 **`rabetbase schema`**（即 `schema export`，**无需认证**），输出与 `rabetbase --help` 同源的机器可读元数据；详见 [`references/rabetbase-schema.md`](references/rabetbase-schema.md) 与仓库 **`docs/user-guide/12-schema命令.md`**。
 

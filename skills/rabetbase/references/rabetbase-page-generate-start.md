@@ -1,6 +1,6 @@
 # page generate-start
 
-异步提交或复用标准页生成任务。
+异步提交或复用智能列表页（Smart List Page）生成任务。
 
 ## 命令
 
@@ -12,7 +12,7 @@ rabetbase page generate-start --datasetcode 097b7361b76c42bcb12b923fa5a08861 --d
 
 ## 行为说明
 
-- 这是标准页生成的 **async-first 提交入口**。
+- 这是智能列表页生成的 **async-first 提交入口**。
 - CLI 会先查 `standard-page-status` 做前置判定。
 - 若允许生成，CLI 会自动生成 `clientOperationId`，并调用 Java 侧 `generate-standard-pages/start`。
 - 返回结果里的 `operationId` 是服务端 job 主标识；`clientOperationId` 是调用方恢复 / 幂等锚点。

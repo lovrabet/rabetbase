@@ -9,7 +9,7 @@
 ## 工作流
 
 ```
-速查公共函数 → 确认需求 → 校验字段 → [按需]查平台 → 编写本地脚本 → 自检 → status → dry-run → push/pull
+速查公共函数 → 确认需求 → 校验字段 → [按需]查平台 → 编写本地脚本 → 自检 → status → dry-run → push/pull → [按需]运行态 smoke
 ```
 
 ### 0. 速查公共函数
@@ -56,7 +56,19 @@
 * 未变更项进入 `skipped: unchanged`
 * 失败项进入 `failed`
 
-### 9. 本地文件
+### 9. 运行态 smoke（按需）
+`rabetbase bff push` 只证明研发态脚本已同步到平台管理侧。若本轮需求要求确认最终运行效果，应显式进入运行态验证，例如在已安装并配置运行态 CLI 的环境中执行：
+
+```bash
+lovrabet bff exec --name <functionName> --params '<json>' --format compress
+```
+
+边界：
+* `lovrabet` CLI 不可用、未配置或无权限时，明确记录“运行态 smoke 未执行”，不要把它写成 `rabetbase` 验证已通过
+* 管理态已同步但运行态仍返回旧版本时，优先按传播延迟 / 缓存延迟处理：等待后重试；必要时再对目标脚本执行一次精确 `bff push --force --type <type> --name <name>`
+* 多次重试仍旧版本时，记录平台运行态缓存风险并上报；不要通过修改 Skill、配置文件或另建脚本来掩盖
+
+### 10. 本地文件
 脚本内容直接保存在本地文件中，纳入 Git 管理。路径遵循 `.rabetbase/bff/<appCode>/` 目录约定（详见 `backend-function.md`）：
 * ENDPOINT → `.rabetbase/bff/<appCode>/ENDPOINT/<name>.js`
 * HOOK → `.rabetbase/bff/<appCode>/HOOK/<alias>/<operationType>/<functionNode>/<name>.js`
@@ -71,7 +83,7 @@
 
 ## 本地文件
 
-正常流程：先在本地创建/修改，再通过 `push` 同步远端，路径同 Step 9（`.rabetbase/bff/<appCode>/` 下）。
+正常流程：先在本地创建/修改，再通过 `push` 同步远端，路径同 Step 10（`.rabetbase/bff/<appCode>/` 下）。
 例外场景：
 * 用户主动要求"同步平台最新到本地" → 从平台拉取 → 覆盖本地（`bff pull`）
 * 用户要求删除脚本 → `bff delete --yes --target ...`

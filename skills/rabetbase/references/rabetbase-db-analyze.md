@@ -1,6 +1,6 @@
 # db analyze-start / analyze-cancel / analyze-status
 
-管理 **schema 分析任务**：启动全量/增量分析、取消、查询状态。`analyze-start` 与 `analyze-cancel` 为 **write**；`analyze-status` 为 **read**（仅按 plan 查询，不需要配置 appcode）。
+管理 **schema 分析任务**：启动全量/增量分析、取消、查询状态。`analyze-start` 与 `analyze-cancel` 为 **write**；`analyze-status` 为 **read**（仅按 plan 查询；命令能解析到 appcode 时会返回页面确认链接）。
 
 ## 何时用
 
@@ -38,6 +38,26 @@ rabetbase db analyze-status --id 10157 --plan <traceId> --format compress
 | **analyze-start** | `--id`（必填）、`--tables`（可选，增量表名列表） |
 | **analyze-cancel** | `--id`（必填）、`--plan`（可选，缺省用 latestAnalysisTraceId） |
 | **analyze-status** | `--id`（必填）、`--plan`（必填） |
+
+## 输出链接
+
+`analyze-start` 和 `analyze-status` 在配置或 `--appcode` 能提供 appcode 时，会返回：
+
+| 字段 | 用途 |
+|------|------|
+| `data.links.erPage` | 分析后引导用户打开 ER 图确认数据集关系 |
+| `data.links.databasePage` | 引导用户打开数据库连接页 |
+
+当 `analyze-status` 返回的原始任务状态为 `SUCCESS` 或 `PARTIAL_SUCCESS` 时，应检查 `data.links.erPage`，并把该链接返回给用户，用于确认 ER 关系与数据集同步结果。若没有 `data.links`，通常是当前命令上下文没有解析到 appcode；重新传 `--appcode` 或在已配置 app 的项目中查询即可生成 ER 页面链接。
+
+链接会按当前环境生成：
+
+```text
+daily      https://daily.lovrabet.com/web-app/app/<appCode>/data/er?dbId=<id>
+daily      https://daily.lovrabet.com/web-app/app/<appCode>/data/database
+production https://app.lovrabet.com/app/<appCode>/data/er?dbId=<id>
+production https://app.lovrabet.com/app/<appCode>/data/database
+```
 
 ## 参考
 
