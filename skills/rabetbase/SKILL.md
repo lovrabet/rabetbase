@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.1.2
+version: 2.1.3
 description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、智能列表页、Smart List Page、page generate-start、page generate-status、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
@@ -18,7 +18,7 @@ metadata:
 
 ## 前置条件
 
-1. **认证**：`rabetbase auth` 通过浏览器完成 OAuth 登录
+1. **认证**：`rabetbase auth login` 通过浏览器完成 OAuth 登录；非交互 Agent 使用 `rabetbase auth login --yes`，把终端打印的授权链接发给用户打开，链接有效期 10 分钟
 2. **AppCode**：确保 `.rabetbase.json` 中设置了 `apps + defaultApp`（推荐）或兼容读取的顶层 `appcode`，或通过 `--appcode <code>` / `--app <name>` 传入（旧名 `.lovrabet.json` 仍可读）
 3. **配置文件**：`rabetbase init` 初始化 `.rabetbase.json`（旧名仍兼容读取）。完整字段说明见 [`.rabetbase.json` 配置参考](references/rabetbase-config.md)
 4. **多应用场景**：一个项目有多个应用时，先 `rabetbase app add <name> --appcode …` 配置各应用，再用 `--app <name>` 或 `rabetbase app use <name>` 切换
@@ -255,7 +255,7 @@ const result = await client.bff.execute<DashboardData>({
 | Quick Start | [`init`](references/rabetbase-init.md) |
 | Project | [`create`](references/rabetbase-project-create.md) / [`upgrade`](references/rabetbase-project-upgrade.md) |
 | Run Scripts | [`run`](references/rabetbase-run.md) |
-| Authentication | [`auth login`](references/rabetbase-config.md) / [`auth logout`](references/rabetbase-auth-logout.md) |
+| Authentication | [`auth login`](references/rabetbase-auth-login.md) / [`auth logout`](references/rabetbase-auth-logout.md) |
 | Self Update | [`update`](references/rabetbase-update.md) |
 | Schema | [`schema` / `schema export`](references/rabetbase-schema.md) |
 | Diagnostics | [`doctor`](references/rabetbase-doctor.md) |
