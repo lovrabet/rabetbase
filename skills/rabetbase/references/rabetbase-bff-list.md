@@ -51,9 +51,11 @@ rabetbase bff list --appcode app-xxxxxxxx
 ## 提示
 
 - 写 BFF 前先查公共函数列表（`--type COMMON`），看是否有可复用函数
+- 复用 COMMON 前用 `bff detail --id <id>` 确认入参、返回值和副作用，不要按函数名猜契约
 - 修改已有 BFF 前必须先用此命令找到脚本 ID
 
 ## 参考
 
 - [SKILL.md](../SKILL.md)
 - [bff-creation-workflow.md](../guides/bff-creation-workflow.md)
+- [backend-function.md](../guides/backend-function.md)

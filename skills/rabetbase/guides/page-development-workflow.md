@@ -21,7 +21,7 @@
 ## 核心原则
 
 1. 智能列表页是“标准后台”方案，不是所有数据集的默认答案。
-2. 平台是页面真源；本地 schema 开发也必须通过 `pull -> IDE 编辑 -> push` 闭环。
+2. 平台是页面权威来源；本地 schema 开发也必须通过 `pull -> IDE 编辑 -> push` 闭环。
 3. 新编排与自动化链路统一按 async-first 契约编排：任务状态查询与页面事实查询分离。
 4. 生产环境先做 `--dry-run`，确认目标、页面组和风险后再执行真实写操作。
 
@@ -128,7 +128,7 @@ rabetbase page push --id <pageId> --format json
 rabetbase page push --datasetcode <datasetCode> --version-tag <tag> --format json
 ```
 
-推送成功后，CLI 会自动回拉远端 canonical schema 覆盖本地文件和 lock。这个行为是预期的，不要把它当作“本地改动丢失”；它的目的是让本地重新回到平台真源状态。
+推送成功后，CLI 会自动回拉远端 canonical schema 覆盖本地文件和 lock。这个行为是预期的，不要把它当作“本地改动丢失”；它的目的是让本地重新回到平台权威状态。
 
 ## 常见分支
 

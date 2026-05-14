@@ -82,7 +82,7 @@ BFF 脚本统一存放在 `.rabetbase/bff/<appCode>/` 目录下，由 CLI 同步
 
 HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 
-1. **alias**（优先）：来自 `api.ts`（由 `rabetbase api pull` 生成），如 `customers`、`orders`
+1. **alias**（优先）：来自 `api.ts`（由 `rabetbase api pull` 生成）
 2. **datasetCode**（兜底）：当 `api.ts` 不可用时，直接使用 32 位数据集编码
 
 推荐始终先执行 `rabetbase api pull` 以获得可读性更好的 alias 命名。
@@ -123,20 +123,29 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 
 ### Step 2：校验数据集、字段与关系
 
-写任何 BFF 逻辑前，必须执行 `rabetbase dataset detail --code xxx --format json`，必要时先用 `rabetbase dataset list --format json` 定位数据集。
+写任何 BFF 逻辑前，必须执行 `rabetbase dataset detail --code xxx --format json`（或 `--format compress`），必要时先用 `rabetbase dataset list --format json` 定位数据集。
 
 必须确认：
 
 * 字段真实存在
 * 字段类型正确
-* 必填字段已识别
+* 必填字段已识别：以 `data.fields[].required === true` 为准，排除平台自动维护字段
+* 枚举/选择字段已识别：写入时使用 `data.fields[].options[].value`，不要写展示用的 `label`
 * 外键或关联关系真实存在
+
+快速查看必填与枚举字段：
+
+```bash
+rabetbase dataset detail --code <datasetCode> --format compress \
+  --jq '.data.fields[] | select(.required == true or (.options | type == "array")) | {name, displayName, type, required, options}'
+```
 
 禁止行为：
 
 * 未读取数据集详情就直接写字段名
 * 凭经验猜 `user_id`、`status`、`deleted` 等通用字段
 * 把前端代码里的字段名照搬到当前 BFF
+* 把某个 Demo 或历史案例中的字段、枚举、表名当作当前任务的通用规则
 
 ### Step 3：选择脚本类型
 
@@ -273,39 +282,60 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 
 ## 数据集调用规范
 
-通过 `context.client.models.dataset_xxx` 调用数据集，推荐先定义映射表：
+通过 `context.client.models` 调用数据集。模型键格式为固定前缀 `"dataset_"` 拼接 32 位数据集编码，编码来自 `rabetbase dataset list/detail` 返回的 `code` 字段。
 
 ```javascript
 const TABLES = {
-  customers: "dataset_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", // 数据集: 客户 | 数据表: customers
-  orders: "dataset_yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy", // 数据集: 订单 | 数据表: orders
+  primary: "dataset_0123456789abcdef0123456789abcdef", // 数据集: <displayName> | 数据表: <tableName>
+  detail: "dataset_fedcba9876543210fedcba9876543210", // 数据集: <displayName> | 数据表: <tableName>
 };
 
 const models = context.client.models;
-const order = await models[TABLES.orders].getOne({ id: 123 });
+const record = await models[TABLES.primary].getOne({ id: params.id });
 ```
 
 规则：
 
-* 必须使用 32 位数据集编码
+* 必须使用 `"dataset_" + 32 位数据集编码`，不要只写裸 `code`
 * 每个映射后写 `// 数据集: ... | 数据表: ...`
 * 查询单条统一使用 `getOne({ id })`
 * 列表查询优先使用 `filter()`
+* `context.client.models` 是 Proxy 对象，`Object.keys()` / `Object.entries()` 可能返回空数组；通过 `models[TABLES.xxx]` 访问即可
 
-常用方法：
+常用方法与返回值：
 
-| 方法 | 说明 |
-|------|------|
-| `getOne({ id })` | 按主键查询单条 |
-| `filter(params)` | 高级过滤查询 |
-| `create(data)` | 创建记录 |
-| `update({ id, ...fields })` | 更新记录（id 支持数组批量，最多 1000 条） |
-| `delete({ id })` | 删除记录（id 支持数组批量，最多 1000 条） |
+| 方法 | 返回值 | 说明 |
+|------|--------|------|
+| `getOne({ id })` | `object \| null` | 按主键查询单条 |
+| `filter(params)` | `{ tableData, paging, tableColumns? }` | 高级过滤查询，数据在 `tableData`，不是 `list` |
+| `create(data)` | `number` | 创建记录，返回新记录 ID，不返回完整对象 |
+| `update({ id, ...fields })` | 无业务对象 | 更新记录（id 支持数组批量，最多 1000 条） |
+| `delete({ id })` | 无业务对象 | 删除记录（id 支持数组批量，最多 1000 条） |
+
+正确处理 `create()` 返回值：
+
+```javascript
+const primaryId = await models[TABLES.primary].create({
+  required_field_a: params.requiredFieldA,
+});
+
+await models[TABLES.detail].create({
+  primary_id: primaryId,
+  required_field_b: params.requiredFieldB,
+});
+```
+
+不要写成：
+
+```javascript
+const primary = await models[TABLES.primary].create({ required_field_a: params.requiredFieldA });
+await models[TABLES.detail].create({ primary_id: primary.id }); // primary.id 是 undefined
+```
 
 不要再写：
 
 ```javascript
-const record = await models[TABLES.orders].findOne({ id });
+const record = await models[TABLES.primary].findOne({ id });
 ```
 
 ## 系统自动维护字段
@@ -424,15 +454,15 @@ const userInfo = await context.client.bff.execute({
 ### 组合调用示例
 
 ```javascript
-export default async function createOrder(params, context) {
-  const orderNo = await context.client.bff.execute({
-    scriptName: 'commonGenerateOrderNo',
+export default async function runBusinessFlow(params, context) {
+  const sequence = await context.client.bff.execute({
+    scriptName: 'commonGenerateSequence',
     params: {}
   });
 
   const result = await context.client.bff.execute({
-    scriptName: 'commonCreateOrderWithTransaction',
-    params: { ...params, orderNo }
+    scriptName: 'commonCreateRecordsWithTransaction',
+    params: { ...params, sequence }
   });
 
   return result;
@@ -445,7 +475,7 @@ export default async function createOrder(params, context) {
 
 ```javascript
 const rows = await context.client.sql.execute({
-  sqlCode: "customer-active-list",
+  sqlCode: "example-read-list",
   params,
 });
 ```
@@ -468,8 +498,18 @@ const rows = result.execResult;
 
 ```javascript
 await context.client.db.transaction(async (tx) => {
-  // 成功自动提交
-  // 抛错自动回滚
+  const primaryId = await tx.models[TABLES.primary].create({
+    required_field_a: params.requiredFieldA,
+  });
+
+  await tx.models[TABLES.detail].create({
+    primary_id: primaryId,
+    required_field_b: params.requiredFieldB,
+  });
+
+  // tx.models 与 context.client.models 用法一致
+  // tx.sql.execute 可在同一事务中执行自定义 SQL
+  // 成功自动提交，抛错自动回滚
 });
 ```
 
@@ -503,6 +543,8 @@ await context.client.db.transaction(async (tx) => {
 * 不要手动设置系统字段
 * 不要保留顶部注释占位符
 * 不要把前端 SQL 返回值语义套到 BFF
+* 不要在 BFF 中使用前端 SDK 独有的方法，如 `createClient`、`registerModels`
+* 不要把示例里的字段名、表名、枚举值复制到真实脚本；字段事实必须来自当前数据集详情
 * 不要忽略权限、脱敏和错误处理
 * 不要在事务里做高延迟外部调用
 
@@ -510,12 +552,14 @@ await context.client.db.transaction(async (tx) => {
 
 * [ ] 已确认脚本类型是 Before / After / Endpoint / Common
 * [ ] 已执行 `rabetbase dataset detail` 获取数据集信息
-* [ ] 字段名、类型、关系已核对
+* [ ] 字段名、类型、必填、枚举、关系已核对
 * [ ] 函数名正确（将作为 `scriptName` 参数传入）
 * [ ] 顶部注释完整且占位符已替换
-* [ ] 数据集映射使用 32 位编码
+* [ ] 数据集映射使用 `"dataset_" + 32 位编码`
 * [ ] 单条查询统一使用 `getOne`
-* [ ] 列表查询使用 `filter`
+* [ ] 列表查询使用 `filter`，并从 `.tableData` 读取结果
+* [ ] `create()` 返回值按新记录 ID 处理，没有访问 `.id`
+* [ ] 枚举/选择字段写入 `options[].value`，不是展示 `label`
 * [ ] SQL 返回值按 BFF 语义处理
 * [ ] 未设置系统自动维护字段
 * [ ] 无明显 N+1 或循环写入问题

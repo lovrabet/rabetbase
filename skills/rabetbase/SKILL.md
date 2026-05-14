@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.1.3
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、智能列表页、Smart List Page、page generate-start、page generate-status、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
+version: 2.1.9
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset field-update、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -46,6 +46,7 @@ metadata:
 2. **先拿元数据，再写代码**
    - 至少先查 `rabetbase dataset detail --code xxx --format compress`（或 `json`）获取表结构
    - 跨表场景还需查目标表的结构
+   - 写入前用 `data.fields[]` 确认真实字段、必填字段、枚举选项；枚举/选择字段写入 `options[].value`，不是展示 `label`
    - 需要了解数据模型关系时用 `rabetbase dataset links --format compress`（或 `json`）
    - **管理物理库连接 / 测连 / 同步表结构分析**时用 `rabetbase db …`（先 [`db list`](references/rabetbase-db-list.md)，trace/plan id 见 [`database-connection-workflow.md`](guides/database-connection-workflow.md)）
    - 输出很大且只需子集时，在 `compress`/`json` 上加 `--jq '.data…'` 缩小结果
@@ -118,6 +119,7 @@ metadata:
 - **不要把废弃命令当主路径** — `sql save` 仅用于返回迁移提示；`bff save` 已退出主工作流。除了解释兼容/迁移，不要再基于它们设计步骤
 - **不要含糊处理失败** — `sql create` / `sql push` / `sql delete` / `bff push` / `bff delete` 返回失败时，必须明确告知用户是哪条资源失败、为什么失败
 - **不要在不确认表结构时就写 SQL** — 先 `dataset detail`，后写 SQL
+- **不要把案例字段当通用规则** — 任何 Demo、历史项目、示例里的字段名、枚举值、表名都不能照搬；必须以当前 `dataset detail` 为准
 - **不要循环单条查询** — 用 SDK `filter + $in` 批量查询，不要 N+1
 - **不要把 MCP 工具名当 CLI 命令** — 使用 `rabetbase sql list`，不是 `list_sql_queries`
 - **不要擅自加 `--global`** — 见上文「配置作用域原则」；默认写项目、读合并；仅在用户明确要求或文档说明的场景使用 `--global`。
@@ -184,6 +186,10 @@ const result = await client.bff.execute<DashboardData>({
 |---|---------|---------------------|
 | SQL 返回值 | `{ execSuccess, execResult }` | 直接返回数组 `T[]` |
 | 单条查询 | `getOne({ id })` | `getOne({ id })` |
+| 模型键 | 可通过初始化/生成代码使用 alias | 使用 `"dataset_" + 32 位数据集 code` |
+| `filter()` 返回 | `tableData` 为列表数据 | `tableData` 为列表数据，不是 `list` |
+| `create()` 返回 | 以 SDK 文档/类型为准 | 新记录 ID，不是完整对象 |
+| SDK 初始化能力 | `createClient` / `registerModels` | 不可用；`context.client` 由平台注入 |
 | 调 BFF | `client.bff.execute({ scriptName, params })` | — |
 
 ## 意图 → 命令索引
@@ -206,6 +212,7 @@ const result = await client.bff.execute<DashboardData>({
 | 更新菜单 CDN URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 批量更新线上菜单资源地址 |
 | 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 服务端模糊匹配；也可 `--code` 精确查 |
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
+| 安全更新 Dataset 原始字段对象 | [`rabetbase dataset field-update`](references/rabetbase-dataset-field-update.md) | 只允许 patch 已知可变业务配置字段；必须先 `--dry-run`，用 `--expect-json` 防漂移 |
 | 查看 Dataset 操作定义 | [`rabetbase dataset operations --code xxx`](references/rabetbase-dataset-operations.md) | 获取 filter/getOne/create 等参数定义 |
 | 查看数据模型关系 | [`rabetbase dataset links`](references/rabetbase-dataset-links.md) | 跨表 JOIN 关系图 |
 | 管理单条数据模型关系 | [`rabetbase dataset link-create/update/delete`](references/rabetbase-dataset-link-mutations.md) | 单条 ER 关系写入；先 `links` 确认 `fromTable/fromColumn/toTable/toColumn`，不要解析字符串 key |

@@ -17,7 +17,7 @@ rabetbase page standard-page-status --alias order --format json
   - 残留页
   - 菜单事实
 - 它不返回异步任务的执行进度，也不负责表达 job 状态。
-- 这是 `page generate-start` 的前置判定与终态回查真源，属于事实接口，不是任务状态接口。
+- 这是 `page generate-start` 的前置判定与终态回查依据，属于事实接口，不是任务状态接口。
 
 ## 适用场景
 

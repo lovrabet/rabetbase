@@ -2,7 +2,8 @@
 
 > 目标：约束 AI 在前端与 Node 环境中生成 Lovrabet SDK 代码时的用法，杜绝凭借通用经验瞎猜 API 结构。
 >
-> 适用范围：所有调用 `@lovrabet/sdk` 的场景。
+> 适用范围：前端 / Node 环境中通过 `@lovrabet/sdk` 初始化后的 `client` 调用。
+> BFF 脚本中的 `context.client` 由平台注入，API 子集与前端 SDK 有差异；编写 BFF 时以 `backend-function.md` 为准。
 
 ## 何时使用
 
@@ -12,6 +13,8 @@
 * 在前端或中台服务中执行自定义 SQL
 * 在前端调用 Backend Function (BFF)
 * 处理 API 返回的错误或业务异常
+
+不要把本指南里的 `createClient`、`registerModels` 等前端 / Node SDK 初始化能力套用到 BFF。BFF 内只使用平台注入的 `context.client`。
 
 ## 初始化规则
 
@@ -145,17 +148,17 @@ async function batchUpdate(ids: number[], batchSize = 1000) {
 
 ### 别名模式（Alias Pattern）
 
-如果使用 `registerModels` 定义了别名，批量操作同样支持：
+如果在前端 / Node SDK 中使用 `registerModels` 定义了别名，批量操作同样支持。此能力不适用于 BFF 的 `context.client`。
 
 ```typescript
 // 注册别名
 client.registerModels({
-  customer: 'dataset_abc123',
-  order: 'dataset_def456'
+  primary: 'dataset_abc123',
+  detail: 'dataset_def456'
 });
 
 // 使用别名批量操作
-await client.models.customer.update({ id: [1, 2, 3], status: 'active' });
+await client.models.primary.update({ id: [1, 2, 3], status: 'active' });
 ```
 
 ## 2. 自定义 SQL (SQL API)
@@ -179,7 +182,7 @@ if (data.execSuccess && data.execResult) {
 }
 ```
 
-## 3. 后端函数 (BFF API)
+## 3. 前端 / Node 调用 Backend Function (BFF API)
 
 ### 强制返回值处理
 调用 BFF 返回的直接是你在脚本中 `return` 的业务数据对象。

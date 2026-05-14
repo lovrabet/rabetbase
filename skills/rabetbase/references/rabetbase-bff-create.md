@@ -33,13 +33,23 @@ rabetbase bff create --type HOOK --name beforeFilter --alias appUser --operation
 
 BFF 源码**仅**应在此目录树内创建与长期维护（与 `bff status` / `bff push` 扫描一致）；不要在本仓库其他路径手写 BFF 再尝试推送。
 
+## 脚手架边界
+
+`bff create` 只创建本地脚本模板，不会替你确认数据集字段、必填字段、枚举值或运行时 API 语义。编辑脚本前先按需阅读：
+
+- [`backend-function.md`](../guides/backend-function.md)：`context.client`、模型键、返回值、事务、禁止事项
+- [`data-api-guidelines.md`](../guides/data-api-guidelines.md)：字段、枚举、外键、性能规则
+
 ## 提示
 
 - `HOOK` 非交互场景建议优先传 `--alias`
 - 如果 alias 解析失败，再用 `--datasetcode`
+- 涉及数据集读写时，先执行 `rabetbase dataset detail --code <code> --format compress` 获取当前字段事实
 - 创建后先跑 `rabetbase bff status --format json` 确认本地状态
 
 ## 参考
 
 - [SKILL.md](../SKILL.md)
 - [bff-creation-workflow.md](../guides/bff-creation-workflow.md)
+- [backend-function.md](../guides/backend-function.md)
+- [data-api-guidelines.md](../guides/data-api-guidelines.md)

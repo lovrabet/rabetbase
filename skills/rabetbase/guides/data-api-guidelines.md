@@ -23,13 +23,15 @@
 在编写任何数据访问代码前，**必须先完成以下检查**：
 
 - [ ] 使用 `rabetbase dataset detail --code <数据集编码> --format json` 获取数据集完整字段与操作信息
-- [ ] 核对字段名（区分大小写）、类型、是否必填
+- [ ] 核对字段名（区分大小写）、类型、是否必填、枚举选项
 - [ ] 分析数据集依赖关系（主外键约束）
 - [ ] 识别外键字段，确定下拉框数据来源
 
 **注意**：系统自动维护字段（id、create_time 等）的处理方式，详见 `backend-function.md`。
 
 **CLI 信封、`data.*` 键位、平台 `get-driven-data` 与 CLI 归一化对照**：单一权威见 [`references/rabetbase-dataset-detail.md`](../references/rabetbase-dataset-detail.md)。
+
+**不要复制示例字段名。** 本指南里的表名、字段名、枚举值只用于说明形态；真实代码必须从当前项目的 `rabetbase dataset detail` 输出中取 `data.fields[]`、`data.relations[]` 和 `data.dbtable`。
 
 ---
 
@@ -41,6 +43,26 @@
 |----------|----------|
 | `METADATA` | **不要默认走 SQL**；优先 `filter` / `getOne` / 标准数据接口 |
 | `CUSTOM` / `DB` | 可继续评估 SQL、BFF 或标准数据接口 |
+
+---
+
+## 元数据取值规则
+
+字段事实以 `rabetbase dataset detail` 的归一化输出为准：
+
+| 目标 | 路径 | 规则 |
+|------|------|------|
+| 字段名 | `data.fields[].name` | 查询、写入、SQL 列名均使用它，不猜通用字段名 |
+| 必填字段 | `data.fields[].required` | `true` 表示创建/写入时需处理，平台自动维护字段除外 |
+| 枚举/选择值 | `data.fields[].options[].value` | 写入持久化 `value`，不要写展示用的 `label` |
+| 外键关系 | `data.relations[]` / `dataset links` | 只有确认存在关系后才写关联查询或校验 |
+
+常用投影：
+
+```bash
+rabetbase dataset detail --code <数据集编码> --format compress \
+  --jq '.data.fields[] | {name, displayName, type, required, options}'
+```
 
 ---
 
@@ -74,7 +96,7 @@ lovrabet data getOne --code <数据集code> --params '{"id":123}' --format json
 ## 步骤 1: 获取数据集详情
 
 ```bash
-rabetbase dataset detail --code orders --format json
+rabetbase dataset detail --code <数据集编码> --format json
 ```
 
 字段表、归一化规则、`dbtable`、jq 示例：**见 [`references/rabetbase-dataset-detail.md`](../references/rabetbase-dataset-detail.md)**。
@@ -97,14 +119,14 @@ rabetbase dataset detail --code orders --format json
 **Backend Function 中的错误处理**：
 
 ```javascript
-export default async function createOrder(params, context) {
-  const customerResult = await context.client.models.customers.filter({
-    where: { id: { $eq: params.customer_id } },
-    select: ['id', 'customer_name']
+export default async function validateRelatedRecord(params, context) {
+  const result = await context.client.models["dataset_0123456789abcdef0123456789abcdef"].filter({
+    where: { id: { $eq: params.related_id } },
+    select: ['id', '<displayField>']
   });
 
-  if (!customerResult.tableData || customerResult.tableData.length === 0) {
-    throw new Error(`客户 ${params.customer_id} 不存在`);
+  if (!result.tableData || result.tableData.length === 0) {
+    throw new Error(`关联记录 ${params.related_id} 不存在`);
   }
 
   // 继续业务逻辑...
@@ -120,18 +142,18 @@ export default async function createOrder(params, context) {
 **从数据集详情中获取依赖关系**，重点关注：
 
 ```
-订单数据集依赖关系示例：
-1. customer_id → customers.id (外键)
-   - 创建订单时 customer_id 必须存在
-   - 下拉框数据来自 customers 表
-   - 需要显示 customer_name，存储 customer_id
+主数据集依赖关系示例：
+1. related_id → related_table.id (外键)
+   - 创建主记录时 related_id 必须存在
+   - 下拉框数据来自关联数据集
+   - 需要显示关联记录名称，存储 related_id
 
-2. product_id → products.id (外键)
-   - 下拉框数据来自 products 表
-   - 需要显示 product_name，存储 product_id
+2. item_id → item_table.id (外键)
+   - 下拉框数据来自另一关联数据集
+   - 需要显示条目名称，存储 item_id
 
 3. status (无外键，`type` 为 SELECT)
-   - 枚举字段，直接使用 `fields[].options` 数组
+   - 枚举字段，直接使用 `data.fields[].options` 数组
    - 不需要额外接口请求
 ```
 
@@ -140,8 +162,10 @@ export default async function createOrder(params, context) {
 | 字段类型 | 识别方式 | 数据来源 | 处理方式 |
 |---------|---------|---------|---------|
 | **外键字段** | `relations[]` 中有对应记录 | 关联的数据集 | 调用关联数据集的 filter 接口 |
-| **枚举字段** | `type === "SELECT"` 且 `options` 非空 | `fields[].options` | 直接使用，无需额外请求 |
+| **枚举字段** | `type === "SELECT"` 且 `options` 非空 | `data.fields[].options` | 写入 `option.value`，展示 `option.label` |
 | **级联选择** | 父字段决定子字段 | 父字段变化时动态加载 | 监听父字段变化，动态加载子选项 |
+
+枚举/选择字段的 `label` 只用于展示，写入 BFF、SDK 或 SQL 参数时使用对应 `value`。`value` 的类型以数据集详情为准，可能是字符串、数字或其它平台约定类型。
 
 **前端示例**：
 
@@ -150,35 +174,35 @@ export default async function createOrder(params, context) {
 // 直接从字段定义取，不需要接口请求
 const statusOptions = field.options.map(o => ({ label: o.label, value: o.value }));
 
-// 分析：customer_id 是外键，关联 customers 表
-// 需要获取客户列表作为下拉框数据
-const [customers, setCustomers] = useState([]);
+// 分析：related_id 是外键，关联另一个数据集
+// 需要获取关联记录列表作为下拉框数据
+const [relatedRecords, setRelatedRecords] = useState([]);
 
 useEffect(() => {
-  client.models.customers.filter({
-    select: ['id', 'customer_name'],
+  client.models.related.filter({
+    select: ['id', '<displayField>'],
     where: { status: { $eq: 'active' } }
   }).then(result => {
-    setCustomers(result.tableData || []);
+    setRelatedRecords(result.tableData || []);
   });
 }, []);
 
 // 下拉框配置
-const customerOptions = customers.map(c => ({
-  label: c.customer_name,
-  value: c.id,
+const relatedOptions = relatedRecords.map(record => ({
+  label: record["<displayField>"],
+  value: record.id,
 }));
 ```
 
 **Backend Function 示例**：
 
 ```javascript
-// 分析：订单表 customer_id 是外键
-// 创建订单前需要校验客户是否存在
+// 分析：related_id 是外键
+// 创建记录前需要校验关联记录是否存在
 
-const customer = await customerDS.getOne({ id: params.customer_id });
-if (!customer) {
-  throw new Error(`客户 ${params.customer_id} 不存在`);
+const related = await relatedDS.getOne({ id: params.related_id });
+if (!related) {
+  throw new Error(`关联记录 ${params.related_id} 不存在`);
 }
 ```
 
@@ -190,18 +214,18 @@ if (!customer) {
 
 ```tsx
 // ❌ 错误：使用 mock 数据
-const CUSTOMER_OPTIONS = [
-  { label: '客户A', value: 1 },
-  { label: '客户B', value: 2 },
+const STATIC_OPTIONS = [
+  { label: '示例A', value: 1 },
+  { label: '示例B', value: 2 },
 ];
 
 // ✅ 正确：使用真实接口
-const [customers, setCustomers] = useState([]);
+const [relatedRecords, setRelatedRecords] = useState([]);
 useEffect(() => {
-  client.models.customers.filter({
-    select: ['id', 'customer_name'],
+  client.models.related.filter({
+    select: ['id', '<displayField>'],
   }).then(result => {
-    setCustomers(result.tableData || []);
+    setRelatedRecords(result.tableData || []);
   });
 }, []);
 ```
@@ -216,7 +240,7 @@ import { createClient } from '@lovrabet/sdk';
 const client = createClient({ appCode: 'your-app-code' });
 
 // 查询列表
-const result = await client.models.dataset_XXXXXXXXXX.filter({
+const result = await client.models.dataset_0123456789abcdef0123456789abcdef.filter({
   where: { status: { $eq: 'active' } },
   select: ['id', 'name'],
   pageSize: 100,
@@ -231,12 +255,12 @@ const data = result.tableData || [];
 // 使用 context.client 访问数据集
 const models = context.client.models;
 const TABLES = {
-  customers: 'dataset_XXXXXXXXXX', // 数据集: 客户 | 数据表: customers
+  primary: 'dataset_0123456789abcdef0123456789abcdef', // 数据集: <displayName> | 数据表: <tableName>
 };
 
-const result = await models[TABLES.customers].filter({
+const result = await models[TABLES.primary].filter({
   where: { status: { $eq: 'active' } },
-  select: ['id', 'customer_name'],
+  select: ['id', '<fieldName>'],
 });
 ```
 
@@ -250,8 +274,8 @@ const result = await models[TABLES.customers].filter({
 
 ```tsx
 // ❌ 性能灾难：N 次接口调用
-for (const order of orders) {
-  const customer = await getCustomer(order.customer_id);
+for (const row of rows) {
+  const related = await getRelatedRecord(row.related_id);
 }
 ```
 
@@ -273,23 +297,23 @@ for (const order of orders) {
 
 <span style={{fontSize: '0.9em', color: '#888'}}>v1.2.0+</span>
 
-**适用于**：1:1 或 N:1 关联（订单→客户、员工→部门）
+**适用于**：1:1 或 N:1 关联（主记录→关联记录、成员→组织等）
 
 ```tsx
 // ✅ 一次查询，自动 JOIN
-const result = await client.models.orders.filter({
+const result = await client.models.primary.filter({
   select: [
-    "id", "order_no",
-    "customer.name",     // 关联表字段
-    "customer.level"     // 关联表字段
+    "id", "record_no",
+    "related.name",     // 关联表字段
+    "related.level"     // 关联表字段
   ],
   where: {
     status: { $eq: "pending" },
-    "customer.level": { $eq: "VIP" }
+    "related.level": { $eq: "important" }
   },
 });
 
-// result.tableData[0].customer.name ← 直接可用
+// result.tableData[0].related.name ← 直接可用
 ```
 
 ### 方案 2：批量查询
@@ -298,15 +322,15 @@ const result = await client.models.orders.filter({
 
 ```tsx
 // ✅ 一次查询，$in 批量获取
-const customerIds = [...new Set(orders.map(o => o.customer_id))];
-const customers = await client.models.customers.filter({
-  where: { id: { $in: customerIds } },
+const relatedIds = [...new Set(rows.map(row => row.related_id))];
+const relatedRows = await client.models.related.filter({
+  where: { id: { $in: relatedIds } },
   select: ['id', 'name']
 });
-const customerMap = Object.fromEntries(
-  customers.tableData?.map(c => [c.id, c.name]) || []
+const relatedMap = Object.fromEntries(
+  relatedRows.tableData?.map(row => [row.id, row.name]) || []
 );
-orders.forEach(o => o.customerName = customerMap[o.customer_id]);
+rows.forEach(row => row.relatedName = relatedMap[row.related_id]);
 ```
 
 ### 性能对比
@@ -323,18 +347,18 @@ orders.forEach(o => o.customerName = customerMap[o.customer_id]);
 
 ### 大量数据写入场景
 
-**场景**：批量复制 100 条订单记录
+**场景**：批量复制 100 条记录
 
 ```javascript
 // ❌ 错误：循环创建（100 次接口调用）
-for (const order of orders) {
-  await orderDS.create(order);
+for (const row of rows) {
+  await model.create(row);
 }
 
 // ✅ 正确：使用自定义 SQL（1 次接口调用）
 await context.client.sql.execute({
-  sqlCode: "batch-copy-orders",
-  params: { sourceOrderId: sourceId, targetOrderId: targetId }
+  sqlCode: "batch-copy-records",
+  params: { sourceId, targetId }
 });
 ```
 
@@ -356,10 +380,10 @@ await context.client.sql.execute({
 
 - [ ] **已获取数据集详情**：使用 CLI 命令获取字段和依赖关系
 - [ ] **外键字段已识别**：下拉框数据来自关联数据集接口
-- [ ] **枚举字段已处理**：直接使用 `fields[].options`，`type === "SELECT"` 的字段无需额外接口
+- [ ] **枚举字段已处理**：展示使用 `options[].label`，写入使用 `options[].value`
 - [ ] **未使用 mock 数据**：所有下拉框数据来自真实接口
 - [ ] **无循环访问**：优先使用多表关联查询，或使用批量查询
-- [ ] **字段名正确**：使用 `fields[].name`（列名），区分大小写，与数据集定义一致
+- [ ] **字段名正确**：使用 `data.fields[].name`（列名），区分大小写，与数据集定义一致
 - [ ] **系统字段已识别**：结合 `data.dbtable` 与 `backend-function.md`，创建/更新时间等按平台约定不传
 - [ ] **关联表使用表名**：多表关联时使用 `tableName.fieldName` 格式
 
@@ -367,6 +391,8 @@ await context.client.sql.execute({
 
 - [ ] **已获取数据集详情**：使用 CLI 命令获取字段和依赖关系
 - [ ] **主外键关系已分析**：理解表间关联关系
+- [ ] **必填字段已覆盖**：`data.fields[].required === true` 的业务字段已提供值
+- [ ] **枚举字段写入正确**：写入 `options[].value`，不是展示 `label`
 - [ ] **外键校验已处理**：创建/更新前校验外键有效性
 - [ ] **系统字段未设置**：主键自增、系统时间等按平台约定不手工传入，详见 `backend-function.md`
 - [ ] **无循环访问**：使用 filter + $in 批量查询
@@ -375,7 +401,7 @@ await context.client.sql.execute({
 ### SQL 开发
 
 - [ ] **已获取数据集详情**：通过 `data.dbtable.tableName` 确认表名，通过 `data.dbtable.dbId` 确认数据库
-- [ ] **必填字段已确认**：INSERT 包含所有业务必填字段（`fields[].required === true` 中需由调用方传入的列）
+- [ ] **必填字段已确认**：INSERT 包含所有业务必填字段（`data.fields[].required === true` 中需由调用方传入的列）
 - [ ] **主外键关系已分析**：JOIN 条件使用 `data.dbtable.pkField` 等
 - [ ] **SQL 已验证**：使用 `rabetbase sql validate` 验证
 - [ ] **SELECT 已测试**：使用 `rabetbase sql exec` 测试

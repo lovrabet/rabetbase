@@ -1,6 +1,6 @@
 # rabetbase app use
 
-切换默认应用（持久写入配置文件的 `defaultApp`）。名称校验基于**全局 + 项目合并**后的 `apps`（与 `app list` 一致）。**位置参数** `<name>`，与 lovrabet-runtime-cli 一致。
+切换默认应用（持久写入配置文件的 `defaultApp`）。名称校验基于**全局 + 项目合并**后的 `apps`（与 `app list` 一致）。**位置参数** `<name>`。
 
 **写入哪一文件**：显式 `--global` → 始终写全局 `~/.rabetbase.json`；否则若该名在**项目** `apps` 中 → 写项目；若仅出现在**全局** `apps` → 写全局。
 

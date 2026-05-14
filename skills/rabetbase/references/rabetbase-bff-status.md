@@ -27,10 +27,11 @@ rabetbase bff status --remote --format json
 
 - `push` 前先看 `status`
 - `pull` 后再次看 `status`，确认是否回到 `unchanged`
+- `status` 只比较本地文件与 lock/远端同步状态，不检查脚本运行时语义；字段、返回值和 `context.client` 用法仍按 `backend-function.md` 自检
 - 多应用项目建议带 `--app` 或 `--appcode`
 
 ## 参考
 
 - [SKILL.md](../SKILL.md)
 - [conflict-detection.md](../guides/conflict-detection.md)
-
+- [backend-function.md](../guides/backend-function.md)

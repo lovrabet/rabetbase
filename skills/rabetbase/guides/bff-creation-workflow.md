@@ -1,6 +1,6 @@
 # BFF 工作流规则
 
-前置知识：`backend-function.md`
+前置知识：`backend-function.md`、`data-api-guidelines.md`
 
 ## 核心原则
 
@@ -13,13 +13,25 @@
 ```
 
 ### 0. 速查公共函数
-执行 `rabetbase bff list --format json`（type=COMMON）查看已有公共函数。如有可复用的工具函数，在后续脚本中直接 import，避免重复实现。
+执行 `rabetbase bff list --type COMMON --format json` 查看已有公共函数。如有可复用的工具函数，先用 `rabetbase bff detail --id <id> --format json` 确认入参、返回值和副作用，避免按名称猜测。
 
 ### 1. 确认需求
 写码前必须明确：类型（ENDPOINT/HOOK/COMMON）、函数名、入参、返回结构、涉及的数据集。缺失则先问用户。
 
 ### 2. 校验字段
-执行 `rabetbase dataset detail --code <数据集编码> --format json` 确认字段名、类型、枚举值、关联关系。禁止凭经验猜字段名。
+执行 `rabetbase dataset detail --code <数据集编码> --format json`（或 `compress`）确认字段名、类型、必填字段、枚举值、关联关系。禁止凭经验猜字段名，禁止把 Demo 或历史案例里的字段、表名、枚举值复制到当前脚本。
+
+常用字段投影：
+
+```bash
+rabetbase dataset detail --code <数据集编码> --format compress \
+  --jq '.data.fields[] | {name, displayName, type, required, options}'
+```
+
+写入前必须确认：
+* 业务必填字段：`data.fields[].required === true`，平台自动维护字段除外
+* 枚举/选择字段：写入 `options[].value`，不要写展示用 `label`
+* 外键字段：从 `data.relations[]` 或 `dataset links` 确认真实关系
 
 ### 3. 查平台（按需）
 * 新建 → 跳过
@@ -35,7 +47,12 @@
 ### 5. 自检
 * 方法名正确
 * 单条查询用 `getOne`
+* BFF 模型键使用 `"dataset_" + 32 位数据集 code`
+* `filter()` 结果从 `.tableData` 读取，不是 `.list`
+* `create()` 返回新记录 ID，不是完整对象；不要访问 `created.id`
+* 枚举/选择字段写入 `options[].value`，不是展示 `label`
 * BFF 中 `sql.execute` 返回数组，不是 `{ execSuccess, execResult }`
+* 没有在 BFF 中使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
 * 参数校验、错误处理、脱敏
 
 ### 6. 检查本地状态
@@ -99,4 +116,8 @@ lovrabet bff exec --name <functionName> --params '<json>' --format compress
 | 场景 | 前端 SDK | BFF (context.client) |
 |------|---------|---------------------|
 | SQL 返回值 | `{ execSuccess, execResult }` | 直接返回数组 |
+| 模型键 | 可通过初始化/生成代码使用 alias | 使用 `"dataset_" + 32 位数据集 code` |
+| `filter()` 返回 | `tableData` 为列表数据 | `tableData` 为列表数据，不是 `list` |
+| `create()` 返回 | 以 SDK 文档/类型为准 | 新记录 ID，不是完整对象 |
+| SDK 初始化能力 | `createClient` / `registerModels` | 不可用；`context.client` 由平台注入 |
 | 前端调 BFF | `client.bff.execute({ scriptName, params })` 返回业务数据 | — |

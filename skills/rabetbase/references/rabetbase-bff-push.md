@@ -36,6 +36,16 @@ rabetbase bff push --yes --type HOOK --name beforeFilter --format json
 
 `--dry-run` 时返回预览对象，包含本地 `filePath`、目标模式（`create` / `update`）和预期状态（如 `unchanged` / `would_push`）。
 
+## 推送前检查
+
+`bff push` 负责同步脚本，不等价于业务逻辑验证。推送前按 [`backend-function.md`](../guides/backend-function.md) 自检，尤其确认：
+
+- 数据集模型键使用 `"dataset_" + 32 位数据集 code`
+- 写入字段、必填字段、枚举 `options[].value` 来自当前 `dataset detail`
+- `filter()` 结果从 `.tableData` 读取
+- `create()` 返回新记录 ID，不访问 `created.id`
+- BFF 中没有使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
+
 ## 提示
 
 - 推送前先跑 `bff status`
@@ -49,4 +59,5 @@ rabetbase bff push --yes --type HOOK --name beforeFilter --format json
 
 - [SKILL.md](../SKILL.md)
 - [bff-creation-workflow.md](../guides/bff-creation-workflow.md)
+- [backend-function.md](../guides/backend-function.md)
 - [conflict-detection.md](../guides/conflict-detection.md)

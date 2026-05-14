@@ -1,6 +1,6 @@
 # dataset list
 
-列出当前 App 下所有 Dataset，支持服务端过滤。返回**精简列表**（每行含 `id`、`name`、`code`、`db`、`table`、`fields` 字段名列表等）；单数据集的完整结构请用 **`dataset detail`**。
+列出当前 App 下所有 Dataset，支持服务端过滤。返回**精简列表**（每行含 `id`、`name`、`code`、`db`、`table` 等；若列表接口提供字段摘要，也会透出 `fields` 字段名列表）。单数据集的完整结构请用 **`dataset detail`**。
 
 ## 命令
 
@@ -22,7 +22,7 @@ rabetbase dataset list --format table
 
 ## 输出
 
-默认返回精简列表（`id`, `name`, `code`, `description`, `source`, `db`, `table`, `datasetKey`, `pk`, `fields` 为字段名字符串数组）。需要完整字段定义、操作、关联页等请执行 `rabetbase dataset detail --code …`。
+默认返回精简列表（`id`, `name`, `code`, `description`, `source`, `db`, `table`, `datasetKey`, `pk`，以及列表接口提供时的 `fields` 字段名字符串数组）。`dataset list` 不隐式调用详情接口，`fields` 为空是符合预期的轻量列表行为。需要完整字段定义、操作、关联页等请执行 `rabetbase dataset detail --code …`。
 
 ## 提示
 
