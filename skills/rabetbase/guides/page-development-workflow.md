@@ -64,15 +64,15 @@ rabetbase dataset links --format json
   - 用 [`page generate-start`](../references/rabetbase-page-generate-start.md)
 - **已有未删除关联页** → 用 [`page sync`](../references/rabetbase-page-sync.md)
 
-推荐先做预演：
+推荐先做预演（`generate-start` 默认就是预演，必须显式 `--apply` 才提交）：
 
 ```bash
 rabetbase page standard-page-status --datasetcode <datasetCode> --format json
-rabetbase page generate-start --datasetcode <datasetCode> --dry-run --format json
+rabetbase page generate-start --datasetcode <datasetCode> --format json
 rabetbase page sync --datasetcode <datasetCode> --dry-run --format json
 ```
 
-不要在已有页面时继续强行 `generate-start`，也不要在完全没页时直接 `sync`。
+不要在已有页面时继续强行 `generate-start --apply`，也不要在完全没页时直接 `sync`。
 
 ### 4. 拉取页面 schema 到本地
 
@@ -135,7 +135,7 @@ rabetbase page push --datasetcode <datasetCode> --version-tag <tag> --format jso
 ### A. 首次补齐智能列表页
 
 ```text
-dataset detail → standard-page-status → page generate-start --dry-run → page generate-start → page generate-status → page standard-page-status
+dataset detail → standard-page-status → page generate-start（默认预览） → page generate-start --apply → page generate-status → page standard-page-status
 ```
 
 适用于：

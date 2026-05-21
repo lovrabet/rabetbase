@@ -113,7 +113,7 @@ rabetbase app remove product --yes
 | `format` | string | — | 默认输出格式。可选值：`json`、`pretty`、`compress`。不设则命令默认 `compress` |
 | `pageSize` | number | — | 默认分页大小，用于 `sql list` 等分页命令 |
 | `riskLevel` | string | `"high-risk-write"` | 允许执行的最高风险等级。可选值：`read`、`write`、`high-risk-write`。兼容旧名 `maxRisk` |
-| `inherit` | boolean | `true` | 为 `false` 时当前项目**不合并** `~/.rabetbase.json`（仅用本目录配置文件，避免全局登记的 `apps`/cookie 等干扰）。省略或 `true` 为默认合并行为 |
+| `inherit` | boolean | 省略 | 配置继承模式。**省略**（默认）：项目主导，仅从全局白名单继承 cookie/accessKey/locale/format/riskLevel/pageSize，不继承 apps/defaultApp/appcode。**`true`**：全量合并全局+项目（旧行为，需显式开启）。**`false`**：完全隔离，不继承任何全局字段 |
 | `apiDir` | string | `"./src/api"` | `api pull` 生成代码的输出目录 |
 | `template_base_url` | string | 平台默认 CDN | 模板 CDN 基础 URL，一般无需修改 |
 | `defaultApp` | string | — | 多应用模式下的默认应用名称 |
@@ -177,10 +177,13 @@ CLI flag (--appcode, --env, --format, --app ...)
 | 项目级 | `process.cwd()` | `.rabetbase.json` > `.lovrabet.json` > `.lovrabetrc` |
 | 全局级 | `~`（用户 HOME） | 同上 |
 
-合并策略：
-- 标量字段：项目级覆盖全局级
-- `apps`：深度合并，项目级同名 app 覆盖全局级同名 app，其余保留
-- `defaultApp`：仅当项目级显式声明时才覆盖全局级
+合并策略由项目级 `inherit` 字段控制（三态）：
+
+- **省略 `inherit`（默认，项目主导）**：项目级配置自给自足；仅从全局白名单继承 `cookie`、`accessKey`、`locale`、`format`、`riskLevel`、`pageSize`，**不继承** `apps` / `defaultApp` / `appcode` / `env` 等业务字段。项目级显式声明的字段覆盖全局白名单。
+- **`inherit: true`（显式全量合并）**：标量字段项目级覆盖全局级；`apps` 深度合并（项目同名覆盖全局同名，其余保留）；`defaultApp` 仅当项目级显式声明时才覆盖全局级。等价于历史默认行为，需要跨项目共享全局 `apps` 时显式开启。
+- **`inherit: false`（完全隔离）**：忽略全局配置，仅使用项目级字段；适用于强隔离场景（如多客户）。
+
+> **为什么默认改成项目主导**：避免 `~/.lovrabet.json` 中的 `defaultApp` / `apps` 在用户进入空白目录或新项目时被无声继承（曾导致 menu update 误改其他应用资源）。`api list` / `api pull` / `app list` 仍可通过 `--global` 显式查看合并视图。
 
 ## 示例
 

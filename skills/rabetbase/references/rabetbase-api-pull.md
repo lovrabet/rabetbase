@@ -37,16 +37,18 @@ rabetbase api pull --appcode app-order-001
 - **加 `--app <name>`**：仅拉取指定应用
 - **加 `--appcode <code>`**：反查到对应 app profile，使用其 cookie/env/apiDir
 
-## 与 `inherit: false` 的关系
+## 与 `inherit` 的关系
 
-项目 `.rabetbase.json` 顶层若设置 **`"inherit": false`**，表示**不合并** `~/.rabetbase.json`（仅用当前目录配置文件）。
+项目 `.rabetbase.json` 的 `inherit` 字段控制配置合并行为：
+
+- **省略**（默认）：项目主导，仅从全局白名单继承 cookie/accessKey/locale/format/riskLevel/pageSize，不继承 apps/defaultApp/appcode。`--global` 仍可看到全局 apps（多应用列表从双层直接取）。
+- **`true`**：全量合并全局+项目（旧行为，需显式开启）。
+- **`false`**：完全隔离，不继承任何全局字段。
 
 此时：
 
-- **`api pull` 使用的 cookie、apiDir、appcode 等**均来自**项目文件**，不会混入全局。
-- **`--global` 不会「绕过」`inherit`**：多应用解析走的合并结果与 `readRawConfig()` 一致，在 `inherit: false` 下**仍然只有项目里的 `apps`**，与不加 `--global` 时相同；加 `--global` 并不能把全局已登记的应用再合并进来。
-
-若需要临时拉全局里的应用，应去掉项目里的 `inherit: false`，或把对应 app 写进项目配置。
+- **`api pull` 使用的 cookie、apiDir、appcode 等**均来自**项目文件**（默认行为下 cookie/accessKey 仍可从全局白名单继承）。
+- **`--global` 多应用列表**始终从全局+项目双层取 apps，不受 inherit 限制。
 
 ## 风险等级
 

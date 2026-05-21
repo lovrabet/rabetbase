@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.1.9
+version: 2.1.12-beta.4
 description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset field-update、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
@@ -63,6 +63,10 @@ metadata:
    - 数据集字段变更后同步已有智能列表页：[`page sync`](references/rabetbase-page-sync.md)
    - 本地 schema 开发：[`page pull`](references/rabetbase-page-pull.md) → IDE 编辑 → [`page push`](references/rabetbase-page-push.md)
    - 需要理解 formal schema 组件语义时，再按需阅读 `knowledge/page-schema/` 下的 PageSchema 组件资料；不要把它与 `rabetbase page` 命令 reference 混淆
+6. **Legacy modernization / Application Blueprint 工作流**
+   - 当用户要把无人交接老项目、外包接手项目或遗留系统翻新到 Lovrabet 体系时，先阅读 [`guides/legacy-application-blueprint-workflow.md`](guides/legacy-application-blueprint-workflow.md)
+   - 主产物是 `.rabetbase/blueprint/<appCode>/application-blueprint.md`，不是直接生成或推送 SQL/BFF
+   - 必须把老代码 Logic Graph 与 dbagent 已生成的 Dataset / Links 绑定，再判断 Instant API、Custom SQL、BFF、Hook、COMMON 或 Java Service 落点
 
 ## 应用决议指引
 
@@ -199,6 +203,7 @@ const result = await client.bff.execute<DashboardData>({
 | 初始化项目 | [`rabetbase init`](references/rabetbase-init.md) | 智能检测旧配置，支持 `--appcode` 非交互；**不加 `--global`** |
 | 创建新项目 | [`rabetbase project create`](references/rabetbase-project-create.md) | 支持 `--name` + `--appcode` 非交互 |
 | 从 lovrabet-cli 迁移 | [`rabetbase project upgrade`](references/rabetbase-project-upgrade.md) | 6 步自动迁移，`--yes` 跳过确认 |
+| 老项目翻新蓝图 / Legacy Application Blueprint | [`guides/legacy-application-blueprint-workflow.md`](guides/legacy-application-blueprint-workflow.md) | 先输出 `.rabetbase/blueprint/<appCode>/application-blueprint.md`，把老代码逻辑与 Dataset / Links 绑定后再生成迁移 Backlog |
 | 运行 package.json 脚本 | [`rabetbase run <script>`](references/rabetbase-run.md) | 自动检测包管理器，`start`/`dev` 前做版本检查 |
 | 安装 / 重装 / 刷新 skill 包 | [`rabetbase skill install`](references/rabetbase-skill-install.md) | 全局安装或刷新 rabetbase skill；发现本地 skill 过期时优先执行 |
 | 退出登录 | [`rabetbase auth logout`](references/rabetbase-auth-logout.md) | 删除本地认证 cookie |
@@ -209,7 +214,7 @@ const result = await client.bff.execute<DashboardData>({
 | 修改配置文件 | [`rabetbase config set <key> <value>`](references/rabetbase-config.md) | 默认写项目；无项目配置且未 `--global` 会拒绝；`--global` 写 `~/.rabetbase.json` |
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
 | 同步菜单到平台 | [`rabetbase menu sync`](references/rabetbase-menu-sync.md) | 本地页面 → 平台菜单，支持交互/静默 |
-| 更新菜单 CDN URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 批量更新线上菜单资源地址 |
+| 更新菜单 CDN URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 高风险写入；先 `--dry-run` 看资源 diff，部分替换用 `--mode patch` |
 | 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 服务端模糊匹配；也可 `--code` 精确查 |
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
 | 安全更新 Dataset 原始字段对象 | [`rabetbase dataset field-update`](references/rabetbase-dataset-field-update.md) | 只允许 patch 已知可变业务配置字段；必须先 `--dry-run`，用 `--expect-json` 防漂移 |
@@ -287,7 +292,7 @@ const result = await client.bff.execute<DashboardData>({
 |------|------|---------|
 | `read` | 只读查询，随时可执行 | 直接执行 |
 | `write` | 修改数据，如 `sql pull` | 先 `--dry-run` 预览，再正式执行 |
-| `high-risk-write` | 影响运行时行为，如 `sql create` / `sql push` / `sql delete` / `bff push` / `bff delete` | 必须 `--yes` 确认或交互确认；CI 模式强制 `--yes` |
+| `high-risk-write` | 影响运行时行为，如 `menu update` / `sql create` / `sql push` / `sql delete` / `bff push` / `bff delete` | 必须 `--yes` 确认或交互确认；CI 模式强制 `--yes` |
 
 `sql validate` 仍是 SQL 内容校验入口；`sql save` 已废弃，不再作为推荐写入路径。
 
