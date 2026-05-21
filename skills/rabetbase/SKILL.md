@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.1.12
+version: 2.1.13
 description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset field-update、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
