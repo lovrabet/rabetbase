@@ -13,15 +13,8 @@ rabetbase dataset field-update \
   --field assignee_id \
   --patch-json '{"doType":"USER"}' \
   --expect-json '{"doType":"TEXT"}' \
-  --dry-run
-
-rabetbase dataset field-update \
-  --appcode app-64e32817 \
-  --db project_management \
-  --table requirements \
-  --field assignee_id \
-  --patch-json '{"doType":"USER","required":true}' \
-  --dry-run
+  --dry-run \
+  --format compress
 ```
 
 ## 参数
@@ -29,9 +22,7 @@ rabetbase dataset field-update \
 | Flag | 必填 | 说明 |
 |------|------|------|
 | `--appcode <code>` | 否 | 目标应用编码；未配置默认 app 时必填 |
-| `--code <code>` | 与 `--db + --table` 二选一 | Dataset code，已知时优先使用 |
-| `--db <name\|id>` | 与 `--code` 二选一 | 数据库名称或 dblink ID；配合 `--table` 解析 Dataset |
-| `--table <table>` | 与 `--code` 二选一 | 物理表名；配合 `--db` 解析 Dataset |
+| `--code <code>` | 是 | Dataset code，32 位 hex UUID |
 | `--field <name>` | 是 | 精确匹配原始 `fields[].name` |
 | `--patch-json <json>` | 是 | JSON 对象 patch；对象深度合并，数组/标量整体替换 |
 | `--expect-json <json>` | 否 | 当前值保护；任一键不匹配即中止且不写入 |
@@ -69,6 +60,9 @@ rabetbase dataset field-update \
 {
   "protocol": "dataset-field-update.v1",
   "appCode": "app-64e32817",
+  "selector": {
+    "code": "1a90dbff5f094a9a89936fa99b10984c"
+  },
   "dataset": {
     "id": 1010859,
     "code": "1a90dbff5f094a9a89936fa99b10984c",
@@ -103,6 +97,7 @@ rabetbase dataset field-update \
 ## 操作边界
 
 - 命令读取平台 `get-driven-data` 原始结构，按 `fields[].name` 精确定位字段。
+- 命令只使用 `--code` 定位 Dataset，保持 AI First 协议标识清晰且可复现。
 - 非 `--dry-run` 且确有变化时，命令通过 `/smartapi/dataset/update-driven-data` 提交完整 driven data。
 - V2 后端保存链路会触发关联页面更新；CLI 不额外调用 `rabetbase page sync`。
 - 页面仍未生效时，再按页面状态单独处理 `page sync`、页面保存或发布。

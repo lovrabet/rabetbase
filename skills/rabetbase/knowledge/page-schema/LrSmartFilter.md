@@ -25,9 +25,9 @@ tags: [filter, page-schema, where, initialValue]
 |------|------|------|
 | _doVersion | string | 数据集版本标识，必须保留原值（如 `"V2"`），不可删除或修改 |
 | items | Item[] | 筛选项配置 |
-| layoutMode | string | 布局模式：`inline` / `vertical` |
-| cols | number | 每行显示数量（inline 模式） |
 | events | Event[] | 事件配置（onSearch 等） |
+
+> 运行时约束：`LrSmartFilter` 不消费 `layoutMode` / `cols`，PageSchema 中不要生成这两个字段。
 
 ---
 
@@ -56,7 +56,7 @@ arrayName = `filterItems`，字段必须存在于数据集（先 dataset_detail_
 | 属性 | 渲染 | 参与提交 | 用途 |
 |------|:----:|:-------:|------|
 | `isShown: false` | ❌ | ❌ | 完全不渲染，等同于不存在 |
-| `hidden: true` | ❌ | ✅ | 隐藏但仍提交值（antd Form.Item 规范） |
+| `hidden: true` | ❌ | ❌ | Filter 中会被跳过，不参与 where |
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
@@ -64,15 +64,15 @@ arrayName = `filterItems`，字段必须存在于数据集（先 dataset_detail_
 | label | string | 标签 |
 | name | string | 字段名，支持 `relation.field` |
 | placeholder | string | 占位符 |
-| initialValue | any | 默认值（与 antd Form.Item initialValue 一致），同时作为首次 API 请求 where 条件的数据源 |
+| initialValue | any | 默认值（与 Ant Design 5 Form.Item initialValue 一致），同时作为首次 API 请求 where 条件的数据源 |
 | options | array | 选项列表（Select/Cascader） |
 | showSearch | boolean | 可搜索（Select） |
 | filterOption | boolean | 本地过滤（远程搜索时设 false） |
-| events | object | 事件配置 |
+| events | object | 禁止默认生成；当前运行时不消费字段级 `events` |
 
 ### 组件类型
 
-筛选项可用的 `componentName`、平台专属组件、数据格式与动态选项约束，统一参考 `field-components.md`。本文档仅补充 Filter 场景特有的 options 数据配置、关联字段引用和与 Table 的联动方式。
+筛选项可用的 `componentName`、字段组件选型规则、数据格式与动态选项约束，统一参考 `field-components.md`。本文档仅补充 Filter 场景特有的 options 数据配置、关联字段引用和与 Table 的联动方式。
 
 ---
 
@@ -95,16 +95,18 @@ arrayName = `filterItems`，字段必须存在于数据集（先 dataset_detail_
 
 ### 方式 2：动态选项（关联表数据）
 
-- **机制**：options 数据来自关联表，需两步配置：Page 层请求数据 → 筛选项绑定 state。state key 必须与 dataSource id 一致
+- **机制**：options 数据来自关联表，需两步配置：Page 层请求 To 表 options 数据 → 筛选项绑定 state。state key 必须与 dataSource id 一致
 - **参数**：
 
 | Placeholder | Value Source | Description |
 |-------------|--------------|-------------|
-| `<fieldName>_options` | Field name + `_options` suffix | dataSource id, must match state key |
+| `<FromDatasetCode>_<FromRelationField>_options` | From 表字段所属 datasetCode + From 表关联字段名 + `_options` suffix | dataSource id, must match state key |
 | `<appCode>` | Application code | From current app config |
-| `<datasetCode>` | Related dataset code | From dataset relations |
-| `<valueField>` | Related table value field | Usually `id` or `code` |
-| `<labelField>` | Related table display field | Usually `name` or `title` |
+| `<ToDatasetCode>` | To 表 datasetCode | From dataset relations |
+| `<ToValueField>` | To 表被关联字段 | Usually `id` or `code` |
+| `<ToLabelField>` | To 表展示字段 | Usually `name` / `title` / location field |
+
+> 自关联父子关系中，`FromDatasetCode` 与 `ToDatasetCode` 可以相同；state key 仍按 `<FromDatasetCode>_<FromRelationField>_options` 命名，URI 仍使用 To 侧 options 数据源。
 
 - **示例**：
 
@@ -114,12 +116,13 @@ arrayName = `filterItems`，字段必须存在于数据集（先 dataset_detail_
 {
   "dataSource": {
     "list": [{
-      "id": "<fieldName>_options",
+      "id": "<FromDatasetCode>_<FromRelationField>_options",
       "type": "fetch",
       "isInit": true,
+      "source": "dataset",
       "options": {
-        "uri": "/api/<appCode>/<datasetCode>/getSelectOptions",
-        "params": {"code": "<valueField>", "label": "<labelField>"}
+        "uri": "/api/<appCode>/<ToDatasetCode>/getSelectOptions",
+        "params": {"code": "<ToValueField>", "label": "<ToLabelField>"}
       }
     }]
   }
@@ -132,13 +135,15 @@ arrayName = `filterItems`，字段必须存在于数据集（先 dataset_detail_
 {
   "componentName": "YtSingleSelect",
   "label": "<filterLabel>",
-  "name": "<fieldName>",
+  "name": "<FromRelationField>",
   "options": {
     "type": "JSExpression",
-    "value": "this.state.<fieldName>_options"
+    "value": "this.state.<FromDatasetCode>_<FromRelationField>_options"
   }
 }
 ```
+
+> `getSelectOptions` 禁止使用 `optionsRequest`。即使字段级请求技术上能访问完整接口，也会把筛选项耦合到具体域名或部署环境；Agent 必须使用 Page 层 `dataSource.list` 的相对 URI，并通过 `this.state.<FromDatasetCode>_<FromRelationField>_options` 绑定。`optionsRequest` 仅用于三方链接、外部接口或外部静态资源 options。
 
 ---
 
@@ -153,7 +158,14 @@ where 条件配置分两个生命周期阶段。
 | 初始化 | `initialValue` | 页面首次加载时的默认筛选条件，写入 filter state → where |
 | 交互 | 用户选择/输入筛选项 | onValuesChange / onSearch 更新 filter state → where |
 
-`initialValue` 是首次 where 条件的唯一数据源。组件初始化时通过 useLayoutEffect 将 initialValue 写入 `context.state[filterKey]`，确保首次 datasource.load() 的 JSExpression 求值能读到 where 条件。不配置 initialValue 的筛选项不参与首次 where。
+`initialValue` 是首次 where 条件的唯一数据源。组件初始化时会将默认筛选值合并为 `initialValues`，再写入 `context.state[filterKey]`，确保首次 datasource.load() 的 JSExpression 求值能读到 where 条件。不配置 initialValue 的筛选项不参与首次 where。
+
+维护说明：
+
+- `LrSmartFilter` 会将 `items[].initialValue/defaultValue` 合并到顶层 `initialValues` 后进入运行时筛选逻辑。
+- 顶层 `initialValues` 优先级高于 `items[].initialValue/defaultValue`。
+- `initialValues` 与 `defaultValue` 不应同时生成；常规默认筛选条件优先使用 `items[].initialValue`。
+- 常规新增/更新筛选默认值时，优先维护对应 `items[].initialValue`；只有批量初始化或已有 schema 已使用顶层 `initialValues` 时，才维护顶层 `initialValues`。
 
 ### 参数
 
@@ -162,10 +174,10 @@ where 条件配置分两个生命周期阶段。
 | `items[].initialValue` | `context.state[filterKey].where.$and` | Auto-converted on component initialization |
 | YtSingleSelect initialValue | `{ fieldName: { $eq: value } }` | Single select → $eq |
 | YtMultiSelect initialValue | `{ fieldName: { $in: [...] } }` | Multi-select array → $in |
-| YtRangeDatePicker initialValue | `{ fieldName: { $gte: start, $lte: end } }` | Date range → interval condition |
-| YtUserSelect initialValue | `{ fieldName: { $in: ["value1", "value2", ...] } }` | User selector → $in, supports both single and multi-select |
+| YtRangeDatePicker initialValue | `{ fieldName: { $between: [start, end] } }` | Date range → `$between` |
+| YtUserSelect initialValue | `{ fieldName: { $in: ["value1", "value2", ...] } }` | User selector → `$in`，值必须是数组 |
 
-> **YtUserSelect 存储规范**：业务字段（YtUserSelect 录入）存储为数组（`["80"]` / `["80","81"]`），系统字段（creator_id / updater_id）存储为字符串（`"80"`）。但在 LrSmartFilter 中，只要使用 YtUserSelect 组件，查询时统一使用 `$in`，服务端兼容两种存储格式。
+> **YtUserSelect 查询规范**：业务字段存储可为数组，系统字段存储可为字符串；但在 `LrSmartFilter` 中，`YtUserSelect` 查询值必须是数组，如 `["80"]`，运行时只对数组值生成 `$in`。
 
 ### 示例
 
@@ -185,10 +197,10 @@ where 条件配置分两个生命周期阶段。
 
 ## events 与上下文
 
-- 通用事件签名、常用 `context` 方法、按钮 `optType + options` 协议：统一参考 `syntax-reference.md`
-- Filter 场景额外关注：
-  - `onSearch` 用于触发表格或其他消费 filter 接口的数据源刷新
-  - `context` 常用于筛选项显隐、选项更新和值联动
+- 宿主级事件、按钮 `optType + options` 协议：统一参考 `syntax-reference.md`
+- Filter 场景只生成宿主级 `onSearch`，用于触发表格或其他消费 filter 接口的数据源刷新。
+- Filter 没有 `fieldReactions`。当前运行时不消费筛选项字段级 `events.onChange` / `events.onMount`，也没有字段级 context 联动方法。Agent 不应生成筛选项显隐、选项更新和值联动类字段级 events。
+- `LrSmartFilter` 不生成筛选项之间的实时动态联动。筛选项展示由静态 `items`、`hidden`、`isShown` 决定；筛选值变化后的数据刷新只通过宿主级 `onSearch` 完成。
 
 ---
 
@@ -426,18 +438,13 @@ function render(props) {
 
 ### 条件显隐
 
-通过 onChange 事件调用 `context.setFieldVisible()` 控制其他筛选项显隐。
+`LrSmartFilter` 目前不支持筛选项之间的实时字段联动。`hidden` / `isShown` 只作为静态渲染控制：`hidden: true` 或 `isShown: false` 的筛选项不会渲染，也不会参与 where 条件。
 
-```json
-{
-  "events": {
-    "onChange": {
-      "type": "JSFunction",
-      "value": "(value, context) => {\n  context.setFieldVisible('company_name', value === 'enterprise');\n  context.setFieldVisible('contact_person', value !== 'enterprise');\n}"
-    }
-  }
-}
-```
+Agent 规则：
+
+- 不为 `LrSmartFilter.items[]` 生成字段级 `events.onChange` / `events.onMount`。
+- 不生成 `fieldReactions`，该能力只用于 Form。
+- 需要搜索时生成宿主级 `events.onSearch`，让 filter state 刷新后触发表格数据源请求。
 
 ---
 
@@ -445,9 +452,9 @@ function render(props) {
 
 | 问题 | 原因 | 解决方案 |
 |------|------|----------|
-| 筛选项不显示 | `hidden: true` | 设置 `hidden: false` |
-| 选项列表为空 | options 未配置 | 配置 options 或 onMount 加载 |
-| 联动不生效 | onChange 配置错误 | 使用 JSFunction 类型 |
+| 筛选项不显示 | `hidden: true` 或 `isShown: false` | 设置静态 `isShown: true`，不要生成字段级联动 |
+| 选项列表为空 | options 未配置 | 配置静态 options，或按标准方案配置 Page 层 getSelectOptions + state 绑定 |
+| 联动不生效 | 字段级 events 未被消费 | 不生成 Filter 字段级联动 schema |
 | 远程搜索不生效 | filterOption 未禁用 | 设置 `filterOption: false` |
 | 默认值不生效 | initialValue 未配置 | 在对应 item 上配置 `initialValue` |
 
@@ -460,8 +467,6 @@ function render(props) {
   "componentName": "LrSmartFilter",
   "props": {
     "_doVersion": "V2",
-    "layoutMode": "inline",
-    "cols": 3,
     "items": [
       {"componentName": "YtInput", "label": "客户名称", "name": "customer_name", "placeholder": "请输入"},
       {"componentName": "YtSingleSelect", "label": "客户状态", "name": "status", "initialValue": 1, "options": [{"label": "活跃", "value": 1}, {"label": "流失", "value": 0}]},

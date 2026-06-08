@@ -14,20 +14,20 @@ tags: [jsx, custom-component, page-schema]
 
 | 禁止 | 替代方案/说明 |
 |------|---------------|
-| 直接修改 `_context.state` | 使用 `_context.setState()` 方法 |
+| 直接修改页面 state 对象 | 使用 `props.env.setState()` 方法 |
 | 在标准组件能满足需求时使用 | 优先使用 LrSmartTable、LrSmartFilter 等标准组件 |
 
 ---
 
 ## 机制
 
-`render` 只写 `source`，不写编译后的 `value`。`source` 会被编译成 React 组件，组件收到的入参是 `props`，页面上下文在 `props.env`。
+`render` 只写 `source`，不写编译后的 `value`。`source` 按 React 组件源码编写，固定使用 `function render(props)`；页面上下文从 `props.env` 读取。Agent 只维护 `source`。
 
 推荐固定写法：
 
 ```jsx
 function render(props) {
-  const _context = props.env;
+  const env = props.env;
   // 业务逻辑
   return <div />;
 }
@@ -45,10 +45,8 @@ function render(props) {
 |------|------|------|
 | `props.render.type` | 是 | 固定为 `JSFunction` |
 | `props.render.source` | 是 | JSX 源码 |
-| `props._context` | 是 | 固定为 `{"type": "JSExpression", "value": "this"}` |
-| `props._uniqueId` | 否 | 组件唯一标识 |
 
-### 运行时参数
+### source 可用参数
 
 | 参数 | 说明 |
 |------|------|
@@ -85,14 +83,14 @@ import React from 'react';
 import { Button } from 'antd';
 
 function render(props) {
-  const _context = props.env;
+  const env = props.env;
   const stateKey = '<stateKey>';
   const dataSourceId = '<dataSourceId>';
 
   const handleClick = () => {
-    _context.setState({ [stateKey]: <value> });
+    env.setState({ [stateKey]: <value> });
     setTimeout(() => {
-      _context.dataSourceMap?.[dataSourceId]?.load();
+      env.dataSourceMap?.[dataSourceId]?.load();
     }, 0);
   };
 
@@ -116,7 +114,6 @@ function render(props) {
 
 | 要点 | 说明 |
 |------|------|
-| `_context` 必须配置 | 否则 `props.env` 缺失 |
 | 只需提供 `source` | `value` 由系统自动生成 |
-| source 中访问上下文 | 使用 `props.env` |
+| source 中访问上下文 | 使用 `props.env`；不要手写编译后的函数参数 |
 | `setState` 触发刷新的前提 | 数据源 params 必须绑定 `this.state.xxx` |

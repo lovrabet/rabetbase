@@ -27,7 +27,7 @@ tags: [detail, page-schema, dataSource, isSync]
 | `preview` | boolean | 固定 `true` |
 | `title` | string | 引用表区域标题（主表不需要） |
 
-> `_doVersion`、`_context`、`_uniqueId`、`ref`、`items` 与 LrSmartCreate 一致，不再赘述。
+> 通用表单项配置与 `LrSmartCreate` 一致；本页只补充详情页数据绑定与引用表依赖链。
 
 ## 4. 运行机制
 

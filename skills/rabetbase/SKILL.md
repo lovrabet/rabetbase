@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.1.13
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset field-update、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
+version: 2.1.14
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset rename、dataset field-update、dataset extend-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -217,10 +217,12 @@ const result = await client.bff.execute<DashboardData>({
 | 更新菜单 CDN URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 高风险写入；先 `--dry-run` 看资源 diff，部分替换用 `--mode patch` |
 | 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 服务端模糊匹配；也可 `--code` 精确查 |
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
-| 安全更新 Dataset 原始字段对象 | [`rabetbase dataset field-update`](references/rabetbase-dataset-field-update.md) | 只允许 patch 已知可变业务配置字段；必须先 `--dry-run`，用 `--expect-json` 防漂移 |
+| 修改 Dataset 展示名 | [`rabetbase dataset rename`](references/rabetbase-dataset-rename.md) | 只更新 Dataset 展示名；必须先 `--dry-run`，用 `--expect-name` 防漂移 |
+| 安全更新 Dataset 原始字段对象 | [`rabetbase dataset field-update`](references/rabetbase-dataset-field-update.md) | 使用 `--code` 定位 Dataset，只允许 patch 已知可变业务配置字段；必须先 `--dry-run`，用 `--expect-json` 防漂移 |
+| 安全更新 Dataset 顶层 extend | [`rabetbase dataset extend-update`](references/rabetbase-dataset-extend-update.md) | 只修改 Dataset 顶层 `extend`，第一版只允许 `businessGroup`；必须先 `--dry-run`，用 `--expect-json` 防漂移 |
 | 查看 Dataset 操作定义 | [`rabetbase dataset operations --code xxx`](references/rabetbase-dataset-operations.md) | 获取 filter/getOne/create 等参数定义 |
 | 查看数据模型关系 | [`rabetbase dataset links`](references/rabetbase-dataset-links.md) | 跨表 JOIN 关系图 |
-| 管理单条数据模型关系 | [`rabetbase dataset link-create/update/delete`](references/rabetbase-dataset-link-mutations.md) | 单条 ER 关系写入；先 `links` 确认 `fromTable/fromColumn/toTable/toColumn`，不要解析字符串 key |
+| 管理单条数据模型关系 | [`rabetbase dataset link-create/update/delete`](references/rabetbase-dataset-link-mutations.md) | 单条 ER 关系写入；DB_TABLE 先用 `links` 确认 `fromTable/fromColumn/toTable/toColumn`；METADATA 用 `links --from-source METADATA` 确认 `fromCode/toCode` |
 | 首次生成智能列表页 | [`rabetbase page generate-start --datasetcode <code>`](references/rabetbase-page-generate-start.md) | 提交或复用服务端异步任务 |
 | 查询智能列表页生成任务状态 | [`rabetbase page generate-status --datasetcode <code> --operation-id <id>`](references/rabetbase-page-generate-status.md) | 查询 job 状态，支持 `operationId` / `clientOperationId` |
 | 查询智能列表页事实快照 | [`rabetbase page standard-page-status --datasetcode <code>`](references/rabetbase-standard-page-status.md) | 查询智能列表页四件套、残留页与菜单事实 |
@@ -275,7 +277,7 @@ const result = await client.bff.execute<DashboardData>({
 | Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
 | Menu | [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) |
 | app commands | [`list`](references/rabetbase-app-list.md) / `remote` / [`use`](references/rabetbase-app-use.md) / [`add`](references/rabetbase-app-add.md) / [`remove`](references/rabetbase-app-remove.md) |
-| dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`links`](references/rabetbase-dataset-links.md) / [`link-create/update/delete`](references/rabetbase-dataset-link-mutations.md) |
+| dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`rename`](references/rabetbase-dataset-rename.md) / [`field-update`](references/rabetbase-dataset-field-update.md) / [`extend-update`](references/rabetbase-dataset-extend-update.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`links`](references/rabetbase-dataset-links.md) / [`link-create/update/delete`](references/rabetbase-dataset-link-mutations.md) |
 | page commands | [`generate-start`](references/rabetbase-page-generate-start.md) / [`generate-status`](references/rabetbase-page-generate-status.md) / [`standard-page-status`](references/rabetbase-standard-page-status.md) / [`sync`](references/rabetbase-page-sync.md) / [`pull`](references/rabetbase-page-pull.md) / [`push`](references/rabetbase-page-push.md) |
 | Database Connections (`db`) | [`list`](references/rabetbase-db-list.md) / [`detail`](references/rabetbase-db-detail.md) / [`create`](references/rabetbase-db-create.md) / [`update`](references/rabetbase-db-update.md) / [`delete`](references/rabetbase-db-delete.md) / [`test`](references/rabetbase-db-test.md) / [`analyze`](references/rabetbase-db-analyze.md) / [`tables`](references/rabetbase-db-tables.md) / [`diff`](references/rabetbase-db-diff.md) |
 | api commands | [`pull`](references/rabetbase-api-pull.md) / [`list`](references/rabetbase-api-list.md) |

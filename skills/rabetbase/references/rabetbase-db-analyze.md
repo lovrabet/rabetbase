@@ -45,7 +45,7 @@ rabetbase db analyze-status --id 10157 --plan <traceId> --format compress
 
 | 字段 | 用途 |
 |------|------|
-| `data.links.erPage` | 分析后引导用户打开 ER 图确认数据集关系 |
+| `data.links.erPage` | 分析后引导用户打开数据集关系页面确认数据集关系 |
 | `data.links.databasePage` | 引导用户打开数据库连接页 |
 
 当 `analyze-status` 返回的原始任务状态为 `SUCCESS` 或 `PARTIAL_SUCCESS` 时，应检查 `data.links.erPage`，并把该链接返回给用户，用于确认 ER 关系与数据集同步结果。若没有 `data.links`，通常是当前命令上下文没有解析到 appcode；重新传 `--appcode` 或在已配置 app 的项目中查询即可生成 ER 页面链接。

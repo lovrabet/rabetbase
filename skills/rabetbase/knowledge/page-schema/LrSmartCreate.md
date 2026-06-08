@@ -36,7 +36,7 @@ tags: [form, page-schema]
 | layoutMode | string | 布局：`multiple` / `inline` |
 | cols | number | 每行字段数（multiple 模式） |
 | valuesKey | string | 数据加载状态 key（Update/Detail） |
-| fieldReactions | string | 字段联动规则（函数字符串形式） |
+| fieldReactions | JSFunction（PageSchema 写法） | 表单型组件字段联动函数，返回“字段名 → 字段属性覆盖”对象 |
 
 ---
 
@@ -64,7 +64,7 @@ arrayName = `formItems`，字段必须存在于数据集（先 dataset_detail_to
 | 属性 | 渲染 | 参与提交 | 用途 |
 |------|:----:|:-------:|------|
 | `isShown: false` | ❌ | ❌ | 完全不渲染，等同于不存在 |
-| `hidden: true` | ❌ | ✅ | 隐藏但仍提交值（antd Form.Item 规范） |
+| `hidden: true` | ❌ | ✅ | 隐藏但仍提交值（Ant Design 5 Form.Item 规范） |
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
@@ -73,15 +73,15 @@ arrayName = `formItems`，字段必须存在于数据集（先 dataset_detail_to
 | indexType | string | 索引类型（`primary` / `unique` / `index`），系统自动生成，无需手动设置 |
 | componentName | string | 组件类型 |
 | formSpan | string | 占宽：`full` / `half` |
-| initialValue | any | 默认值（与 antd Form.Item initialValue 一致） |
+| initialValue | any | 默认值（与 Ant Design 5 Form.Item initialValue 一致） |
 | rules | Rule[] | 校验规则 |
 | options | array | 静态选项 |
-| events | object | 事件配置 |
+| events | object | 禁止默认生成；当前运行时不消费字段级 `events`，字段联动请使用 Form 顶层 `fieldReactions` |
 | readonly | boolean | 只读（Detail 默认 true） |
 
 ### 组件类型
 
-表单项可用的 `componentName`、平台专属组件、数据格式与动态选项约束，统一参考 `field-components.md`。本文档仅补充 Form 场景特有的模式、校验、提交与联动行为。
+表单项可用的 `componentName`、字段组件选型规则、数据格式与动态选项约束，统一参考 `field-components.md`。本文档仅补充 Form 场景特有的模式、校验、提交与联动行为。
 
 ### 校验规则
 
@@ -96,11 +96,25 @@ arrayName = `formItems`，字段必须存在于数据集（先 dataset_detail_to
 
 ## events 与上下文
 
-- 事件签名、通用 `context` 方法、按钮 `optType + options` 协议：统一参考 `syntax-reference.md`
+- 宿主级事件、按钮 `optType + options` 协议：统一参考 `syntax-reference.md`
+- 当前运行时不消费字段级 `events.onChange` / `events.onMount`，Agent 不应新增此类字段级事件 schema
+- 表单型组件字段联动使用组件 props 顶层 `fieldReactions`，不要写在 `items[]` 内
 - `form` 方法属于表单组件特有能力，集中在本页维护
-- Form 场景分工：
-  - 字段值读写使用 `form`
-  - 字段显隐、禁用、规则、选项等状态控制使用 `context`
+
+### fieldReactions（字段联动）
+
+`fieldReactions` 是表单型组件字段联动的默认方式，写在组件 props 顶层，用于集中描述多字段之间的显隐、禁用、校验和选项覆盖逻辑。函数返回一个“字段名 → 字段属性覆盖”的对象，运行时会把返回值按字段 `name` 合并到对应 item 上。当前适用于 `LrSmartCreate` / `LrSmartUpdate`；`LrSmartDetail` 如需展示控制也遵循同一机制。
+
+Agent 规则：
+
+- 联动触发源字段不用写事件；表单值变化后运行时会重新执行 `fieldReactions`。
+- 返回对象的 key 必须是被联动字段的 `name`。
+- value 是要覆盖的 item 属性，常见为 `isShown`、`hidden`、`disabled`、`rules`、`options`。
+- `isShown: false` 表示不渲染该字段；`hidden: true` 表示隐藏但保留在 Form 中。
+- 读取值优先使用 `allValues`；不要用 `changedValues` 判断本次变化字段，因为当前运行时 `changedValues` 与 `allValues` 同值。
+- 只有需要命令式读写值时才使用 `form`。
+- 联动函数应保持纯函数：根据 `allValues` 返回覆盖对象，不在函数内发请求、改 schema 或写页面状态。
+- PageSchema 中统一生成 `{"type": "JSFunction", "value": "..."}`，不要生成裸函数字符串。
 
 ### form（管理字段值）
 
@@ -201,101 +215,41 @@ arrayName = `formItems`，字段必须存在于数据集（先 dataset_detail_to
 
 ## 常见场景
 
-### 字段联动（fieldReactions）
+### 条件显隐与禁用
 
-**推荐方式**：使用 `fieldReactions` 实现多字段联动，相比单个字段的 onChange 事件更简洁高效。
+通过 `fieldReactions` 根据当前表单值覆盖字段属性，控制其他字段显隐或禁用。不要生成字段级 `events` 联动 schema。
 
-- **机制**：表单值变化时自动执行联动函数，返回各字段的属性覆盖映射
-- **优势**：集中管理联动逻辑，避免在多个字段的 onChange 中重复代码
-- **支持属性**：`disabled`、`required`、`rules`、`isShown`、`hidden` 等所有 Item 属性
-
-**函数签名**：
-
-```javascript
-({ changedValues, allValues, form }) => {
-  // 返回对象，key 为字段名，value 为要覆盖的属性
-  return {
-    fieldName: { disabled: true, required: false, isShown: true, ... }
-  }
-}
-```
-
-**示例 1：状态联动必填规则**
-
-商机表单中，当状态为"已赢单"时，产品相关字段变为必填；当状态为"已输单"时，隐藏预计成交日期。
+`fieldReactions` 是函数型字段。Agent 生成 PageSchema 时使用 `JSFunction`。函数入参使用 `{ allValues, form }`：`allValues` 用于读取完整表单值，`form` 用于命令式读写表单。
 
 ```json
 {
-  "componentName": "LrSmartCreate",
-  "props": {
-    "fieldReactions": "({ allValues }) => { const isWon = allValues.status === 2; return { product_id: { disabled: false, required: isWon, rules: isWon ? [{ type: 'required', message: '请输入产品ID' }] : [] }, product_name: { disabled: false, required: isWon, rules: isWon ? [{ type: 'required', message: '请输入产品名称' }] : [] }, product_num: { disabled: false, required: isWon, rules: isWon ? [{ type: 'required', message: '请输入产品数量' }] : [] }, expected_date: { isShown: allValues.status !== 3 } }; }",
-    "items": [
-      {
-        "name": "status",
-        "componentName": "YtSingleSelect",
-        "label": "状态",
-        "options": [
-          {"label": "进行中", "value": 1},
-          {"label": "已赢单", "value": 2},
-          {"label": "已输单", "value": 3}
-        ]
-      },
-      {"name": "product_id", "componentName": "YtInputNumber", "label": "产品ID"},
-      {"name": "product_name", "componentName": "YtInput", "label": "产品名称"},
-      {"name": "product_num", "componentName": "YtInputNumber", "label": "产品数量"},
-      {"name": "expected_date", "componentName": "YtDatePicker", "label": "预计成交日期"}
-    ]
-  }
-}
-```
-
-**示例 2：客户类型联动显示**
-
-根据客户类型显示不同字段：企业客户显示等级，个人客户显示联系人。
-
-```json
-{
-  "fieldReactions": "({ allValues }) => { const isEnterprise = allValues.customer_type === '企业'; return { level_id: { isShown: isEnterprise }, contact_id: { isShown: !isEnterprise } }; }"
-}
-```
-
-**注意事项**：
-
-- fieldReactions 中的函数以字符串形式配置，运行时通过 `new Function` 解析执行
-- 返回的属性会覆盖 items 中的原始配置
-- 联动逻辑应保持纯函数，避免副作用
-- 复杂联动建议使用 fieldReactions，简单的单字段联动可使用 onChange 事件
-
-### 条件显隐（onChange 方式）
-
-通过 onChange 事件调用 `context.setFieldVisible()` 控制其他字段显隐。适用于简单的单字段联动场景。
-
-```json
-{
-  "name": "customer_type",
-  "componentName": "YtSingleSelect",
-  "options": [{"label": "企业", "value": "企业"}, {"label": "个人", "value": "个人"}],
-  "events": {
-    "onChange": {
-      "type": "JSFunction",
-      "value": "async (value, form, context) => {\n  const isEnterprise = value === '企业';\n  context.setFieldVisible('level_id', isEnterprise);\n  context.setFieldVisible('contact_id', !isEnterprise);\n}"
-    }
-  }
+  "fieldReactions": {
+    "type": "JSFunction",
+    "value": "({ allValues }) => {\n  const isEnterprise = allValues.customer_type === 'enterprise';\n  return {\n    company_name: { isShown: isEnterprise },\n    personal_name: { isShown: !isEnterprise },\n    tax_no: { disabled: !isEnterprise }\n  };\n}"
+  },
+  "items": [
+    {"name": "customer_type", "label": "客户类型", "componentName": "YtSingleSelect", "options": [{"label": "企业", "value": "enterprise"}, {"label": "个人", "value": "personal"}]},
+    {"name": "company_name", "label": "企业名称", "componentName": "YtInput", "isShown": false},
+    {"name": "personal_name", "label": "个人姓名", "componentName": "YtInput", "isShown": true},
+    {"name": "tax_no", "label": "税号", "componentName": "YtInput"}
+  ]
 }
 ```
 
 ### 动态选项加载
 
-- **机制**：options 数据来自关联表，需两步配置：Page 层请求数据 → formItem 层绑定 state。state key 必须与 dataSource id 一致，确保数据正确传递
+- **机制**：options 数据来自关联表，需两步配置：Page 层请求 To 表 options 数据 → formItem 层绑定 state。state key 必须与 dataSource id 一致，确保数据正确传递
 - **参数**：
 
 | Placeholder | Value Source | Description |
 |-------------|--------------|-------------|
-| `<fieldName>_options` | Field name + `_options` suffix | dataSource id, must match state key |
+| `<FromDatasetCode>_<FromRelationField>_options` | From 表字段所属 datasetCode + From 表关联字段名 + `_options` suffix | dataSource id, must match state key |
 | `<appCode>` | Application code | From current app config |
-| `<datasetCode>` | Related dataset code | From dataset relations |
-| `<valueField>` | Related table value field | Usually `id` or `code` |
-| `<labelField>` | Related table display field | Usually `name` or `title` |
+| `<ToDatasetCode>` | To 表 datasetCode | From dataset relations |
+| `<ToValueField>` | To 表被关联字段 | Usually `id` or `code` |
+| `<ToLabelField>` | To 表展示字段 | Usually `name` / `title` / location field |
+
+> 自关联父子关系中，`FromDatasetCode` 与 `ToDatasetCode` 可以相同；state key 仍按 `<FromDatasetCode>_<FromRelationField>_options` 命名，URI 仍使用 To 侧 options 数据源。
 
 - **示例**：
 
@@ -303,26 +257,27 @@ arrayName = `formItems`，字段必须存在于数据集（先 dataset_detail_to
 // Page.dataSource.list
 {
   "type": "fetch",
-  "id": "level_id_options",
+  "id": "<FromDatasetCode>_<FromRelationField>_options",
   "isInit": true,
+  "source": "dataset",
   "options": {
-    "uri": "/api/<appCode>/<datasetCode>/getSelectOptions",
-    "params": {"code": "<valueField>", "label": "<labelField>"}
+    "uri": "/api/<appCode>/<ToDatasetCode>/getSelectOptions",
+    "params": {"code": "<ToValueField>", "label": "<ToLabelField>"}
   }
 }
 
 // formItem
 {
-  "name": "level_id",
+  "name": "<FromRelationField>",
   "componentName": "YtSingleSelect",
   "options": {
     "type": "JSExpression",
-    "value": "this.state.level_id_options"
+    "value": "this.state.<FromDatasetCode>_<FromRelationField>_options"
   }
 }
 ```
 
-> `formItem.optionsRequest` 配置 `{url, dataProcess}` 后组件自动请求并填充 options，详见 `field-components.md` § options 数据获取方式。
+> `getSelectOptions` 禁止使用 `optionsRequest`。即使字段级请求技术上能访问完整接口，也会把表单字段耦合到具体域名或部署环境；Agent 必须使用 Page 层 `dataSource.list` 的相对 URI，并通过 `this.state.<FromDatasetCode>_<FromRelationField>_options` 绑定。`optionsRequest` 仅用于三方链接、外部接口或外部静态资源 options。
 
 ---
 
@@ -331,11 +286,9 @@ arrayName = `formItems`，字段必须存在于数据集（先 dataset_detail_to
 | 问题 | 原因 | 解决方案 |
 |------|------|----------|
 | 表单不显示 | items 为空 | 配置 items |
-| 联动不生效 | onChange 配置错误或 fieldReactions 语法错误 | 使用 JSFunction 或检查 fieldReactions 函数语法 |
-| fieldReactions 不执行 | 函数字符串格式错误 | 确保返回对象格式正确，检查控制台错误 |
-| 联动后字段状态不更新 | 返回的字段名拼写错误 | 确保返回对象的 key 与 item.name 完全一致 |
+| 联动不生效 | 使用了字段级 events/onChange | 表单型组件字段联动使用 `fieldReactions`，不要生成字段级 events 联动 schema |
 | 下拉选项为空 | options 未配置，或 Page 层未配置 getSelectOptions 请求 | 配置静态 options，或按标准方案配置 Page 层 dataSource + state 绑定 |
-| 提交失败 | 必填字段未填 | 检查 rules 或 fieldReactions 中的 required 配置 |
+| 提交失败 | 必填字段未填 | 检查 rules |
 
 ---
 

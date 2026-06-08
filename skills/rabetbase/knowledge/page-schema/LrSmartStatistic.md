@@ -42,6 +42,16 @@ tags: [statistic, page-schema]
 
 ## Props 属性
 
+### Agent 生成边界
+
+`LrSmartStatistic` 运行时消费 `cardItem`，组件内部会固定 `cardItem.display_type = "statistic"` 后透传给 `LrSmartChart`。
+
+Agent 生成 / 更新规则：
+
+- 可维护已有的稳定 `cardItem` 结构。
+- 只有在已有 dataset、字段 code、SQL 证据充分时，才生成或修改 `query_config`、`statistic_config`。
+- 统计卡 SQL 必须返回单行单列并使用 `AS value`。
+
 ```json
 {
   "dataSource": {"type": "JSExpression", "value": "this.state.chart_data_<nodeId>"},

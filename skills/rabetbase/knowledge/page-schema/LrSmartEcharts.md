@@ -53,6 +53,16 @@ tags: [echarts, chart, page-schema]
 
 ## Props 属性
 
+### Agent 生成边界
+
+`LrSmartEcharts` 运行时消费 `cardItem`，组件内部会固定 `cardItem.display_type = "echarts"` 后透传给 `LrSmartChart`。
+
+Agent 生成 / 更新规则：
+
+- 可维护已有的稳定 `cardItem` 结构。
+- 只有在已有 dataset、字段 code、SQL 证据充分时，才生成或修改 `query_config`、`echarts_config`。
+- 不编造字段、表名、SQL 聚合语义。
+
 ```json
 {
   "dataSource": {"type": "JSExpression", "value": "this.state.chart_data_<nodeId>"},

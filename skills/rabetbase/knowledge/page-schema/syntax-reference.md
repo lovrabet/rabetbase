@@ -1,12 +1,12 @@
 ---
 name: PageSchema-syntax-reference
-description: PageSchema 平台扩展语法规范。先验知识：低代码引擎协议、antd 5+组件知识。
+description: PageSchema 平台扩展语法规范。先验知识：低代码引擎搭建协议、Ant Design 5 组件知识。
 tags: [page-schema, syntax, reference]
 ---
 
 # PageSchema 语法参考（平台扩展）
 
-> **先验知识**：GLM-5 已具备低代码引擎协议和 antd 5+ 组件知识。本文档仅记录平台特有扩展。
+> **先验知识**：默认已具备低代码引擎搭建协议和 Ant Design 5 组件知识。本文档仅记录平台特有扩展。
 
 ---
 
@@ -111,29 +111,33 @@ tags: [page-schema, syntax, reference]
 
 ## 3. 事件处理（events）
 
-### 字段型标准组件事件签名
+### Agent 生成边界
 
-| 宿主组件 | 事件 | 函数签名 | 说明 |
-|---------|------|---------|------|
-| `LrSmartCreate` / `LrSmartUpdate` / `LrSmartDetail` | `onChange` | `function(value, form, context)` | 字段值变化 |
-| `LrSmartCreate` / `LrSmartUpdate` / `LrSmartDetail` | `onMount` | `function(form, context)` | 组件挂载 |
-| `LrSmartFilter` | `onChange` | `function(value, context)` | 筛选项值变化 |
-| `LrSmartFilter` | `onMount` | `function(context)` | 组件挂载 |
-| `LrSmartFilter` | `onSearch` | `function(keyword, context)` | Select 搜索时触发 |
+当前运行时不消费字段组件上的 `events.onChange` / `events.onMount`，也没有字段级 context 联动方法实现。
 
-### LrSmartFilter / LrSmartCreate / LrSmartUpdate / LrSmartDetail 事件上下文方法
+Agent 不应为 `LrSmartCreate` / `LrSmartUpdate` / `LrSmartDetail` / `LrSmartFilter` 的字段项生成字段级 `events` 联动 schema。
 
-以下 `context` 方法适用于上述字段型标准组件的事件处理场景，不适用于 `LrSmartTable`、`LrSmartJsx` 等其他组件上下文。
+### 字段联动决策表
 
-| 方法 | 说明 |
-|------|------|
-| `setFieldOptions(name, options)` | 设置字段选项列表 |
-| `setFieldVisible(name, visible)` | 设置字段显隐 |
-| `setFieldDisabled(name, disabled)` | 设置字段禁用 |
-| `setFieldRules(name, rules)` | 设置字段校验规则 |
-| `setFieldValue(name, value)` | 设置字段值 |
-| `getFieldValue(name)` | 获取字段值 |
-| `showMessage(type, text)` | 显示提示消息 |
+| 组件场景 | Agent 应该怎么生成 | 不要生成 |
+|----------|--------------------|----------|
+| 表单型组件字段联动 | 在组件 props 顶层生成 `fieldReactions`；返回“字段名 → 字段属性覆盖”的对象。当前适用于 `LrSmartCreate` / `LrSmartUpdate`，详情展示控制同理遵循 Form 机制 | `items[].events.onChange`、字段级 context 方法 |
+| `LrSmartFilter` 筛选搜索 | 生成宿主级 `events.onSearch`，用于刷新消费 filter state 的数据源 | 筛选项之间的实时字段联动、`fieldReactions`、`items[].events.onChange` |
+| 字段静态隐藏 | 在字段 item 上设置 `hidden` 或 `isShown` | 通过字段级事件动态 setFieldVisible |
+
+`fieldReactions` 只用于表单型组件，不用于 `LrSmartFilter`。返回对象的 key 是被联动字段 `name`，value 是要覆盖的字段属性，例如 `isShown`、`hidden`、`disabled`、`rules`、`options`。具体示例见 `LrSmartCreate.md`。
+
+### 当前可生成的事件入口
+
+| 入口 | 适用场景 | Agent 生成规则 |
+|------|----------|----------------|
+| `optType + options` | 按钮点击、提交、请求、跳转、提示消息 | 标准按钮协议，见 § 2 |
+| 宿主级 `events` | 表单提交、默认值加载完成、筛选搜索、表格行/分页事件 | 仅在组件文档明确给出事件名时生成 |
+| `fieldReactions` | 表单型组件字段显隐、禁用、选项等联动覆盖 | 仅用于表单型组件，不用于 Filter；具体见 `LrSmartCreate.md` |
+
+### 禁止生成模式
+
+不要为字段项生成字段级 `events` 联动 schema，也不要假设存在字段级 context 联动方法。表单型组件字段联动使用 `fieldReactions`；Filter 字段联动当前不作为 Agent 默认生成能力。
 
 ---
 
