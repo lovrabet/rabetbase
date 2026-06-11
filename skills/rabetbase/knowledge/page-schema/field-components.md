@@ -139,7 +139,7 @@ tags: [filter, form, field-components, page-schema]
 {"name": "status", "componentName": "YtSingleSelect", "label": "状态", "options": [{"label": "活跃", "value": 1}, {"label": "流失", "value": 0}]}
 
 // 选择类动态选项（YtSingleSelect / YtMultiSelect 等，需配套 Page.dataSource.list getSelectOptions）
-{"name": "<FromRelationField>", "componentName": "<selectComponentName>", "label": "<fieldLabel>", "options": {"type": "JSExpression", "value": "this.state.<FromDatasetCode>_<FromRelationField>_options"}}
+{"name": "<FromRelationField>", "componentName": "<selectComponentName>", "label": "<fieldLabel>", "options": {"type": "JSExpression", "value": "this.state.dataset_<FromDatasetCode>_<FromRelationField>_options"}}
 
 // YtMultiSelect（静态选项）
 {"name": "tags", "componentName": "YtMultiSelect", "label": "标签", "options": [{"label": "重点", "value": "key"}, {"label": "潜在", "value": "potential"}]}
@@ -209,7 +209,7 @@ tags: [filter, form, field-components, page-schema]
 // ✅ 平台数据集关联关系：Page 层预配置 getSelectOptions
 {
   "type": "fetch",
-  "id": "<FromDatasetCode>_<FromRelationField>_options",
+  "id": "dataset_<FromDatasetCode>_<FromRelationField>_options",
   "isInit": true,
   "source": "dataset",
   "options": {
@@ -225,7 +225,7 @@ tags: [filter, form, field-components, page-schema]
   "componentName": "<selectComponentName>",
   "options": {
     "type": "JSExpression",
-    "value": "this.state.<FromDatasetCode>_<FromRelationField>_options"
+    "value": "this.state.dataset_<FromDatasetCode>_<FromRelationField>_options"
   }
 }
 
@@ -265,14 +265,14 @@ tags: [filter, form, field-components, page-schema]
 
 #### 关联关系 From / To 规则
 
-- `dataSource.id = <FromDatasetCode>_<From表关联字段名>_options`，其中 `FromDatasetCode` 为 From 表字段所属数据集的 code
+- `dataSource.id = dataset_<FromDatasetCode>_<From表关联字段名>_options`，其中 `FromDatasetCode` 为 From 表字段所属数据集的 code
 - `dataSource.isInit = true`
 - `dataSource.source = "dataset"`
 - `uri = /api/<appCode>/<ToDatasetCode>/getSelectOptions`
 - `params.code = <To表被关联字段，通常是 id>`
 - `params.label = <To表展示字段>`
-- 字段 `options` 绑定 `this.state.<FromDatasetCode>_<From表关联字段名>_options`
-- 自关联父子关系中，`FromDatasetCode` 与 `ToDatasetCode` 可以相同；state key 仍按 `<FromDatasetCode>_<FromRelationField>_options` 命名，URI 仍使用 To 侧 options 数据源。
+- 字段 `options` 绑定 `this.state.dataset_<FromDatasetCode>_<From表关联字段名>_options`
+- 自关联父子关系中，`FromDatasetCode` 与 `ToDatasetCode` 可以相同；state key 仍按 `dataset_<FromDatasetCode>_<FromRelationField>_options` 命名，URI 仍使用 To 侧 options 数据源。
 
 ---
 

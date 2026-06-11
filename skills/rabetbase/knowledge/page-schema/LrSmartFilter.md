@@ -100,13 +100,13 @@ arrayName = `filterItems`，字段必须存在于数据集（先 dataset_detail_
 
 | Placeholder | Value Source | Description |
 |-------------|--------------|-------------|
-| `<FromDatasetCode>_<FromRelationField>_options` | From 表字段所属 datasetCode + From 表关联字段名 + `_options` suffix | dataSource id, must match state key |
+| `dataset_<FromDatasetCode>_<FromRelationField>_options` | `dataset_` prefix + From 表字段所属 datasetCode + From 表关联字段名 + `_options` suffix | dataSource id, must match state key |
 | `<appCode>` | Application code | From current app config |
 | `<ToDatasetCode>` | To 表 datasetCode | From dataset relations |
 | `<ToValueField>` | To 表被关联字段 | Usually `id` or `code` |
 | `<ToLabelField>` | To 表展示字段 | Usually `name` / `title` / location field |
 
-> 自关联父子关系中，`FromDatasetCode` 与 `ToDatasetCode` 可以相同；state key 仍按 `<FromDatasetCode>_<FromRelationField>_options` 命名，URI 仍使用 To 侧 options 数据源。
+> 自关联父子关系中，`FromDatasetCode` 与 `ToDatasetCode` 可以相同；state key 仍按 `dataset_<FromDatasetCode>_<FromRelationField>_options` 命名，URI 仍使用 To 侧 options 数据源。
 
 - **示例**：
 
@@ -116,7 +116,7 @@ arrayName = `filterItems`，字段必须存在于数据集（先 dataset_detail_
 {
   "dataSource": {
     "list": [{
-      "id": "<FromDatasetCode>_<FromRelationField>_options",
+      "id": "dataset_<FromDatasetCode>_<FromRelationField>_options",
       "type": "fetch",
       "isInit": true,
       "source": "dataset",
@@ -138,12 +138,12 @@ arrayName = `filterItems`，字段必须存在于数据集（先 dataset_detail_
   "name": "<FromRelationField>",
   "options": {
     "type": "JSExpression",
-    "value": "this.state.<FromDatasetCode>_<FromRelationField>_options"
+    "value": "this.state.dataset_<FromDatasetCode>_<FromRelationField>_options"
   }
 }
 ```
 
-> `getSelectOptions` 禁止使用 `optionsRequest`。即使字段级请求技术上能访问完整接口，也会把筛选项耦合到具体域名或部署环境；Agent 必须使用 Page 层 `dataSource.list` 的相对 URI，并通过 `this.state.<FromDatasetCode>_<FromRelationField>_options` 绑定。`optionsRequest` 仅用于三方链接、外部接口或外部静态资源 options。
+> `getSelectOptions` 禁止使用 `optionsRequest`。即使字段级请求技术上能访问完整接口，也会把筛选项耦合到具体域名或部署环境；Agent 必须使用 Page 层 `dataSource.list` 的相对 URI，并通过 `this.state.dataset_<FromDatasetCode>_<FromRelationField>_options` 绑定。`optionsRequest` 仅用于三方链接、外部接口或外部静态资源 options。
 
 ---
 

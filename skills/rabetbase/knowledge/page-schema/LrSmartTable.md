@@ -149,21 +149,21 @@ V2 页面生成时已为数据集所有字段全量生成 columns，通过 `isSh
 
 | 规则 | 说明 |
 |------|------|
-| `dataSource.id = <FromDatasetCode>_<FromRelationField>_options` | `FromDatasetCode` 为 From 表字段所属数据集的 code |
+| `dataSource.id = dataset_<FromDatasetCode>_<FromRelationField>_options` | `FromDatasetCode` 为 From 表字段所属数据集的 code |
 | `dataSource.isInit = true` | 页面加载时自动请求 options |
 | `dataSource.source = "dataset"` | 标识平台数据集请求 |
 | `uri = /api/<appCode>/<ToDatasetCode>/getSelectOptions` | URI 使用 To 表 datasetCode |
 | `params.code = <ToValueField>` | To 表被关联字段，通常是 `id` |
 | `params.label = <ToLabelField>` | To 表展示字段，如 `name` / `title` / location 字段 |
-| `formatOptions.options` | 绑定 `this.state.<FromDatasetCode>_<FromRelationField>_options` |
+| `formatOptions.options` | 绑定 `this.state.dataset_<FromDatasetCode>_<FromRelationField>_options` |
 
-> 自关联父子关系中，`FromDatasetCode` 与 `ToDatasetCode` 可以相同；state key 仍按 `<FromDatasetCode>_<FromRelationField>_options` 命名，URI 仍使用 To 侧 options 数据源。
+> 自关联父子关系中，`FromDatasetCode` 与 `ToDatasetCode` 可以相同；state key 仍按 `dataset_<FromDatasetCode>_<FromRelationField>_options` 命名，URI 仍使用 To 侧 options 数据源。
 
 ```json
 // Page.dataSource.list
 {
   "type": "fetch",
-  "id": "<FromDatasetCode>_<FromRelationField>_options",
+  "id": "dataset_<FromDatasetCode>_<FromRelationField>_options",
   "isInit": true,
   "source": "dataset",
   "options": {
@@ -185,7 +185,7 @@ V2 页面生成时已为数据集所有字段全量生成 columns，通过 `isSh
     "ellipsis": true,
     "options": {
       "type": "JSExpression",
-      "value": "this.state.<FromDatasetCode>_<FromRelationField>_options"
+      "value": "this.state.dataset_<FromDatasetCode>_<FromRelationField>_options"
     }
   }
 }

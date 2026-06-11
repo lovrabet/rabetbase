@@ -2,7 +2,7 @@
 
 Use this workflow when modernizing a legacy application into the Lovrabet architecture, especially when the developer has limited project knowledge, the handoff is incomplete, or the application was received from an external vendor.
 
-The goal is not to rewrite code immediately. The goal is to produce a reviewable **Lovrabet Application Blueprint** that connects legacy code behavior with Lovrabet datasets, dataset links, Instant API, Custom SQL, Backend Functions, Hooks, Common Functions, and optional Enterprise Java Services.
+The goal is not to rewrite code immediately. The goal is to produce a reviewable **Lovrabet Application Blueprint** that connects legacy code behavior with Lovrabet datasets, dataset relations, Instant API, Custom SQL, Backend Functions, Hooks, Common Functions, and optional Enterprise Java Services.
 
 ## Core Principle
 
@@ -11,8 +11,8 @@ Do not ask the developer to explain the legacy system first. In many real projec
 Instead:
 
 1. Collect evidence from code, SQL, configuration, tests, documentation, and git history.
-2. Collect platform facts from `rabetbase dataset detail`, `dataset links`, `db tables`, `db diff`, `sql list/detail`, and `bff list/detail`.
-3. Bind legacy code artifacts to Lovrabet datasets and links.
+2. Collect platform facts from `rabetbase dataset detail`, `dataset relations`, `db tables`, `db diff`, `sql list/detail`, and `bff list/detail`.
+3. Bind legacy code artifacts to Lovrabet datasets and relations.
 4. Generate an Application Blueprint as Markdown.
 5. Ask humans only for high-impact uncertainties that cannot be resolved from evidence.
 
@@ -59,7 +59,7 @@ Legacy Logic Graph + Dataset Graph + rabetbase CLI Facts = Application Blueprint
 Use platform facts to reduce guesswork:
 
 - `rabetbase dataset detail --code <datasetCode> --format compress`
-- `rabetbase dataset links --format compress`
+- `rabetbase dataset relations --format compress`
 - `rabetbase db tables --format compress`
 - `rabetbase db diff --format compress`
 - `rabetbase sql list/detail --format compress`
@@ -109,10 +109,10 @@ It answers:
 - Which legacy table maps to which Dataset?
 - Which legacy field maps to which Dataset field?
 - Which legacy enum or status field maps to Dataset options?
-- Which legacy SQL joins map to Dataset Links?
+- Which legacy SQL joins map to Dataset Relations?
 - Which repository writes affect which Datasets?
 - Which business action affects which Dataset group?
-- Which Dataset or Link is missing and should become a model adjustment?
+- Which Dataset or Relation is missing and should become a model adjustment?
 
 ### 4. Capability Mapping
 
@@ -175,7 +175,7 @@ Search for:
 Use Lovrabet platform facts to calibrate code inference:
 
 - `dataset detail`: fields, field types, required flags, enum options, display names
-- `dataset links`: relationship facts, join candidates, parent-child or reference relationships
+- `dataset relations`: relationship facts, join candidates, parent-child or reference relationships
 - `db tables` and `db diff`: physical table facts and Dataset mismatch checks
 - `sql list/detail`: existing Custom SQL that should not be duplicated
 - `bff list/detail`: existing BFF, Hook, and Common scripts that should not be overwritten
@@ -194,7 +194,7 @@ Every important claim should be recorded in this shape:
 - Platform evidence:
   - Dataset: `<datasetCode>` / `<datasetName>`
   - Field: `<fieldName>` / `<type>` / `<options>`
-  - Link: `<fromDataset> -> <toDataset>`
+  - Relation: `<fromDataset> -> <toDataset>`
 - Assumption: <only if needed>
 - Risk if wrong: <migration impact>
 ```
@@ -207,7 +207,7 @@ Include:
 
 - Legacy technology stack
 - Key business domains detected
-- Dataset and Dataset Link coverage
+- Dataset and Dataset Relation coverage
 - Recommended migration path
 - Highest-risk areas
 - Number of manual confirmation items
@@ -260,7 +260,7 @@ For key business actions, include the call chain:
 Recommended table:
 
 ```markdown
-| Legacy artifact | Code evidence | Dataset | Field mapping | Links | Confidence | Risk |
+| Legacy artifact | Code evidence | Dataset | Field mapping | Relations | Confidence | Risk |
 | --- | --- | --- | --- | --- | --- | --- |
 ```
 
@@ -268,8 +268,8 @@ Rules:
 
 - Name similarity alone is weak evidence.
 - Dataset field type and enum values come from `dataset detail`.
-- Relationships come from `dataset links` when available.
-- Missing links should become Dataset adjustment candidates or manual confirmation items.
+- Relationships come from `dataset relations` when available.
+- Missing relations should become Dataset adjustment candidates or manual confirmation items.
 - If the legacy model conflicts with Dataset metadata, do not generate implementation drafts yet.
 
 ### 5. Lovrabet Capability Mapping
@@ -317,7 +317,7 @@ Use evidence-based options, not open-ended questions:
   - `src/services/orderService.ts` updates order status before refund.
   - `src/integrations/payment.ts` catches refund errors and logs them.
   - No retry queue or compensation job was found.
-- Dataset / Links evidence:
+- Dataset / Relations evidence:
   - `order_xxx` contains `orderStatus`.
   - `refund_log_xxx` is linked to `order_xxx`.
 - Options:
@@ -369,10 +369,10 @@ Do not map these directly to Instant API:
 ## Recommended Agent Flow
 
 1. Resolve app context with `.rabetbase.json`, `rabetbase app list`, or explicit `--appcode`.
-2. Collect Dataset facts with `dataset detail` and `dataset links`.
+2. Collect Dataset facts with `dataset detail` and `dataset relations`.
 3. Check existing platform assets with `sql list/detail` and `bff list/detail` when relevant.
 4. Inspect legacy code and build the Logic Graph.
-5. Bind legacy code artifacts to Datasets and Links.
+5. Bind legacy code artifacts to Datasets and Relations.
 6. Produce `.rabetbase/blueprint/<appCode>/application-blueprint.md`.
 7. Split backlog and manual confirmation items if the file becomes too large.
 8. Wait for review before generating implementation drafts.
@@ -410,7 +410,7 @@ Lovrabet capabilities:
 
 Rules:
 - Every important conclusion must include code evidence.
-- Every Dataset-related conclusion must include platform evidence from dataset detail, dataset links, db tables/diff, or existing SQL/BFF facts when available.
+- Every Dataset-related conclusion must include platform evidence from dataset detail, dataset relations, db tables/diff, or existing SQL/BFF facts when available.
 - Mark confidence as high, medium, or low.
 - Ask humans only for high-impact uncertainties that cannot be resolved from evidence.
 - Do not map all legacy APIs to Instant API. Upgrade to SQL, BFF, Hook, Common Function, or Java Service when transaction, state machine, permission, side effect, or external integration complexity requires it.
@@ -420,11 +420,11 @@ Rules:
 ### Dataset Binding Prompt
 
 ```markdown
-Generate a Dataset Binding report by connecting legacy entities, tables, repository methods, and SQL statements to Lovrabet Datasets and Dataset Links.
+Generate a Dataset Binding report by connecting legacy entities, tables, repository methods, and SQL statements to Lovrabet Datasets and Dataset Relations.
 
 Use:
 - `rabetbase dataset detail --code <datasetCode> --format compress`
-- `rabetbase dataset links --format compress`
+- `rabetbase dataset relations --format compress`
 - `rabetbase db tables --format compress`
 - `rabetbase db diff --format compress`
 
@@ -434,7 +434,7 @@ Output:
 - Matched Dataset
 - Field mapping
 - Enum/status mapping
-- Dataset Links
+- Dataset Relations
 - Missing or conflicting model facts
 - Dataset adjustment candidates
 - Confidence
@@ -461,7 +461,7 @@ Stages:
 Each task must include:
 - Goal
 - Code evidence
-- Dataset / Links evidence
+- Dataset / Relations evidence
 - Recommended Lovrabet capability
 - Dependencies
 - Acceptance criteria

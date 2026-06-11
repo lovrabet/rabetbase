@@ -2,6 +2,12 @@
 
 检查并更新 CLI 到指定 npm dist-tag 或版本，并刷新官方 rabetbase skill。
 
+## 命令策略
+
+- 默认升级入口是 `rabetbase update`。日常使用时优先让 CLI 自动解析 latest 并更新，避免用户关心底层安装工具。
+- 需要预览版本时使用 `rabetbase update --beta`；需要精确到某个版本时使用 `rabetbase update --version <version>`。
+- `npm install -g @lovrabet/rabetbase-cli@<version>` 只作为命令异常、环境修复或精确复现版本的手动兜底；普通升级不把它作为首选路径。
+
 ## 命令
 
 ```bash

@@ -77,7 +77,7 @@ db delete --id <id> --yes    # high-risk-write，非交互必须 --yes
 ## 与其它命令的配合
 
 - **写 SQL 前要 `dbId`**：`dataset detail --code …` 里 `db.id`；或 `db list` 的 `id` 与数据集侧 `dbId` 对应。
-- **看模型关系**：仍用 `dataset links`（需要 `--db` 时，id 或名称可与 `db list` 对照）。
+- **看模型关系**：用 `dataset relations`；物理库连接和表清单仍用 `db list` / `db tables` 对照。
 - **给用户确认页面**：DB 更新或分析完成后返回 `data.links.erPage`；新建连接后返回 `data.links.databasePage`。
 - **不确定 flags**：`rabetbase schema`（无需登录）查契约。
 

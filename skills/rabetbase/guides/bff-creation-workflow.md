@@ -31,7 +31,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 写入前必须确认：
 * 业务必填字段：`data.fields[].required === true`，平台自动维护字段除外
 * 枚举/选择字段：写入 `options[].value`，不要写展示用 `label`
-* 外键字段：从 `data.relations[]` 或 `dataset links` 确认真实关系
+* 外键字段：从 `data.relations[]` 或 `dataset relations` 确认真实关系
 
 ### 3. 查平台（按需）
 * 新建 → 跳过

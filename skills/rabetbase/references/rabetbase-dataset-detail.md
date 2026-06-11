@@ -95,7 +95,7 @@ rabetbase dataset detail --code <数据集编码> --format json --jq '.data.oper
 
 ## 提示
 
-- 写 SQL / BFF 前先调用此命令确认真实字段名、类型与枚举；关联关系可看 **relations** 或 **`dataset links`**
+- 写 SQL / BFF 前先调用此命令确认真实字段名、类型与枚举；关联关系统一看 **`dataset relations`**
 - `--alias` 需要先执行 `rabetbase api pull` 生成 `api.ts`
 - 横切数据访问流程、外键与性能：见 [`guides/data-api-guidelines.md`](../guides/data-api-guidelines.md)
 

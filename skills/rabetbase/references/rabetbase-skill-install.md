@@ -24,6 +24,8 @@ npx skills add lovrabet/rabetbase -g -y
 
 默认执行 `npx skills add lovrabet/rabetbase -g -y`，全局安装 rabetbase skill。
 
+该命令只执行官方 Skill 安装或刷新；不会自动修复本地 npm、网络、Git 或权限问题。失败时保留原始错误，按本机工具配置排查。
+
 若需要在文档、脚本或 AI 引导里显式表达“无交互刷新”，可使用：
 
 `npx skills add lovrabet/rabetbase -g -y`

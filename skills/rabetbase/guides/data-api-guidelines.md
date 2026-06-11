@@ -55,7 +55,7 @@
 | 字段名 | `data.fields[].name` | 查询、写入、SQL 列名均使用它，不猜通用字段名 |
 | 必填字段 | `data.fields[].required` | `true` 表示创建/写入时需处理，平台自动维护字段除外 |
 | 枚举/选择值 | `data.fields[].options[].value` | 写入持久化 `value`，不要写展示用的 `label` |
-| 外键关系 | `data.relations[]` / `dataset links` | 只有确认存在关系后才写关联查询或校验 |
+| 外键关系 | `data.relations[]` / `dataset relations` | 只有确认存在关系后才写关联查询或校验 |
 
 常用投影：
 

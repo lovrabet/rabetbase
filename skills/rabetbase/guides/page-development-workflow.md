@@ -47,7 +47,7 @@
 
 ```bash
 rabetbase dataset detail --code <datasetCode> --format json
-rabetbase dataset links --format json
+rabetbase dataset relations --datasetcode <datasetCode> --format json
 ```
 
 重点确认：
