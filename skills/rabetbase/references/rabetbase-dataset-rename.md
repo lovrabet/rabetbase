@@ -77,7 +77,7 @@ rabetbase dataset rename \
 
 ```bash
 rabetbase dataset detail --code <datasetCode> --format compress --jq '.data | {id, code, name}'
-rabetbase dataset list --code <datasetCode> --include-metadata --format compress --jq '.data.datasets[] | {id, code, name}'
+rabetbase dataset list --code <datasetCode> --format compress --jq '.data.datasets[] | {id, code, name}'
 ```
 
 ## 参考

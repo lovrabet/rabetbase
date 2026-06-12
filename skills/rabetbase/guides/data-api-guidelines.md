@@ -41,7 +41,7 @@
 
 | `source` | 建议路线 |
 |----------|----------|
-| `METADATA` | **不要默认走 SQL**；优先 `filter` / `getOne` / 标准数据接口 |
+| `METADATA` | **不要走 SQL / aggregate**；优先 `filter` / `getOne` / `create` / `update` / `delete` 等平台返回的标准操作；BFF HOOK 可挂载，operation 以后端返回为准 |
 | `CUSTOM` / `DB` | 可继续评估 SQL、BFF 或标准数据接口 |
 
 ---

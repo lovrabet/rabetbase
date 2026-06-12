@@ -103,7 +103,21 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 * `create`
 * `update`
 * `delete`
-* `aggregate`
+* `aggregate`（仅在数据集 operation 实际返回时使用；METADATA 默认不会提供）
+
+BFF HOOK 可以挂在 `DB_TABLE` 或 `METADATA` 数据集上；是否可挂某个 operation，以平台返回的 operation types 为准。
+
+### METADATA HOOK 脚本内部限制
+
+METADATA 数据集没有 DB_TABLE 数据源上下文，脚本中优先使用标准 SDK 操作，例如 `filter`、`getOne`、`create`、`update`、`delete`。
+
+不要在这类脚本中使用：
+
+* `context.client.customSql()` 或其他自定义 SQL 路径
+* aggregate 聚合接口
+* 直接拼接和执行 SQL
+
+如果需要复杂查询，优先组合 `filter` 的查询能力；无法满足时，考虑把数据源建模为 `DB_TABLE`，或在脚本中调用其他 `DB_TABLE` 数据集。
 
 ## 强制工作流
 

@@ -6,6 +6,13 @@
 
 未显式传来源/目标类型参数时，来源/目标数据集类型为 `DB_TABLE -> DB_TABLE`；涉及 `METADATA` 时必须显式传 `--from-source METADATA` 或 `--to-source METADATA`。暂不支持 `METADATA -> DB_TABLE`。
 
+## Agent 安全边界
+
+- 面向用户答疑时，只给出“先只读确认、再生成 dry-run 方案、用户确认后执行”的路径，不直接让用户执行正式写入。
+- 关系缺失时使用 `relation-create --dry-run` 预览；展示字段或支持的关系属性不符合预期时使用 `relation-update --dry-run` 预览。
+- `relation-update` 不修改来源表/字段或目标表/字段；如果定位字段本身选错，必须重新确认关系，必要时分别对删除和新增做 dry-run，并等待用户明确确认。
+- 不要把关系写入、页面审计和 `page sync` 混成“一键修复”。关系事实修正后，再重新执行 `page relation-audit`，页面仍需同步时再走 `page sync --dry-run`。
+
 ## 命令
 
 ```bash

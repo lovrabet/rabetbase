@@ -138,21 +138,21 @@ rabetbase app remove product --yes
 
 ## 优先级
 
-每个配置项的解析优先级从高到低：
+每个配置项的解析优先级从高到低（`appcode` 不从环境变量自动解析，必须来自 `--appcode` 或配置文件）：
 
 ```
 CLI flag (--appcode, --env, --format, --app ...)
   ↓
-环境变量 (RABETBASE_APPCODE, RABETBASE_ENV, RABETBASE_FORMAT ...)
+当前项目 app profile / 顶层字段
   ↓
-当前激活的 app profile (apps.<currentApp>.*)
+环境变量 (RABETBASE_ENV, RABETBASE_FORMAT ...)
   ↓
-项目级 .rabetbase.json 顶层字段
-  ↓
-全局级 ~/.rabetbase.json 顶层字段
+全局级 ~/.rabetbase.json app profile / 顶层字段
   ↓
 内置默认值
 ```
+
+业务落点类字段以当前项目为主。`appcode` 不允许从 shell 残留环境变量自动推断；CI 或一次性脚本如需使用环境变量，必须显式传 `--appcode "$RABETBASE_APPCODE"`。对需要 App Code 的业务命令，如果检测到 `RABETBASE_APPCODE` / `LOVRABET_APPCODE` 已设置但未显式传 `--appcode`，且当前解析结果为空或与环境变量不同，CLI 会直接拒绝执行，避免误操作其他应用。`RABETBASE_APP`、`RABETBASE_ENV` 仍只作为无项目配置时的显式选择 / 环境 fallback。
 
 ## 环境变量
 
@@ -160,15 +160,15 @@ CLI flag (--appcode, --env, --format, --app ...)
 
 | 环境变量 | 对应配置项 | 说明 |
 |----------|-----------|------|
-| `RABETBASE_APPCODE` | `appcode` | 应用代码 |
-| `RABETBASE_ENV` | `env` | 环境 |
+| `RABETBASE_APPCODE` | — | 仅作为 shell 变量供脚本显式传给 `--appcode`；业务命令检测到冲突时会拒绝执行 |
+| `RABETBASE_ENV` | `env` | 无项目 env 时的环境 fallback |
 | `RABETBASE_COOKIE` | `cookie` | Session cookie |
 | `RABETBASE_ACCESS_KEY` | `accessKey` | Access Key |
 | `RABETBASE_FORMAT` | `format` | 输出格式 |
 | `RABETBASE_PAGE_SIZE` | `pageSize` | 分页大小 |
 | `RABETBASE_RISK_LEVEL` | `riskLevel` | 最高风险等级 |
 | `RABETBASE_VERBOSE` | — | 全局 verbose 开关（`1` 或 `true` 启用），仅环境变量，不支持配置文件 |
-| `RABETBASE_APP` | — | 运行时指定应用名（等效 `--app`） |
+| `RABETBASE_APP` | — | 无项目显式选择时的临时应用名 fallback（显式切换优先用 `--app`） |
 
 ## 配置文件查找规则
 
@@ -196,7 +196,7 @@ CLI flag (--appcode, --env, --format, --app ...)
 ```bash
 export RABETBASE_APPCODE=app-xxx
 export RABETBASE_ENV=daily
-rabetbase dataset list
+rabetbase dataset list --appcode "$RABETBASE_APPCODE"
 ```
 
 ### 开发环境单应用

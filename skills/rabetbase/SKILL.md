@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.2.0
+version: 2.2.1
 description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset rename、dataset field-update、dataset extend-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
@@ -40,9 +40,9 @@ metadata:
 
 1. **判断需求类型**
    - Instant API 标准数据记录操作 → SDK filter/getOne/create/update/delete
-   - 简单聚合 → SDK aggregate
-   - 复杂 JOIN / 数据库函数 → 自定义 SQL
-   - 外部系统调用 / 跨表事务 / 复杂业务编排 → BFF
+   - 简单聚合且数据集是 DB_TABLE → SDK aggregate
+   - 复杂 JOIN / 数据库函数且数据集是 DB_TABLE → 自定义 SQL
+   - 外部系统调用 / 跨表事务 / 复杂业务编排 → BFF；BFF HOOK 可挂 DB_TABLE 或 METADATA，具体 operation 以后端返回为准
 2. **先拿元数据，再写代码**
    - 至少先查 `rabetbase dataset detail --code xxx --format compress`（或 `json`）获取表结构
    - 跨表场景还需查目标表的结构
@@ -62,6 +62,8 @@ metadata:
    - `page` 命令职责分离：[`page generate-start`](references/rabetbase-page-generate-start.md) 负责提交或复用任务，[`page generate-status`](references/rabetbase-page-generate-status.md) 负责查询任务状态，[`page standard-page-status`](references/rabetbase-standard-page-status.md) 负责查询智能列表页事实
    - 数据集字段变更后同步已有智能列表页：[`page sync`](references/rabetbase-page-sync.md)
    - 页面关系绑定审计：先读 [`rabetbase-page-relation-binding.md`](references/rabetbase-page-relation-binding.md)，再执行 [`page relation-audit`](references/rabetbase-page-relation-binding.md)
+   - 遇到“关联数据带不出 / 标准页面没有生成关联关系 / 页面关联绑定异常”类问题，固定顺序是：`dataset relations` 只读确认关系事实 → `page standard-page-status` 判断页面是否存在 → `page relation-audit` 审计页面绑定；若关系事实本身不对，先按 [`dataset relation-create/update/delete`](references/rabetbase-dataset-relation-mutations.md) 做 `--dry-run` 方案并等用户确认；已有页面再 `page sync --dry-run`，无页面走 `page generate-start --dry-run`
+   - `page sync` 只负责同步已有智能列表页，不是数据集关系修复命令，也不能承诺自动修复所有 `wrong_code` / `wrong_label` / `missing`
    - 本地 schema 开发：[`page pull`](references/rabetbase-page-pull.md) → IDE 编辑 → [`page push`](references/rabetbase-page-push.md)
    - 需要理解 formal schema 组件语义时，再按需阅读 `knowledge/page-schema/` 下的 PageSchema 组件资料；不要把它与 `rabetbase page` 命令 reference 混淆
 6. **Legacy modernization / Application Blueprint 工作流**
@@ -134,8 +136,8 @@ metadata:
 遇到新需求时按优先级选择实现方式：
 
 1. **标准 SDK 接口**（filter/getOne/create 等）— 能用就不写 SQL
-2. **aggregate 聚合接口** — 简单分组汇总
-3. **自定义 SQL** — 复杂 JOIN、数据库函数、跨表统计
+2. **aggregate 聚合接口** — DB_TABLE 的简单分组汇总；METADATA 不默认支持 aggregate
+3. **自定义 SQL** — DB_TABLE 的复杂 JOIN、数据库函数、跨表统计；METADATA 不支持 SQL 路径
 4. **BFF** — 外部系统调用、跨表事务、复杂业务编排
 
 ## SDK 核心规则
@@ -216,7 +218,7 @@ const result = await client.bff.execute<DashboardData>({
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
 | 同步菜单到平台 | [`rabetbase menu sync`](references/rabetbase-menu-sync.md) | 本地页面 → 平台菜单，支持交互/静默 |
 | 更新菜单 CDN URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 高风险写入；先 `--dry-run` 看资源 diff，部分替换用 `--mode patch` |
-| 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 服务端模糊匹配；也可 `--code` 精确查 |
+| 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 默认返回全部 DO V2 数据集；查指定来源用 `--source DB_TABLE` / `--source METADATA`；也可 `--code` 精确查 |
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
 | 修改 Dataset 展示名 | [`rabetbase dataset rename`](references/rabetbase-dataset-rename.md) | 只更新 Dataset 展示名；必须先 `--dry-run`，用 `--expect-name` 防漂移 |
 | 安全更新 Dataset 原始字段对象 | [`rabetbase dataset field-update`](references/rabetbase-dataset-field-update.md) | 使用 `--code` 定位 Dataset，只允许 patch 已知可变业务配置字段；必须先 `--dry-run`，用 `--expect-json` 防漂移 |

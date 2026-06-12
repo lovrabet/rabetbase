@@ -44,6 +44,8 @@ BFF 源码**仅**应在此目录树内创建与长期维护（与 `bff status` /
 
 - `HOOK` 非交互场景建议优先传 `--alias`
 - 如果 alias 解析失败，再用 `--datasetcode`
+- `HOOK` 可以挂载 `DB_TABLE` 或 `METADATA` 数据集；可用 operation 以后端返回为准
+- `METADATA` 数据集不支持 SQL / aggregate 路径，脚本里应使用标准数据操作
 - 涉及数据集读写时，先执行 `rabetbase dataset detail --code <code> --format compress` 获取当前字段事实
 - 创建后先跑 `rabetbase bff status --format json` 确认本地状态
 

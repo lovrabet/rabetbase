@@ -15,6 +15,14 @@ rabetbase page push --appcode <appCode> --id <pageId> --dry-run --format compres
 
 Agent 不得假设存在自动修复命令，也不得把 audit 结果直接转成平台写入。修复必须走本地 schema 工作流：先 `page pull`，只改审计命中的本地字段节点和对应数据源，再用 `page push --dry-run` 复核差异，最后由明确授权的 `page push` 提交。
 
+## 审计到处理边界
+
+- `relation_options` 通常表示页面绑定与数据集关系匹配，不应作为错误处理。
+- `custom_options` 表示字段或页面当前使用自定义选项，不一定是错误；先确认业务是否期望数据集关联选项。
+- `wrong_label` / `wrong_code` / `wrong_state` / `missing` 只说明审计发现差异，不能直接承诺 `page sync` 自动修复。
+- 若 `dataset relations` 关系事实本身不符合预期，先修正数据集关系并重新审计；若关系事实正确但页面绑定仍不一致，再按本地 schema 工作流或页面同步流程处理。
+- `page sync` 是已有页面同步动作，不是页面 schema 审计结果的通用自动修复器。
+
 ## relation options 绑定规则
 
 `optionsType=relation` 来自平台数据集关系时，使用 Page 层 `dataSource.list`，字段层绑定同名 state：

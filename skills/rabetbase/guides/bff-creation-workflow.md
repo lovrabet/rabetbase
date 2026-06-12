@@ -21,6 +21,8 @@
 ### 2. 校验字段
 执行 `rabetbase dataset detail --code <数据集编码> --format json`（或 `compress`）确认字段名、类型、必填字段、枚举值、关联关系。禁止凭经验猜字段名，禁止把 Demo 或历史案例里的字段、表名、枚举值复制到当前脚本。
 
+BFF HOOK 可挂载 `DB_TABLE` 或 `METADATA` 数据集，具体 operation 以平台返回为准。`METADATA` 数据集不支持 SQL / aggregate 路径；脚本中应使用 `context.client.models.dataset_<code>` 的标准操作能力。
+
 常用字段投影：
 
 ```bash
@@ -48,6 +50,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 * 方法名正确
 * 单条查询用 `getOne`
 * BFF 模型键使用 `"dataset_" + 32 位数据集 code`
+* METADATA 数据集的 BFF / HOOK 不走 SQL 或 aggregate；只使用平台返回的标准数据操作
 * `filter()` 结果从 `.tableData` 读取，不是 `.list`
 * `create()` 返回新记录 ID，不是完整对象；不要访问 `created.id`
 * 枚举/选择字段写入 `options[].value`，不是展示 `label`
