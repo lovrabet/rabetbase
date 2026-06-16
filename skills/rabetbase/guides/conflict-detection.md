@@ -9,7 +9,7 @@
 
 ## 当前主工作流
 
-当前团队主路径不是 `save`：
+当前推荐路径不是 `save`：
 
 - **SQL**
   - 新建：`rabetbase sql create`

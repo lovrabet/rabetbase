@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.2.2
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset rename、dataset field-update、dataset extend-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
+version: 2.2.3
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单事实读取与同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset rename、dataset field-update、dataset extend-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu list、菜单异常审计、菜单手动删除清单、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -24,7 +24,7 @@ metadata:
 4. **多应用场景**：一个项目有多个应用时，先 `rabetbase app add <name> --appcode …` 配置各应用，再用 `--app <name>` 或 `rabetbase app use <name>` 切换
 5. **平台发现**：当你不知道当前登录账号能访问哪些应用时，先 `rabetbase app remote`；它查询平台目录，不修改本地配置
 6. **本地配置视图**：当你要确认当前项目或全局已经登记了哪些应用、默认应用是谁时，用 `rabetbase app list`。`rabetbase app` 本身只显示帮助，不等价于 `app list`
-7. **本地 SQL / BFF 目录（团队约定）**：新建或长期维护的源文件应落在 CLI 与 `bff status` / `sql pull` 一致的路径，避免写在 `src/`、`queries/` 等随意目录后再迁移。
+7. **本地 SQL / BFF 目录**：新建或长期维护的源文件应落在 CLI 与 `bff status` / `sql pull` 一致的路径，避免写在 `src/`、`queries/` 等随意目录后再迁移。
    - **SQL**：项目根 **`.rabetbase/sql/<appCode>/<dbName|db-<id>>/<sqlCode>_<sqlName>.sql|xml`**；草稿或人工兜底可放 `.draft.sql`。`sql create` / `sql pull` / `sql push` / `sql status` 默认围绕这套目录与 `.rabetbase/sql.lock.json` 工作。`sql save` 已废弃，不再作为推荐路径。
    - **BFF**：**`.rabetbase/bff/<appCode>/...`**（由 `bff create` 创建或 `bff pull` 同步；与 `bff status` / `bff push` 扫描范围一致）。详见 [`guides/sql-creation-workflow.md`](guides/sql-creation-workflow.md)、[`guides/bff-creation-workflow.md`](guides/bff-creation-workflow.md)。
 8. **可选：`lovrabet` CLI 查数** — 若本机已安装 **`@lovrabet/lovrabet-cli`**（命令 **`lovrabet`**）且 **版本 ≥ 2.0**（`lovrabet --version`），可用 **`lovrabet data filter` / `lovrabet data getOne`** 按 SDK 语义在终端查看真实行数据与 JSON，便于调试；**非人人安装**，未安装或版本低于 2.0 时仅用 `rabetbase` 即可。详见 [`guides/data-api-guidelines.md`](guides/data-api-guidelines.md) 中「可选：`lovrabet` CLI 查数」。
@@ -52,11 +52,11 @@ metadata:
    - 输出很大且只需子集时，在 `compress`/`json` 上加 `--jq '.data…'` 缩小结果
    - **（可选）** 若环境已安装 **`lovrabet` ≥ 2.0**，可用 `lovrabet data filter` / `data getOne` 对数据集做与 SDK 同语义的终端查数；**不要**假设用户已安装或版本够新，见 [`guides/data-api-guidelines.md`](guides/data-api-guidelines.md)
 3. **SQL 工作流严格分步**
-   - 团队主路径：查现有(`sql list/detail`) 或新建(`sql create`) → 拉/落本地(`sql pull` / `sql create`) → 编辑同步目录文件 → 可选校验(`sql validate`) → 检查状态(`sql status`) → 先预览(`sql push --dry-run` / `sql delete --dry-run`) → 再 `sql push` / `sql delete` → `sql detail` / `sql exec` 验证
+   - 推荐路径：查现有(`sql list/detail`) 或新建(`sql create`) → 拉/落本地(`sql pull` / `sql create`) → 编辑同步目录文件 → 可选校验(`sql validate`) → 检查状态(`sql status`) → 先预览(`sql push --dry-run` / `sql delete --dry-run`) → 再 `sql push` / `sql delete` → `sql detail` / `sql exec` 验证
    - `sql save` 已废弃；用户若提到它，直接引导迁移到 `sql create` / `sql push`
 4. **BFF 工作流严格分步**
    - 查现有 → 确认字段 → 查公共函数 → 本地创建(`bff create`) → 检查状态(`bff status`) → 先预览(`--dry-run`) → 再拉取/推送/删除
-   - 推送完成只代表研发态脚本已同步；若用户要确认运行态效果，显式交接到运行态验证（如可用的 `lovrabet bff exec`），不要把运行态 smoke 伪装成 `rabetbase` 已完成
+   - 推送完成只代表脚本配置已同步到平台；若用户要确认最终运行效果，显式交接到运行验证（如可用的 `lovrabet bff exec`），不要把运行验证伪装成 `rabetbase` 已完成
 5. **智能列表页（Smart List Page，page）工作流**
    - 工作流判断先看 [`guides/page-development-workflow.md`](guides/page-development-workflow.md)
    - `page` 命令职责分离：[`page generate-start`](references/rabetbase-page-generate-start.md) 负责提交或复用任务，[`page generate-status`](references/rabetbase-page-generate-status.md) 负责查询任务状态，[`page standard-page-status`](references/rabetbase-standard-page-status.md) 负责查询智能列表页事实
@@ -216,8 +216,9 @@ const result = await client.bff.execute<DashboardData>({
 | 更新 CLI 版本 | [`rabetbase update`](references/rabetbase-update.md) | 自动检测最新版本并升级 |
 | 修改配置文件 | [`rabetbase config set <key> <value>`](references/rabetbase-config.md) | 默认写项目；无项目配置且未 `--global` 会拒绝；`--global` 写 `~/.rabetbase.json` |
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
+| 查看线上菜单事实 / 菜单异常审计 | [`rabetbase menu list`](references/rabetbase-menu-list.md) | 只读返回当前 App 菜单事实；过滤用 `--jq`；人工修复重复菜单先读 [`menu-anomaly-manual-cleanup`](guides/menu-anomaly-manual-cleanup.md) |
 | 同步菜单到平台 | [`rabetbase menu sync`](references/rabetbase-menu-sync.md) | 本地页面 → 平台菜单，支持交互/静默 |
-| 更新菜单 CDN URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 高风险写入；先 `--dry-run` 看资源 diff，部分替换用 `--mode patch` |
+| 修改菜单资源 URL / 更新菜单 CDN URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 高频高风险写入；先用 `menu list` 确认资源现状，再 `--dry-run` 看 diff，默认用 `--mode patch`，最后复用同参数加 `--yes` |
 | 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 默认返回全部 DO V2 数据集；查指定来源用 `--source DB_TABLE` / `--source METADATA`；也可 `--code` 精确查 |
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
 | 修改 Dataset 展示名 | [`rabetbase dataset rename`](references/rabetbase-dataset-rename.md) | 只更新 Dataset 展示名；必须先 `--dry-run`，用 `--expect-name` 防漂移 |
@@ -279,7 +280,7 @@ const result = await client.bff.execute<DashboardData>({
 | Diagnostics | [`doctor`](references/rabetbase-doctor.md) |
 | Platform Issue | [`report`](references/rabetbase-issue-report.md) |
 | Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
-| Menu | [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) |
+| Menu | [`list`](references/rabetbase-menu-list.md) / [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) |
 | app commands | [`list`](references/rabetbase-app-list.md) / `remote` / [`use`](references/rabetbase-app-use.md) / [`add`](references/rabetbase-app-add.md) / [`remove`](references/rabetbase-app-remove.md) |
 | dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`rename`](references/rabetbase-dataset-rename.md) / [`field-update`](references/rabetbase-dataset-field-update.md) / [`extend-update`](references/rabetbase-dataset-extend-update.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`relations`](references/rabetbase-dataset-relations.md) / [`relation-create/update/delete`](references/rabetbase-dataset-relation-mutations.md) |
 | page commands | [`generate-start`](references/rabetbase-page-generate-start.md) / [`generate-status`](references/rabetbase-page-generate-status.md) / [`standard-page-status`](references/rabetbase-standard-page-status.md) / [`relation-audit`](references/rabetbase-page-relation-binding.md) / [`sync`](references/rabetbase-page-sync.md) / [`pull`](references/rabetbase-page-pull.md) / [`push`](references/rabetbase-page-push.md) |
@@ -362,3 +363,4 @@ const result = await client.bff.execute<DashboardData>({
 | 冲突检测与保存 | `blocked`、未保存时的用户沟通、响应结构 | [`conflict-detection.md`](guides/conflict-detection.md) |
 | 质量与最佳实践 | 审查 SQL/BFF、命名、高危边界、描述字段 | [`best-practices.md`](guides/best-practices.md) |
 | 数据库连接与分析 | 接入/改连/测连、`traceId` 来源、`db analyze-*` 与 dataset 分工；子命令速查见上文 **「数据库连接（db）」** | [`database-connection-workflow.md`](guides/database-connection-workflow.md) |
+| 菜单异常审计与人工修复 | 重复 path、根级菜单重名、需生成平台手动删除清单 | [`menu-anomaly-manual-cleanup.md`](guides/menu-anomaly-manual-cleanup.md) |

@@ -51,7 +51,7 @@ rabetbase bff push --yes --format json
 ## Agent 规则
 
 - 不要再基于 `bff save` 设计新流程
-- 如果用户只是沿用旧术语，先解释“当前主路径是 `bff create + bff push`”，然后直接按新流程执行
+- 如果用户只是沿用旧术语，先解释“推荐路径是 `bff create + bff push`”，然后直接按新流程执行
 - 如果用户贴出历史脚本，优先帮他改造成 `create/push/pull/status/delete`
 
 ## 参考

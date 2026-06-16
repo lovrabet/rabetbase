@@ -364,7 +364,7 @@ await context.client.sql.execute({
 
 **自定义 SQL 创建流程**：
 
-1. 团队主路径优先使用 `rabetbase sql create` 创建 SQL（此时平台端已创建记录），再在本地同步目录中编辑并通过 `sql push` 更新
+1. 优先使用 `rabetbase sql create` 创建 SQL（此时平台端已创建记录），再在本地同步目录中编辑并通过 `sql push` 更新
 2. 获得返回或已存在的 `sqlCode`
 3. 在代码中调用 `context.client.sql.execute({ sqlCode, params })`
 

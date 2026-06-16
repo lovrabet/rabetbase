@@ -77,7 +77,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 * 失败项进入 `failed`
 
 ### 9. 运行态 smoke（按需）
-`rabetbase bff push` 只证明研发态脚本已同步到平台管理侧。若本轮需求要求确认最终运行效果，应显式进入运行态验证，例如在已安装并配置运行态 CLI 的环境中执行：
+`rabetbase bff push` 只证明脚本配置已同步到平台管理侧。若本轮需求要求确认最终运行效果，应显式进入运行验证，例如在已安装并配置运行 CLI 的环境中执行：
 
 ```bash
 lovrabet bff exec --name <functionName> --params '<json>' --format compress

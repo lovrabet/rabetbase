@@ -4,7 +4,7 @@
 
 ## 本地路径约定
 
-从文件校验时，团队约定优先使用同步目录下的文件：
+从文件校验时，优先使用同步目录下的文件：
 
 ```text
 .rabetbase/sql/<appCode>/<dbName|db-<id>>/<sqlCode>_<sqlName>.sql|xml

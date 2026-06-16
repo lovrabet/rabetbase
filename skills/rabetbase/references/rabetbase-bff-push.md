@@ -53,7 +53,7 @@ rabetbase bff push --yes --type HOOK --name beforeFilter --format json
 - 精确推单个函数时用 `--type + --name`
 - HOOK 推送依赖数据集 alias / datasetCode 和 operationType/functionNode
 - HOOK 可挂载 `DB_TABLE` 或 `METADATA` 数据集；METADATA 不支持 SQL / aggregate 路径，脚本中使用平台返回的标准数据操作
-- 推送成功只代表研发态脚本已同步；如需确认运行态生效，使用运行态验证（例如 `lovrabet bff exec --name <functionName> --params '<json>' --format compress`）
+- 推送成功只代表脚本配置已同步到平台；如需确认最终运行效果，使用运行验证（例如 `lovrabet bff exec --name <functionName> --params '<json>' --format compress`）
 - 管理态已同步但运行态仍旧版本时，按传播延迟 / 缓存延迟处理：等待后重试，必要时对目标脚本精确执行 `--force` 推送；仍不生效时记录平台运行态缓存风险
 
 ## 参考
