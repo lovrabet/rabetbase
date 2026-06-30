@@ -53,6 +53,7 @@
 | 目标 | 路径 | 规则 |
 |------|------|------|
 | 字段名 | `data.fields[].name` | 查询、写入、SQL 列名均使用它，不猜通用字段名 |
+| 聚合列名 | `aggregate[].column` | SDK aggregate 定义使用 `column`，不要写旧别名 `field` |
 | 必填字段 | `data.fields[].required` | `true` 表示创建/写入时需处理，平台自动维护字段除外 |
 | 枚举/选择值 | `data.fields[].options[].value` | 写入持久化 `value`，不要写展示用的 `label` |
 | 外键关系 | `data.relations[]` / `dataset relations` | 只有确认存在关系后才写关联查询或校验 |

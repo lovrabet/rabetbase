@@ -105,6 +105,8 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 * `delete`
 * `aggregate`（仅在数据集 operation 实际返回时使用；METADATA 默认不会提供）
 
+使用 `aggregate` 时，聚合列名写在 `aggregate[].column`；`field` 只是历史兼容别名，新脚本不要使用。
+
 BFF HOOK 可以挂在 `DB_TABLE` 或 `METADATA` 数据集上；是否可挂某个 operation，以平台返回的 operation types 为准。
 
 ### METADATA HOOK 脚本内部限制

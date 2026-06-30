@@ -2,7 +2,7 @@
 
 添加一个新应用到配置文件。默认写入**项目** `process.cwd()` 下解析到的配置文件（一般为 `.rabetbase.json`）；加 **`--global`** 则只写 `~/.rabetbase.json`。若是第一个应用，自动设为 `defaultApp`。其余 CLI 配置仍兼容读取 `.lovrabet.json`。
 
-应用名 **`<name>` 为位置参数**，与 `app use` / `app remove` 一致。
+应用名 **`<name>` 为位置参数**，与 `app remove` 一致。设置当前工作目录默认应用时，优先使用 `workspace use`。
 
 ## 命令
 
@@ -42,12 +42,13 @@ rabetbase app add <name> --appcode <code> [--env <env>] [--apiDir <dir>] [--glob
 ```bash
 rabetbase app add order --appcode app-order-xxx --env production --apiDir ./apps/order/src/api
 rabetbase app add product --appcode app-product-yyy --env daily --apiDir ./apps/product/src/api
-rabetbase app use order
+rabetbase workspace use --app order
 ```
 
 ## 参考
 
 - [SKILL.md](../SKILL.md) — 总索引
 - [rabetbase app list](rabetbase-app-list.md) — 查看所有应用
-- [rabetbase app use](rabetbase-app-use.md) — 切换默认应用
+- [rabetbase workspace](rabetbase-workspace.md) — 推荐的工作目录应用绑定入口
+- [rabetbase app use](rabetbase-app-use.md) — 兼容入口
 - [rabetbase app remove](rabetbase-app-remove.md) — 移除应用

@@ -48,6 +48,6 @@ rabetbase auth login --yes
 登录完成后，通常继续执行：
 
 ```bash
-rabetbase app remote --format compress
+rabetbase app list --remote --format compress
 rabetbase app list --format compress
 ```

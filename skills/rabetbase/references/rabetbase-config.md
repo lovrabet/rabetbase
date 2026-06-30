@@ -4,7 +4,7 @@
 
 这份文件描述的是**本地配置模型**：默认应用、应用名到 `appcode`/`env`/`apiDir` 的映射，以及输出格式、风险等级、认证信息等本地偏好。
 
-它**不是**平台应用目录。若要查看当前登录账号在平台上能访问哪些应用，应使用 `rabetbase app remote`，而不是直接查看 `.rabetbase.json`。
+它**不是**平台应用目录。若要查看当前登录账号在平台上能访问哪些应用，应使用 `rabetbase app list --remote`，而不是直接查看 `.rabetbase.json`。
 
 兼容旧名：`.lovrabet.json`、`.lovrabetrc`（按优先级 `.rabetbase.json` > `.lovrabet.json` > `.lovrabetrc`，首个存在的生效）。
 
