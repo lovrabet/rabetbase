@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.2.4
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单事实读取与同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset rename、dataset field-update、dataset extend-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu list、菜单异常审计、菜单手动删除清单、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
+version: 2.3.1
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、菜单事实读取与同步、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset delete、dataset restore、废弃数据集、恢复数据集、dataset rename、dataset field-update、dataset extend-update、dataset business-group-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、menu list、菜单异常审计、菜单手动删除清单、menu sync、menu update、project create、project upgrade、schema、jq、compress、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -33,7 +33,7 @@ metadata:
 ## Skill Freshness
 
 - **本地 repo 与 CLI 契约优先** — 若已安装的全局 skill 描述与当前仓库 `skills/rabetbase/`、`rabetbase --help`、`rabetbase schema` 不一致，以**当前仓库内容和 CLI 实际输出**为准。
-- **发现 skill 过期时应主动刷新** — 若不一致已经影响当前任务判断，且用户没有禁止网络/环境变更，应主动执行 `rabetbase skill install`；等价的显式非交互命令是 `npx skills add lovrabet/rabetbase -g -y`。
+- **发现 skill 过期时应主动刷新** — 若不一致已经影响当前任务判断，且用户没有禁止网络/环境变更，应主动执行 `rabetbase cli-skill install`；等价的显式非交互命令是 `npx skills add lovrabet/rabetbase -g -y`。
 - **刷新后必须重新读取** — 刷新完成后，重新打开当前 `SKILL.md` 与所需 reference，再继续执行任务，避免沿用旧记忆。
 - **刷新失败也不能回退到旧结论** — 若安装失败，明确告诉用户“本地全局 skill 可能过期”，并继续以仓库内 `skills/rabetbase/` 和 `rabetbase schema` 作为 source of truth。
 
@@ -111,7 +111,7 @@ metadata:
 ## 配置作用域原则（`--global`）
 
 - **写操作默认当前项目**（`init`、`app add`、`config set`、`project create` 等），除非用户**显式**传 `--global`。
-- **不要**在用户未要求时给命令加 `--global`** — 默认行为已是「项目优先」；只有用户明确要改全局配置或不在项目内且意图写全局时才使用。
+- **不要**在用户未要求时给命令加 `--global`\*\* — 默认行为已是「项目优先」；只有用户明确要改全局配置或不在项目内且意图写全局时才使用。
 - **`config set`**：在**没有**项目配置文件（当前目录未解析到 `.rabetbase.json`）且**未**传 `--global` 时，CLI **拒绝执行**并提示使用 `--global` 或先 `rabetbase init`，**不会**静默写入全局。
 - **`project create`** 生成的新项目 `.rabetbase.json` **只继承**少量全局偏好（如 `cookie` / `locale` / `format` / `riskLevel` 等），**不会**把全局 `apps` / `defaultApp` 带入新项目文件。
 - **`api pull` / `api list`**：默认仅针对**项目** `apps`；需要合并全局已登记应用时加 `--global`（见各命令 reference）。
@@ -173,7 +173,10 @@ where 条件强制使用操作符：`$eq` `$ne` `$gte` `$lte` `$gt` `$lt` `$in` 
 ### SQL 调用
 
 ```typescript
-const data = await client.sql.execute<MyRow>({ sqlCode: "xxx", params: { key: "val" } });
+const data = await client.sql.execute<MyRow>({
+  sqlCode: "xxx",
+  params: { key: "val" },
+});
 if (data.execSuccess && data.execResult) {
   console.log(data.execResult);
 }
@@ -190,15 +193,15 @@ const result = await client.bff.execute<DashboardData>({
 
 ### 前端 vs BFF 关键差异
 
-| | 前端 SDK | BFF (context.client) |
-|---|---------|---------------------|
-| SQL 返回值 | `{ execSuccess, execResult }` | 直接返回数组 `T[]` |
-| 单条查询 | `getOne({ id })` | `getOne({ id })` |
-| 模型键 | 可通过初始化/生成代码使用 alias | 使用 `"dataset_" + 32 位数据集 code` |
-| `filter()` 返回 | `tableData` 为列表数据 | `tableData` 为列表数据，不是 `list` |
-| `create()` 返回 | 以 SDK 文档/类型为准 | 新记录 ID，不是完整对象 |
-| SDK 初始化能力 | `createClient` / `registerModels` | 不可用；`context.client` 由平台注入 |
-| 调 BFF | `client.bff.execute({ scriptName, params })` | — |
+|                 | 前端 SDK                                     | BFF (context.client)                 |
+| --------------- | -------------------------------------------- | ------------------------------------ |
+| SQL 返回值      | `{ execSuccess, execResult }`                | 直接返回数组 `T[]`                   |
+| 单条查询        | `getOne({ id })`                             | `getOne({ id })`                     |
+| 模型键          | 可通过初始化/生成代码使用 alias              | 使用 `"dataset_" + 32 位数据集 code` |
+| `filter()` 返回 | `tableData` 为列表数据                       | `tableData` 为列表数据，不是 `list`  |
+| `create()` 返回 | 以 SDK 文档/类型为准                         | 新记录 ID，不是完整对象              |
+| SDK 初始化能力  | `createClient` / `registerModels`            | 不可用；`context.client` 由平台注入  |
+| 调 BFF          | `client.bff.execute({ scriptName, params })` | —                                    |
 
 ## 意图 → 命令索引
 
@@ -209,7 +212,7 @@ const result = await client.bff.execute<DashboardData>({
 | 从 lovrabet-cli 迁移 | [`rabetbase project upgrade`](references/rabetbase-project-upgrade.md) | 6 步自动迁移，`--yes` 跳过确认 |
 | 老项目翻新蓝图 / Legacy Application Blueprint | [`guides/legacy-application-blueprint-workflow.md`](guides/legacy-application-blueprint-workflow.md) | 先输出 `.rabetbase/blueprint/<appCode>/application-blueprint.md`，把老代码逻辑与 Dataset / Relations 绑定后再生成迁移 Backlog |
 | 运行 package.json 脚本 | [`rabetbase run <script>`](references/rabetbase-run.md) | 自动检测包管理器，`start`/`dev` 前做版本检查 |
-| 安装 / 重装 / 刷新 skill 包 | [`rabetbase skill install`](references/rabetbase-skill-install.md) | 全局安装或刷新 rabetbase skill；发现本地 skill 过期时优先执行 |
+| 安装 / 重装 / 刷新 CLI Built-in Skill | [`rabetbase cli-skill install`](references/rabetbase-cli-skill-install.md) | 全局安装或刷新 rabetbase CLI Built-in Skill；发现本地 skill 过期时优先执行 |
 | 退出登录 | [`rabetbase auth logout`](references/rabetbase-auth-logout.md) | 删除本地认证 cookie |
 | 诊断配置问题 | [`rabetbase doctor`](references/rabetbase-doctor.md) | 合并配置、各侧 JSON 语法、域名、认证状态 |
 | 上报平台问题 | [`rabetbase issue report`](references/rabetbase-issue-report.md) | 由 Skill 先组织 Markdown 上下文，再写入平台 Issue 采集链路 |
@@ -218,14 +221,18 @@ const result = await client.bff.execute<DashboardData>({
 | 初始化/切换当前工作目录应用 | [`rabetbase workspace`](references/rabetbase-workspace.md) | 写当前目录 `.rabetbase.json`；不从全局复制 cookie/accessKey |
 | 修改配置文件 | [`rabetbase config set <key> <value>`](references/rabetbase-config.md) | 默认写项目；无项目配置且未 `--global` 会拒绝；`--global` 写 `~/.rabetbase.json` |
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
+| 管理远端应用配置 KV | [`rabetbase app-config list/get/set/delete`](references/rabetbase-app-config.md) | 远端 app-config 管理面；默认不输出明文 value，`set/delete` 先 `--dry-run` |
 | 查看线上菜单事实 / 菜单异常审计 | [`rabetbase menu list`](references/rabetbase-menu-list.md) | 只读返回当前 App 菜单事实；过滤用 `--jq`；人工修复重复菜单先读 [`menu-anomaly-manual-cleanup`](guides/menu-anomaly-manual-cleanup.md) |
 | 同步菜单到平台 | [`rabetbase menu sync`](references/rabetbase-menu-sync.md) | 本地页面 → 平台菜单，支持交互/静默 |
 | 修改菜单资源 URL / 更新菜单 CDN URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 高频高风险写入；先用 `menu list` 确认资源现状，再 `--dry-run` 看 diff，默认用 `--mode patch`，最后复用同参数加 `--yes` |
 | 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 默认返回全部 DO V2 数据集；查指定来源用 `--source DB_TABLE` / `--source METADATA`；也可 `--code` 精确查 |
 | 查看表结构和字段 | [`rabetbase dataset detail --code xxx`](references/rabetbase-dataset-detail.md) | 含字段定义和操作列表 |
+| 废弃数据集 | [`rabetbase dataset delete`](references/rabetbase-dataset-delete.md) | high-risk-write；只从未删除数据集中定位，必须先 `--dry-run`，正式执行加 `--confirm --yes`，批量废弃推荐 `--expected-count` |
+| 恢复已删除数据集 | [`rabetbase dataset restore`](references/rabetbase-dataset-restore.md) | high-risk-write；只从已删除数据集中定位，必须先 `--dry-run`，正式执行加 `--confirm --yes`，批量恢复推荐 `--expected-count` |
 | 修改 Dataset 展示名 | [`rabetbase dataset rename`](references/rabetbase-dataset-rename.md) | 只更新 Dataset 展示名；必须先 `--dry-run`，用 `--expect-name` 防漂移 |
 | 安全更新 Dataset 原始字段对象 | [`rabetbase dataset field-update`](references/rabetbase-dataset-field-update.md) | 使用 `--code` 定位 Dataset，只允许 patch 已知可变业务配置字段；必须先 `--dry-run`，用 `--expect-json` 防漂移 |
-| 安全更新 Dataset 顶层 extend | [`rabetbase dataset extend-update`](references/rabetbase-dataset-extend-update.md) | 只修改 Dataset 顶层 `extend`，第一版只允许 `businessGroup`；必须先 `--dry-run`，用 `--expect-json` 防漂移 |
+| Dataset 顶层 extend 更新命令 | [`rabetbase dataset extend-update`](references/rabetbase-dataset-extend-update.md) | 当前无可写字段；不得用于 `businessGroup`。业务模型分组只能使用 `rabetbase dataset business-group-update` |
+| 更新业务模型分组 | [`rabetbase dataset business-group-update`](references/rabetbase-dataset-business-group-update.md) | 唯一入口；使用 `--code` 定位 Dataset；必须先 `--dry-run`，推荐用 `--expect-business-group` 防漂移 |
 | 查看 Dataset 操作定义 | [`rabetbase dataset operations --code xxx`](references/rabetbase-dataset-operations.md) | 获取 filter/getOne/create 等参数定义 |
 | 查看数据集关联关系 | [`rabetbase dataset relations`](references/rabetbase-dataset-relations.md) | 标准只读入口，输出 `datasetCode + field` 关系事实；支持 `DB_TABLE -> DB_TABLE`、`DB_TABLE -> METADATA`、`METADATA -> METADATA` |
 | 管理单条数据集关联关系 | [`rabetbase dataset relation-create/update/delete`](references/rabetbase-dataset-relation-mutations.md) | 单条关系写入；写入前用 `relations` 确认 `datasetCode + field` 关系事实，DB_TABLE 写入所需表名来自显式参数或物理表事实 |
@@ -283,25 +290,26 @@ const result = await client.bff.execute<DashboardData>({
 | Diagnostics | [`doctor`](references/rabetbase-doctor.md) |
 | Platform Issue | [`report`](references/rabetbase-issue-report.md) |
 | Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
+| Remote App Config | [`app-config list/get/set/delete`](references/rabetbase-app-config.md) |
 | Menu | [`list`](references/rabetbase-menu-list.md) / [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) |
 | app commands | [`list`](references/rabetbase-app-list.md) / `remote`（deprecated） / [`use`（deprecated）](references/rabetbase-app-use.md) / [`add`](references/rabetbase-app-add.md) / [`remove`](references/rabetbase-app-remove.md) |
-| dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`rename`](references/rabetbase-dataset-rename.md) / [`field-update`](references/rabetbase-dataset-field-update.md) / [`extend-update`](references/rabetbase-dataset-extend-update.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`relations`](references/rabetbase-dataset-relations.md) / [`relation-create/update/delete`](references/rabetbase-dataset-relation-mutations.md) |
+| dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`delete`](references/rabetbase-dataset-delete.md) / [`restore`](references/rabetbase-dataset-restore.md) / [`rename`](references/rabetbase-dataset-rename.md) / [`field-update`](references/rabetbase-dataset-field-update.md) / [`extend-update`](references/rabetbase-dataset-extend-update.md) / [`business-group-update`](references/rabetbase-dataset-business-group-update.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`relations`](references/rabetbase-dataset-relations.md) / [`relation-create/update/delete`](references/rabetbase-dataset-relation-mutations.md) |
 | page commands | [`generate-start`](references/rabetbase-page-generate-start.md) / [`generate-status`](references/rabetbase-page-generate-status.md) / [`standard-page-status`](references/rabetbase-standard-page-status.md) / [`relation-audit`](references/rabetbase-page-relation-binding.md) / [`sync`](references/rabetbase-page-sync.md) / [`pull`](references/rabetbase-page-pull.md) / [`push`](references/rabetbase-page-push.md) |
 | Database Connections (`db`) | [`list`](references/rabetbase-db-list.md) / [`detail`](references/rabetbase-db-detail.md) / [`create`](references/rabetbase-db-create.md) / [`update`](references/rabetbase-db-update.md) / [`delete`](references/rabetbase-db-delete.md) / [`test`](references/rabetbase-db-test.md) / [`analyze`](references/rabetbase-db-analyze.md) / [`tables`](references/rabetbase-db-tables.md) / [`diff`](references/rabetbase-db-diff.md) |
 | api commands | [`pull`](references/rabetbase-api-pull.md) / [`list`](references/rabetbase-api-list.md) |
 | sql commands | [`list`](references/rabetbase-sql-list.md) / [`detail`](references/rabetbase-sql-detail.md) / [`create`](references/rabetbase-sql-create.md) / [`status`](references/rabetbase-sql-status.md) / [`pull`](references/rabetbase-sql-pull.md) / [`push`](references/rabetbase-sql-push.md) / [`delete`](references/rabetbase-sql-delete.md) / [`validate`](references/rabetbase-sql-validate.md) / [`save`（deprecated）](references/rabetbase-sql-save.md) / [`exec`](references/rabetbase-sql-exec.md) |
 | bff commands | [`list`](references/rabetbase-bff-list.md) / [`detail`](references/rabetbase-bff-detail.md) / [`create`](references/rabetbase-bff-create.md) / [`status`](references/rabetbase-bff-status.md) / [`pull`](references/rabetbase-bff-pull.md) / [`push`](references/rabetbase-bff-push.md) / [`delete`](references/rabetbase-bff-delete.md) |
 | codegen commands | [`sdk`](references/rabetbase-codegen-sdk.md) / [`sql`](references/rabetbase-codegen-sql.md) |
-| Skills | [`install`](references/rabetbase-skill-install.md) |
+| CLI Built-in Skill | [`install`](references/rabetbase-cli-skill-install.md) |
 
 ## 风险控制
 
 所有声明式命令有 **risk level**：
 
-| 级别 | 含义 | 使用方式 |
-|------|------|---------|
-| `read` | 只读查询，随时可执行 | 直接执行 |
-| `write` | 修改数据，如 `sql pull` | 先 `--dry-run` 预览，再正式执行 |
+| 级别              | 含义                                                                                                    | 使用方式                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `read`            | 只读查询，随时可执行                                                                                    | 直接执行                                         |
+| `write`           | 修改数据，如 `sql pull`                                                                                 | 先 `--dry-run` 预览，再正式执行                  |
 | `high-risk-write` | 影响运行时行为，如 `menu update` / `sql create` / `sql push` / `sql delete` / `bff push` / `bff delete` | 必须 `--yes` 确认或交互确认；CI 模式强制 `--yes` |
 
 `sql validate` 仍是 SQL 内容校验入口；`sql save` 已废弃，不再作为推荐写入路径。
@@ -312,12 +320,12 @@ const result = await client.bff.execute<DashboardData>({
 
 声明式命令统一走 **标准信封**：`ok`、`command`、`risk`、可选 `data`（失败时可有 `error` 等，以实际输出为准）。
 
-| 格式 | 用途 | 说明 |
-|------|------|------|
-| **`--format compress`** | **AI / 脚本优先** | 与 `json` **语义相同**，**单行紧凑**、无缩进换行，显著省 token |
-| `--format json` | 程序解析、调试 | 同上信封，**缩进**，便于人工阅读 |
-| `--format pretty` | 人类阅读（未指定 format 时的常见默认） | 非 JSON 的彩色文本 |
-| `--format table` | 列表数据 | 表格 |
+| 格式                    | 用途                                   | 说明                                                           |
+| ----------------------- | -------------------------------------- | -------------------------------------------------------------- |
+| **`--format compress`** | **AI / 脚本优先**                      | 与 `json` **语义相同**，**单行紧凑**、无缩进换行，显著省 token |
+| `--format json`         | 程序解析、调试                         | 同上信封，**缩进**，便于人工阅读                               |
+| `--format pretty`       | 人类阅读（未指定 format 时的常见默认） | 非 JSON 的彩色文本                                             |
+| `--format table`        | 列表数据                               | 表格                                                           |
 
 **`--jq '<expr>'`**（全局）：仅配合 **`json` 或 `compress`**；对**最终打印的整段 JSON**执行 jq（表达式作用在信封上，例如取 `data` 内字段用 `.data.xxx`）。**jq 可执行文件**按 **`JQ_PATH` → CLI 内置 sidecar jq → `PATH` 上的 jq** 的顺序解析。若显式设置了 **`JQ_PATH`**，它必须指向一个真实可执行文件；否则命令会直接报错，不会静默回退。
 
@@ -325,15 +333,15 @@ const result = await client.bff.execute<DashboardData>({
 
 ## 常见错误速查
 
-| 错误类型 | 含义 | 解决方案 |
-|---------|------|---------|
-| `auth_required` | 未登录 | 执行 `rabetbase auth` |
-| `config_missing` | 未配置 appcode | `rabetbase project init` 或传 `--appcode` |
-| `flag_missing` | 缺少必填参数 | 检查 reference 文档确认必填 flags |
-| `validation_error` | 输入校验失败（含 SQL 类型阻止） | 检查 SQL 内容或参数格式 |
-| `api_error` | 后端 API 错误 | 检查 appcode、网络、权限 |
-| `cancelled` | 用户取消高风险操作 | 用 `--yes` 跳过确认，或修改 riskLevel |
-| `blocked` | 平台冲突检测或资源状态冲突（常见于旧保存链路或平台侧限制） | 明确说明未完成远端写入，引导用户去平台处理或改走同步工作流 |
+| 错误类型           | 含义                                                       | 解决方案                                                   |
+| ------------------ | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| `auth_required`    | 未登录                                                     | 执行 `rabetbase auth`                                      |
+| `config_missing`   | 未配置 appcode                                             | `rabetbase project init` 或传 `--appcode`                  |
+| `flag_missing`     | 缺少必填参数                                               | 检查 reference 文档确认必填 flags                          |
+| `validation_error` | 输入校验失败（含 SQL 类型阻止）                            | 检查 SQL 内容或参数格式                                    |
+| `api_error`        | 后端 API 错误                                              | 检查 appcode、网络、权限                                   |
+| `cancelled`        | 用户取消高风险操作                                         | 用 `--yes` 跳过确认，或修改 riskLevel                      |
+| `blocked`          | 平台冲突检测或资源状态冲突（常见于旧保存链路或平台侧限制） | 明确说明未完成远端写入，引导用户去平台处理或改走同步工作流 |
 
 ## 冲突处理
 
@@ -353,17 +361,17 @@ const result = await client.bff.execute<DashboardData>({
 
 以下 guide 提供详细说明、示例与边界情况：
 
-| 主题 | Use when | Guide |
-|------|----------|-------|
-| SDK 完整参数与返回值 | 初始化 client、filter/create、sql.execute、bff.execute、错误处理 | [`typescript-sdk.md`](guides/typescript-sdk.md) |
-| SQL MyBatis 与动态 SQL | 写自定义 SQL、`<if>`/`<foreach>`、参数绑定 | [`sql-mybatis.md`](guides/sql-mybatis.md) |
-| 前端页面开发约束 | React 页、表单、列表、与数据集绑定 | [`frontend-development.md`](guides/frontend-development.md) |
-| 故障诊断 | CLI/登录/数据集/保存失败排障 | [`troubleshooting.md`](guides/troubleshooting.md) |
-| BFF 脚本规范 | HOOK/ENDPOINT/COMMON、`context.client`、目录与注释模板 | [`backend-function.md`](guides/backend-function.md) |
-| 数据接口访问 | 先 detail 再编码、外键/枚举、禁止 N+1、批量与关联查询；可选 `lovrabet data` 查数（**`lovrabet` CLI ≥ 2.0** 且已安装） | [`data-api-guidelines.md`](guides/data-api-guidelines.md) |
-| SQL 创建工作流 | list/detail → pull/new → edit → validate → status → push/delete → exec 全链路 | [`sql-creation-workflow.md`](guides/sql-creation-workflow.md) |
-| BFF 创建工作流 | new → status → dry-run → pull/push | [`bff-creation-workflow.md`](guides/bff-creation-workflow.md) |
-| 冲突检测与保存 | `blocked`、未保存时的用户沟通、响应结构 | [`conflict-detection.md`](guides/conflict-detection.md) |
-| 质量与最佳实践 | 审查 SQL/BFF、命名、高危边界、描述字段 | [`best-practices.md`](guides/best-practices.md) |
-| 数据库连接与分析 | 接入/改连/测连、`traceId` 来源、`db analyze-*` 与 dataset 分工；子命令速查见上文 **「数据库连接（db）」** | [`database-connection-workflow.md`](guides/database-connection-workflow.md) |
-| 菜单异常审计与人工修复 | 重复 path、根级菜单重名、需生成平台手动删除清单 | [`menu-anomaly-manual-cleanup.md`](guides/menu-anomaly-manual-cleanup.md) |
+| 主题                   | Use when                                                                                                              | Guide                                                                       |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| SDK 完整参数与返回值   | 初始化 client、filter/create、sql.execute、bff.execute、错误处理                                                      | [`typescript-sdk.md`](guides/typescript-sdk.md)                             |
+| SQL MyBatis 与动态 SQL | 写自定义 SQL、`<if>`/`<foreach>`、参数绑定                                                                            | [`sql-mybatis.md`](guides/sql-mybatis.md)                                   |
+| 前端页面开发约束       | React 页、表单、列表、与数据集绑定                                                                                    | [`frontend-development.md`](guides/frontend-development.md)                 |
+| 故障诊断               | CLI/登录/数据集/保存失败排障                                                                                          | [`troubleshooting.md`](guides/troubleshooting.md)                           |
+| BFF 脚本规范           | HOOK/ENDPOINT/COMMON、`context.client`、目录与注释模板                                                                | [`backend-function.md`](guides/backend-function.md)                         |
+| 数据接口访问           | 先 detail 再编码、外键/枚举、禁止 N+1、批量与关联查询；可选 `lovrabet data` 查数（**`lovrabet` CLI ≥ 2.0** 且已安装） | [`data-api-guidelines.md`](guides/data-api-guidelines.md)                   |
+| SQL 创建工作流         | list/detail → pull/new → edit → validate → status → push/delete → exec 全链路                                         | [`sql-creation-workflow.md`](guides/sql-creation-workflow.md)               |
+| BFF 创建工作流         | new → status → dry-run → pull/push                                                                                    | [`bff-creation-workflow.md`](guides/bff-creation-workflow.md)               |
+| 冲突检测与保存         | `blocked`、未保存时的用户沟通、响应结构                                                                               | [`conflict-detection.md`](guides/conflict-detection.md)                     |
+| 质量与最佳实践         | 审查 SQL/BFF、命名、高危边界、描述字段                                                                                | [`best-practices.md`](guides/best-practices.md)                             |
+| 数据库连接与分析       | 接入/改连/测连、`traceId` 来源、`db analyze-*` 与 dataset 分工；子命令速查见上文 **「数据库连接（db）」**             | [`database-connection-workflow.md`](guides/database-connection-workflow.md) |
+| 菜单异常审计与人工修复 | 重复 path、根级菜单重名、需生成平台手动删除清单                                                                       | [`menu-anomaly-manual-cleanup.md`](guides/menu-anomaly-manual-cleanup.md)   |

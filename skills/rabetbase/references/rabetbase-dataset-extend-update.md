@@ -1,8 +1,8 @@
 # dataset extend-update
 
-安全更新 Dataset 顶层 `extend` 对象。
+Dataset 顶层 `extend` 更新命令。
 
-本命令用于修正表元数据级别的业务配置，例如修改 `yt_table_metadata.extend.businessGroup`。它不是字段更新工具，不修改 `fields[]` 或 `properties[]` 中的字段对象。
+本命令保留为 Dataset 顶层 `extend` 的专用入口，但当前可写 key 白名单为空。它不是字段更新工具，不修改 `fields[]` 或 `properties[]` 中的字段对象，也不作为业务模型分组更新路径；业务模型分组请使用 `dataset business-group-update`。
 
 ## 命令
 
@@ -10,13 +10,12 @@
 rabetbase dataset extend-update \
   --appcode app-64e32817 \
   --code 1a90dbff5f094a9a89936fa99b10984c \
-  --patch-json '{"businessGroup":"mt_2"}' \
-  --expect-json '{"businessGroup":"mt_1"}' \
+  --patch-json '{"someExtendKey":"value"}' \
   --dry-run \
   --format compress
 ```
 
-确认 dry-run 结果无误后再去掉 `--dry-run` 执行。
+当前该命令会因白名单为空拒绝 patch key。若目标是修改业务模型分组，不要使用本命令。
 
 ## 参数
 
@@ -24,73 +23,48 @@ rabetbase dataset extend-update \
 | ---------------------- | -------------------------- | ---------------------------------------------------------- |
 | `--appcode <code>`     | 否                         | 目标应用编码；未配置默认 app 时必填                        |
 | `--code <code>`        | 是                         | Dataset code，32 位 hex UUID                               |
-| `--patch-json <json>`  | 是                         | JSON 对象 patch；第一版只允许 `businessGroup`              |
+| `--patch-json <json>`  | 是                         | JSON 对象 patch；当前白名单为空                            |
 | `--expect-json <json>` | 否                         | 当前 `extend` 值保护；任一键不匹配即中止且不写入           |
-| `--dry-run`            | 否                         | 只返回 before/after、changedPaths 和提交预览，不调用写接口 |
+| `--dry-run`            | 否                         | 预览模式；当前仍会因白名单为空被拒绝                       |
 | `--format <fmt>`       | 否                         | 输出格式，AI Agent 优先用 `compress`                       |
 
 ## 可修改字段
 
-第一版只允许 patch 已知可变业务配置属性：
+当前白名单为空，没有开放可修改字段。
 
-- `businessGroup`
+`businessGroup` 会被明确拒绝，并提示改用 `dataset business-group-update`。
 
 ## 输出
 
-返回结构包含：
+当前传入 `businessGroup` 时会返回校验错误，错误语义类似：
 
 ```json
 {
-  "protocol": "dataset-extend-update.v1",
-  "appCode": "app-64e32817",
-  "selector": {
-    "code": "1a90dbff5f094a9a89936fa99b10984c"
-  },
-  "dataset": {
-    "id": 1010859,
-    "code": "1a90dbff5f094a9a89936fa99b10984c",
-    "name": "保单条款",
-    "table": "mt_policy_term",
-    "db": 10293
-  },
-  "dryRun": true,
-  "changed": true,
-  "changedPaths": ["extend.businessGroup"],
-  "before": {
-    "extend": {
-      "businessGroup": "mt_1",
-      "tableLabel": "保单条款"
-    }
-  },
-  "after": {
-    "extend": {
-      "businessGroup": "mt_2",
-      "tableLabel": "保单条款"
-    }
-  },
-  "submitted": false
+  "ok": false,
+  "error": {
+    "message": "dataset extend-update does not support businessGroup; use dataset business-group-update"
+  }
 }
 ```
 
-当 patch 后无变化时，返回 `changed=false`，不会调用写接口。
-
 ## 操作边界
 
-- 命令读取平台 `get-driven-data` 原始结构，解析顶层 `detail.extend`。
-- 命令只使用 `--code` 定位 Dataset，保持 AI First 协议标识清晰且可复现。
-- 非 `--dry-run` 且确有变化时，命令通过 `/smartapi/dataset/update-driven-data` 提交完整 driven data。
-- 若平台返回的 `extend` 是 JSON 字符串，写回时保持字符串形态；若是对象，写回时保持对象形态。
+- 命令只使用 `--code` 定位 Dataset，保持目标清晰且可复现。
+- 当前白名单为空；任何 `--patch-json` key 都会被拒绝。
+- `businessGroup` 不属于本命令职责。
 - 命令不修改字段对象。字段级业务配置继续使用 `rabetbase dataset field-update`。
+- 业务模型分组更新请使用 `rabetbase dataset business-group-update`。
 
 ## 提示
 
-- 写入前必须先运行 `--dry-run`。
-- 推荐用 `--expect-json` 保护当前值，例如 `--expect-json '{"businessGroup":"mt_1"}'`。
+- 不要用 `extend-update` 修改业务模型分组。
+- 修改业务模型分组时，使用 `rabetbase dataset business-group-update`，并先执行 `--dry-run`。
 - 不确定 Dataset code 时，先用 `rabetbase dataset list --name <name> --format compress` 或 `rabetbase dataset detail` 相关上下文定位，再回到本命令显式传 `--code`。
 
 ## 参考
 
 - [dataset detail](rabetbase-dataset-detail.md)
+- [dataset business-group-update](rabetbase-dataset-business-group-update.md)
 - [dataset field-update](rabetbase-dataset-field-update.md)
 - [dataset list](rabetbase-dataset-list.md)
 - [SKILL.md](../SKILL.md)
