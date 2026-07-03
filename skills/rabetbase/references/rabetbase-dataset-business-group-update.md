@@ -46,7 +46,6 @@ rabetbase dataset business-group-update \
 
 ```json
 {
-  "protocol": "dataset-business-group-update.v1",
   "operation": "update",
   "appCode": "app-64e32817",
   "selector": {

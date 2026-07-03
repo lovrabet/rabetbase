@@ -59,7 +59,6 @@ rabetbase dataset field-update \
 
 ```json
 {
-  "protocol": "dataset-field-update.v1",
   "appCode": "app-64e32817",
   "selector": {
     "code": "1a90dbff5f094a9a89936fa99b10984c"

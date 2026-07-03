@@ -65,7 +65,7 @@ rabetbase dataset relation-delete --db <dbNameOrId> --from-table <fromTable> --f
 
 ## 输出
 
-实际写入返回 `dataset-relation-mutation.v1` 协议数据，包含变更前后状态、写后验证结果和执行信息。纯 DB_TABLE `--dry-run` 返回请求预览对象，顶层包含 `operation`、`appCode`、`dbId`、`dbName` 和 `body`，用于确认写入落点。METADATA `relation-update --dry-run` 返回 `dataset-relation-mutation.v1` 审计结构，包含 `before/after/warnings/suggestedExpectFlags`，并同样包含 `body.appCode`、`body.dblinkId` 和 `body.relation` 供复核实际请求体。关系定位只使用结构化字段，不解析字符串 key。
+实际写入返回变更前后状态、写后验证结果和执行信息。纯 DB_TABLE `--dry-run` 返回请求预览对象，顶层包含 `operation`、`appCode`、`dbId`、`dbName` 和 `body`，用于确认写入落点。METADATA `relation-update --dry-run` 返回审计结构，包含 `before/after/warnings/suggestedExpectFlags`，并同样包含 `body.appCode`、`body.dblinkId` 和 `body.relation` 供复核实际请求体。关系定位只使用结构化字段，不解析字符串 key。
 
 正式写入后，CLI 会自动回读关系事实：
 
@@ -75,11 +75,10 @@ rabetbase dataset relation-delete --db <dbNameOrId> --from-table <fromTable> --f
 
 如果后端写接口返回但回读不匹配，命令以 `relation_write_not_verified` 失败，不返回成功结果。
 
-关系事实字段语义与 `dataset-relations.v1` 一致，主定位字段为 `datasetCode + field`；单条关系写入命令返回 `dataset-relation-mutation.v1` 执行结果。
+关系事实字段主定位字段为 `datasetCode + field`；单条关系写入命令返回结构化执行结果。
 
 ```json
 {
-  "protocol": "dataset-relation-mutation.v1",
   "operation": "create",
   "appCode": "app-xxx",
   "selector": {
