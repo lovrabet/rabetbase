@@ -1,8 +1,8 @@
 # rabetbase app-config
 
-管理远端应用级配置 KV。事实源是平台 `/smartapi/app-config`，不是本地 `.rabetbase.json`；本地配置仍用 `rabetbase config` / `rabetbase app` 管理。
+管理当前应用的运行态 app-config key。事实源是平台 app-config 管理面，不是本地 `.rabetbase.json`；本地配置仍用 `rabetbase config` / `rabetbase app` 管理。
 
-`value` 默认按敏感内容处理：`list` 和默认 `get` 不输出明文，`set --dry-run` / `delete --dry-run` 也不输出明文。不要把远端 value 写入本地配置、缓存、日志或命令参数转发给业务 BFF。
+`value` 默认按敏感内容处理：`list` 和默认 `get` 不输出明文，`set --dry-run` / `delete --dry-run` 也不输出明文。不要把 app-config value 写入本地配置、缓存、日志或命令参数转发给业务 BFF。
 
 ## 命令
 
@@ -87,9 +87,9 @@ rabetbase app-config delete vectorengine.apiKey --yes
 - `set/delete --dry-run` 不输出明文 value，也不写入。
 - `set` 的成功/失败输出只报告 key、appCode、operation 和脱敏上下文。
 - 不依赖、不展示、不判断 `encrypted`。
-- 不把远端 app-config 混入 `rabetbase config`。
+- 不把运行态 app-config 混入 `rabetbase config`。
 - 当前不把该能力描述为 KMS、密钥托管、自动轮换或后端加密能力。
 
 ## 业务消费
 
-rabetbase 只负责维护远端 app-config。业务代码需要敏感配置时，应由服务端 BFF 上下文读取；不要让 Agent 先 `--reveal` value，再把明文作为 `lovrabet bff exec` 参数或脚本参数传入。
+rabetbase 负责维护运行态 app-config 管理面。业务代码需要敏感配置时，应由服务端 BFF 上下文通过 `context.appConfig.get(...)` 读取并消费；不要让 Agent 先 `--reveal` value，再把明文作为 `lovrabet bff exec` 参数或脚本参数传入。
