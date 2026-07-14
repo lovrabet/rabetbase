@@ -19,7 +19,7 @@ rabetbase dataset detail --alias order --format json
 
 ## 输出（要点）
 
-- **fields**：归一化字段（`name` / `displayName` / `type` / `pk` / `required` / `options` 等）
+- **fields**：归一化字段（`name` / `displayName` / `type` / `pk` / `required` / `deprecated` / `options` 等）
 - **operations**：每项含 `method`、`path`、`host`（若有）、**已解析 JSON 的** `requestBody` / `responseBody`（原 API 为字符串）
 - **dbtable**：`dbtableConfig` 关键信息（含 `allFieldNames` 由 `allFields` 拆分）
 - **relatedPages**：来自 `relatedPageInfoList`（`id` / `type` / `code` / `title` / `deleted`）
@@ -68,9 +68,10 @@ rabetbase dataset detail --alias order --format json
 | `dbType` | 数据库存储类型 | SQL 编写 |
 | `pk` | 是否主键 | create 策略 |
 | `required` | 是否必填 | 校验 |
+| `deprecated` | 字段是否已废弃 | 字段治理、页面/脚本迁移判断 |
 | `options` | SELECT/ENUM 的 `{label, value, children}[]` | 下拉枚举 |
 
-平台原始 JSON 中的 `systemRetain` / `autoIncrement` 等 **不会逐字段完整体现在归一化 `fields[]`**；系统时间列请结合 **`data.dbtable.createTimeField` / `updateTimeField`** 与 [`guides/backend-function.md`](../guides/backend-function.md) 约定判断。
+平台原始 JSON 中的 `systemRetain` / `autoIncrement` 等 **不会逐字段完整体现在归一化 `fields[]`**；字段生命周期标记 `deprecated` 会归一化为布尔值。系统时间列请结合 **`data.dbtable.createTimeField` / `updateTimeField`** 与 [`guides/backend-function.md`](../guides/backend-function.md) 约定判断。
 
 ### 数据库配置（`data.dbtable`）关键字段
 

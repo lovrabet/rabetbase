@@ -74,6 +74,15 @@ rabetbase page sync --datasetcode <datasetCode> --dry-run --format json
 
 不要在已有页面时继续强行 `generate-start --apply`，也不要在完全没页时直接 `sync`。
 
+真实提交生成后，保存返回的 `operationId` 和 `clientOperationId`，并用同一任务标识查询：
+
+```bash
+rabetbase page generate-start --datasetcode <datasetCode> --apply --format json
+rabetbase page generate-status --datasetcode <datasetCode> --operation-id <operationId> --format json
+```
+
+查询超时或网络失败时继续查询原任务，不重新提交生成。成功终态后，从 `standardPageStatus.pageSets[]` 读取页面事实和 `versionTag`；存在多个完整组、残留页或冲突时交给用户确认，不猜测页面组。
+
 ### 4. 拉取页面 schema 到本地
 
 需要本地开发 formal schema 时，执行 [`page pull`](../references/rabetbase-page-pull.md)：
@@ -81,6 +90,7 @@ rabetbase page sync --datasetcode <datasetCode> --dry-run --format json
 ```bash
 rabetbase page pull --id <pageId> --format json
 rabetbase page pull --datasetcode <datasetCode> --format json
+rabetbase page pull --datasetcode <datasetCode> --version-tag <versionTag> --format json
 ```
 
 规则：
@@ -88,7 +98,8 @@ rabetbase page pull --datasetcode <datasetCode> --format json
 - `--id` 用于单页
 - `--datasetcode` / `--alias` 用于按数据集批量
 - 同一命令里 `--id` 与 `--datasetcode` / `--alias` 互斥
-- 批量模式下若同一数据集存在多组页面且 `versionTag` 不唯一，必须显式传 `--version-tag`
+- 生成链路优先使用 `page generate-status` 的 `standardPageStatus.pageSets[].versionTag`
+- 批量模式下若同一数据集存在多组页面且 `versionTag` 不唯一，必须由用户确认后显式传 `--version-tag`
 
 本地文件位置：
 
@@ -135,7 +146,7 @@ rabetbase page push --datasetcode <datasetCode> --version-tag <tag> --format jso
 ### A. 首次补齐智能列表页
 
 ```text
-dataset detail → standard-page-status → page generate-start（默认预览） → page generate-start --apply → page generate-status → page standard-page-status
+dataset detail → standard-page-status → page generate-start（默认预览） → page generate-start --apply → 保存 operation ID → page generate-status → 从 standardPageStatus.pageSets[] 选择 versionTag
 ```
 
 适用于：

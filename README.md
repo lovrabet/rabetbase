@@ -16,7 +16,7 @@
 * SQL 创建、校验（`sql validate`）、保存（`sql save`）与冲突处理
 * BFF 脚本编写规范与安全保存流程
 * Lovrabet TypeScript SDK 的正确使用方式（filter / aggregate / sql.execute / bff.execute）
-* 多应用配置与切换（`app add` / `app use` / `--app`）
+* 多应用配置与切换（`app add` / `workspace use --app` / `--app`）
 * 团队协作中的冲突检测与防覆盖规范
 
 ## 安装

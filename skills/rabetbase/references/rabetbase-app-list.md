@@ -10,7 +10,7 @@
 - **`--project`**：仅列出**项目**文件中的应用（与 `--global` 互斥）。
 - **`--remote`**：列出当前登录账号在平台上可访问的应用（与 `--global` / `--project` 互斥）。
 
-`app add` 默认写项目（`--global` 写全局）。当前工作目录默认应用优先用 `workspace use` 修改；`app use` 仅保留兼容。`app remove` 的落盘规则见对应 reference。
+登记应用用 `workspace add`（默认写项目，`--global` 写全局）。当前工作目录默认应用用 `workspace use` 修改。移除应用用 `workspace remove`，落盘规则见 workspace reference。
 
 ## 命令
 
@@ -21,7 +21,7 @@ rabetbase app list --project
 rabetbase app list --remote
 ```
 
-> **说明：** `rabetbase app` 本身只显示 `app` 服务帮助；查看本地配置中的应用请显式执行 `rabetbase app list`。旧命令 `rabetbase app remote` 仍可兼容使用，但会提示迁移到 `rabetbase app list --remote`。
+> **说明：** `rabetbase app` 本身只显示 `app` 服务帮助；查看本地配置中的应用请显式执行 `rabetbase app list`。平台目录视图使用 `rabetbase app list --remote`。
 
 ## 参数
 
@@ -67,16 +67,13 @@ rabetbase app list --remote
 ## 提示
 
 - 若列表与预期不符，先检查项目或全局 JSON **是否为合法 JSON**（例如尾随逗号会导致该侧配置被忽略）；`rabetbase doctor` 的 **Config JSON** 段可检测语法。
-- 无 `apps` 时显示单应用信息，并提示可用 `app add` 迁移到多应用模式。
+- 无 `apps` 时显示单应用信息，并提示可用 `workspace add` 迁移到多应用模式。
 - 如果你想知道“本地已经登记了哪些应用”，执行 `rabetbase app list`。
 - 如果你想知道“当前登录账号在平台上还能访问哪些应用”，执行 `rabetbase app list --remote`。
-- `rabetbase app remote` 是兼容入口，不再作为 Agent 主路径。
 
 ## 参考
 
 - [SKILL.md](../SKILL.md) — 总索引
 - [`.rabetbase.json` 配置参考](rabetbase-config.md) — 合并策略与路径
 - [rabetbase doctor](rabetbase-doctor.md) — 配置与 JSON 诊断
-- [rabetbase workspace](rabetbase-workspace.md) — 推荐的工作目录应用绑定入口
-- [rabetbase app add](rabetbase-app-add.md) — 添加应用
-- [rabetbase app use](rabetbase-app-use.md) — 兼容入口
+- [rabetbase workspace](rabetbase-workspace.md) — 工作环境应用配置（绑定/登记/移除）入口

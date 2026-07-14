@@ -6,7 +6,7 @@
 
 - **analyze-start**：接入新库或表结构大变后，同步到 Lovrabet（生成/更新数据集元数据的前置）
 - **analyze-cancel**：任务卡住或误触，需要停掉当前分析
-- **analyze-status**：轮询任务是否 `SUCCESS` / `FAILED`
+- **analyze-status**：轮询任务状态，并读取 CLI 派生的终态、重试和耗时字段
 
 ## trace / plan id 从哪来
 
@@ -38,6 +38,21 @@ rabetbase db analyze-status --id 10157 --plan <traceId> --format compress
 | **analyze-start** | `--id`（必填）、`--tables`（可选，增量表名列表） |
 | **analyze-cancel** | `--id`（必填）、`--plan`（可选，缺省用 latestAnalysisTraceId） |
 | **analyze-status** | `--id`（必填）、`--plan`（必填） |
+
+## `analyze-status` 输出
+
+| 字段 | 语义 |
+|------|------|
+| `data.status` | 后端原始任务对象，保留 `status / jobContext / errorMsg` 等排障事实 |
+| `data.parsedJobContext` | `jobContext` 为 JSON 对象时的完整解析结果；空值或非法值返回 `null` |
+| `data.jobContextParseWarning` | 非法 JSON 或非对象 JSON 的解析警告；正常或空上下文为 `null` |
+| `data.isTerminal` | 仅 `SUCCESS / PARTIAL_SUCCESS / FAILED / CANCELLED` 为 `true` |
+| `data.isRetrying` | 仅原始状态为 `RETRYING` 时为 `true` |
+| `data.elapsedMs` | 优先使用服务端 `costTimeMs`，否则由任务时间戳计算；无法计算时为 `null` |
+
+`PENDING / RUNNING / RETRYING / CANCELING` 与未知状态都不是终态。不要根据 `failedTables`、`retryCount` 或错误文案推测状态。`PARTIAL_SUCCESS` 只表示任务已到终态；必须复跑 `db diff --all --changed-only` 验证目标差异收敛，才能得出本轮分析完成结论。
+
+`RETRYING` 状态下的服务端 `costTimeMs` 可能只代表当前或最近一轮执行耗时，因此此时的 `elapsedMs` 不应解释为整个任务的累计总耗时。
 
 ## 输出链接
 
