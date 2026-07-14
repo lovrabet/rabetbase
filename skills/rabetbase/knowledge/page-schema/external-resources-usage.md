@@ -119,7 +119,7 @@ tags: [page-schema, external-resources, custom-sql, bff, permission]
 
 ### 3.2 ENDPOINT 脚本消费方式
 
-**API 路径**：`POST /api/{appCode}/endpoint/{scriptName}`
+**API 路径**：`POST /api/endpoint/{appCode}/{scriptName}`
 
 **步骤 1：在 dataSource 中配置 ENDPOINT API**：
 
@@ -130,7 +130,7 @@ tags: [page-schema, external-resources, custom-sql, bff, permission]
       "id": "convertToCustomer",
       "type": "fetch",
       "options": {
-        "uri": "/api/<appCode>/endpoint/convertToCustomer",
+        "uri": "/api/endpoint/<appCode>/convertToCustomer",
         "params": {}
       }
     }]
