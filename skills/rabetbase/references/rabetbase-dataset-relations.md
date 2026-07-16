@@ -25,13 +25,14 @@ rabetbase dataset relations --from-source DB_TABLE --to-source METADATA --format
 
 ## 输出
 
-返回数据集关系事实。主定位字段是 `datasetCode + field`；`table` 仅作为 `DB_TABLE` 的物理表辅助信息，`METADATA` 侧不会模拟物理表。目标展示字段使用 `to.labelField`，关系基数使用 `relation.cardinality`。
+返回数据集关系事实。主定位字段是 `datasetCode + field`；`from.table` 来自来源数据集详情，`DB_TABLE` 表示物理表，`METADATA` 在 `data.dataset.tableName` 有值时输出、无值时省略；`to.table` 仅在目标为 `DB_TABLE` 时输出。有效的关系记录 ID 使用顶层 `relationId`，目标展示字段使用 `to.labelField`，关系基数使用 `relation.cardinality`，业务关系类型使用 `relation.bizRelationType`；`main_sub` 表示主子表关系，`null` 表示普通关系。
 
 ```json
 {
   "appCode": "app-xxx",
   "total": 1,
   "relations": [{
+    "relationId": 14263,
     "from": {
       "source": "DB_TABLE",
       "datasetCode": "from-dataset-code",
@@ -47,7 +48,8 @@ rabetbase dataset relations --from-source DB_TABLE --to-source METADATA --format
       "labelField": "to_label_field"
     },
     "relation": {
-      "cardinality": "ONE_TO_MANY"
+      "cardinality": "ONE_TO_MANY",
+      "bizRelationType": "main_sub"
     }
   }]
 }
@@ -56,7 +58,7 @@ rabetbase dataset relations --from-source DB_TABLE --to-source METADATA --format
 ## Agent 使用规则
 
 - 页面关系审计、标准页面绑定、字典/选项源判断，直接使用 `dataset relations --format compress`；命令底层默认读取 D0/DO V2 关系事实
-- 写入前用本命令确认来源/目标 `datasetCode + field`、`to.labelField` 和 `relation.cardinality`
+- 更新或删除前确认 `relationId`；写入前确认来源/目标 `datasetCode + field`、`to.labelField`、`relation.cardinality` 和 `relation.bizRelationType`
 - `DB_TABLE -> METADATA` 表示业务表字段消费 METADATA 字典，不要把它理解为数据库外键
 - `METADATA -> METADATA` 可以是自关联父子关系；是否自关联由 `from.datasetCode === to.datasetCode` 自行判断，不在协议里增加派生字段
 - 读取输出只表达关系事实，不输出派生能力字段

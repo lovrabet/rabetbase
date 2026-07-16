@@ -266,3 +266,13 @@ await client.models.dataset_xxx.filter({
 - 仅支持一级关联（`relation.field`），不支持 `a.b.c`
 - 关联关系必须在数据集 `relations` 中定义
 - create / update / getOne 等其他接口不支持点号语法
+
+数据集关系的主子表声明、字段方向和验收规则见 [数据集关系声明](dataset-relations.md)。
+
+---
+
+## 8. 数据集关系：主子表
+
+主子表是数据集关系元数据，用于表示一条主记录对应多条明细记录。通过 Rabetbase CLI 写入时，关系基数使用 `--cardinality ONE_TO_MANY`，业务类型使用 `--biz-relation-type main_sub`，并保证主表被引用字段与子表关联字段真实匹配。
+
+页面通过 `relation.field` 消费已定义的关系；它不会因为声明主子表而自动生成子表布局或交互。不要将数据集内部关系对象直接复制到 CLI 请求或 PageSchema props；完整字段说明、示例与校验规则见 [数据集关系声明](dataset-relations.md)。

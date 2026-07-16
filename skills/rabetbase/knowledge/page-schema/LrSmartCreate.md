@@ -37,6 +37,62 @@ tags: [form, page-schema]
 | cols | number | 每行字段数（multiple 模式） |
 | valuesKey | string | 数据加载状态 key（Update/Detail） |
 | fieldReactions | JSFunction（PageSchema 写法） | 表单型组件字段联动函数，返回“字段名 → 字段属性覆盖”对象 |
+| sub_info | object | 主子表的子表配置。标准页生成器为主表 Form 写入，包含子表标题、数据集编码与字段 items |
+
+---
+
+## 主子表表单（sub_info）
+
+`LrSmartCreate`、`LrSmartUpdate` 和 `LrSmartDetail` 共用 `YtForm` 的子表运行时。主子表不是在 `items` 中增加一个普通字段，而是由 Form props 顶层的 `sub_info` 描述子表。
+关系写入规范见 [dataset-relations.md](dataset-relations.md)。
+
+```json
+{
+  "sub_info": {
+    "title": "订单明细",
+    "datasetCode": "order_item",
+    "items": [
+      {"name": "product_name", "label": "商品", "componentName": "YtInput", "isShown": true},
+      {"name": "quantity", "label": "数量", "componentName": "YtInputNumber", "isShown": true}
+    ]
+  }
+}
+```
+
+| 属性 | 含义 | 生成规则 |
+|------|------|----------|
+| `sub_info.title` | 子表区域标题和子表抽屉标题 | 使用子表数据集名称 |
+| `sub_info.datasetCode` | 子表数据集编码，也是子表记录在 Form 内部的命名空间 | 使用子表协议中的 `datasetCode` |
+| `sub_info.items` | 子表的 Form items | 按子表字段生成并同步；若配置了 `subColumnName`，同名字段不会出现在子表 items 中 |
+
+### 标准页生成条件与同步
+
+主子表关系声明见 [dataset-relations.md](dataset-relations.md)。标准页生成器还需要在主表协议的 `extend` 中提供 `subDatasetCode` 和 `subTableName`，并在 `relatedTablesJson` 中提供以 `subTableName` 为 key 的子表协议；`subColumnName` 为可选字段，用于从子表表单项中排除同名字段。
+
+- 仅主表的 Form 节点会写入 `sub_info`，不会给子表自身的页面节点重复挂载子表。
+- 新建、编辑和详情页面的 `LrSmartCreate` / `LrSmartUpdate` / `LrSmartDetail` 都会在标准页生成或更新时同步 `sub_info`。
+- 同步会复用并校准既有子表 items，而不是要求手工维护一份与子表数据集脱节的字段副本。
+- 当主子表上下文被移除后再次同步，旧的 `sub_info` 会被删除；同步结果会标记只由旧子表 items 引用的数据源，供上层生命周期决定是否清理。
+
+因此，新增或变更主子表字段时，先通过 Rabetbase CLI 校验关系事实，再修改子表数据集与主表协议并重新执行标准页生成/同步。不要只在某一个页面手写一套长期维护的 `sub_info.items`，也不要因存在关系元数据就假定页面会自动生成子表。
+
+### 运行时展示与数据结构
+
+- `sub_info.items` 为空时，页面不会渲染子表区域。
+- 子表区域以卡片汇总展示记录，每条记录默认展示前三个可见、非分组字段。新建和编辑模式提供“新增”、编辑和删除操作，编辑在子表抽屉中完成。
+- 子表抽屉会遵循 item 的 `isShown`、`hidden`、`group`、`formSpan` 和 `readonly` 配置，与主表字段的表单规则一致。
+- 子表记录会同步到父 Form 的内部字段路径 `__subFormData[<sub_info.datasetCode>]`，并同步到 Form 的 `valuesKey` 状态。该路径是运行时数据结构，不要把 `__subFormData` 作为普通主表字段写入 `items`。
+- 同步记录时会去除以 `_label` 结尾的展示字段，只保留原始提交值；不要依赖 `xxx_label` 作为子表持久化数据。
+
+### 三种表单模式
+
+| 组件 | 子表交互 | 数据表现 |
+|------|----------|----------|
+| `LrSmartCreate` | 可新增、编辑、删除子表记录 | 从空表单开始，子表记录随主表 Form 一起维护 |
+| `LrSmartUpdate` | 可新增、编辑、删除子表记录 | 已传入的子表默认记录会先规范化，再写入 `__subFormData[datasetCode]` |
+| `LrSmartDetail` | 仅可通过查看按钮打开只读抽屉 | `preview: true` 时不显示新增、编辑、删除与抽屉提交按钮 |
+
+详情页的主子表展示与普通引用表详情不同，详见 [LrSmartDetail.md](LrSmartDetail.md)。
 
 ---
 
