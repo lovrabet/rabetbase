@@ -45,6 +45,7 @@ rabetbase bff push --yes --type HOOK --name beforeFilter --format json
 - `filter()` 结果从 `.tableData` 读取
 - `create()` 返回新记录 ID，不访问 `created.id`
 - BFF 中没有使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
+- 通知型 BFF 只使用已确认的 `configCode` / `audiences` / `message`，没有渠道地址、密钥、旧 MANUAL 参数或 `${...}` 模板表达式
 
 ## 提示
 

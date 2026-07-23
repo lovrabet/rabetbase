@@ -37,8 +37,10 @@ BFF 源码**仅**应在此目录树内创建与长期维护（与 `bff status` /
 
 `bff create` 只创建本地脚本模板，不会替你确认数据集字段、必填字段、枚举值或运行时 API 语义。编辑脚本前先按需阅读：
 
-- [`backend-function.md`](../guides/backend-function.md)：`context.client`、模型键、返回值、事务、禁止事项
+- [`backend-function.md`](../guides/backend-function.md)：`context.client`、模型键、返回值、事务、消息通知扩展、禁止事项
 - [`data-api-guidelines.md`](../guides/data-api-guidelines.md)：字段、枚举、外键、性能规则
+
+创建可由 CLI 调用的通知型 BFF 时使用 `ENDPOINT`，并先用 [`rabetbase notification config-list`](rabetbase-notification-config-list.md) 确认当前应用真实的通知 `configCode`。纯通知 ENDPOINT 不需要虚构数据集；脚本只通过 `context.client.extension.execute("notification", "send", ...)` 使用 `configCode`、`audiences`、`message`，不得写渠道地址或密钥。
 
 ## 提示
 

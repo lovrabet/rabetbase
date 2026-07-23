@@ -5,7 +5,7 @@
 ## 何时用
 
 - 已用 `db list` 拿到 `id`，需要比列表更全的字段
-- 需要当前 **`latestAnalysisTraceId`** 做 `analyze status/cancel`
+- 需要当前 **`latestAnalysisTraceId`** 查询最新分析状态；取消已知任务时仍使用正在跟踪的原 planId
 
 ## 命令
 

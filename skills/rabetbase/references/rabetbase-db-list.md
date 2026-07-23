@@ -6,7 +6,7 @@
 
 - 刚接手项目，需要知道有哪些库、分析是否跑完
 - 为其它 `db` 子命令准备 **`--id`**
-- 查看 **`latestAnalysisTraceId`**（供 `db analyze-status` / `db analyze-cancel`）
+- 查看 **`latestAnalysisTraceId`**（连接级最新快照，可供 `db analyze-status` 使用；取消已知任务时应使用正在跟踪的原 planId）
 
 ## 命令
 
