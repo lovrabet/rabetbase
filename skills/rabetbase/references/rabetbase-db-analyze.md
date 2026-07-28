@@ -74,6 +74,16 @@ rabetbase db analyze-status --id 10157 --plan <traceId> --format compress
 
 显式单批 `analyze-start --tables` 的持久化参数超过 1024 UTF-8 bytes 时，CLI 会在调用 API 前返回 validation error 并提示先运行 `db analyze-batch-plan`。960 是规划安全预算；960 至 1024 bytes 的显式单批仍允许启动。未传 `--tables` 的全量分析不受此保护影响。
 
+## `analyze-start` 输出
+
+| 字段 | 语义 |
+|------|------|
+| `data.planId` | 当前服务端任务的唯一查询标识 |
+| `data.serverEstimate.estimatedMinutes` | 服务端返回的当前任务耗时估算（分钟） |
+| `data.serverEstimate.estimatedDurationDesc` | 服务端返回的当前任务耗时描述 |
+
+`serverEstimate` 属于已经创建的当前任务；`analyze-batch-plan` 的 `planningEstimate` 属于创建任务前的本地批次规划。两者都不用于判断任务状态。
+
 ## `analyze-status` 输出
 
 | 字段 | 语义 |

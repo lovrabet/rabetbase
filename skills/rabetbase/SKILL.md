@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.3.7
+version: 2.3.8
 description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、通知配置、菜单事实读取与同步、应用文件、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset relation-audit、dataset delete、dataset restore、废弃数据集、恢复数据集、dataset rename、dataset field-update、dataset extend-update、dataset business-group-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-batch-plan、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、BF 消息通知、BFF 消息通知、Backend Function 消息通知、notification config-list、EMAIL configCode、通知配置、notification.send、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、appcode、app list、workspace、workspace init、workspace use、workspace add、workspace remove、多应用、默认应用、menu list、菜单异常审计、菜单手动删除清单、menu sync、menu update、角色、用户组、权限、role、permit、role list、role create、role user-add、role user-remove、user-resolve、销售组、加入开发者、page-set、page-get、row-roles、SELF、ALL、行级权限、role-menus-set、role-apis-set、菜单权限、API 权限、DEV、CUSTOM、project create、project upgrade、schema、jq、compress、file upload、file query-url、文件上传、长期链接、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
@@ -108,7 +108,7 @@ metadata:
 - **入口**：先 [`db list`](references/rabetbase-db-list.md) 取 `id` 与 `latestAnalysisTraceId`（如有）。
 - **只读常用**：[`db detail`](references/rabetbase-db-detail.md)、[`db test`](references/rabetbase-db-test.md)、[`db tables`](references/rabetbase-db-tables.md)、[`db diff`](references/rabetbase-db-diff.md)（`--table` 为表名**子串**过滤，分页用 `--page` / `--pagesize`）。
 - **分析任务**：`db analyze-batch-plan` / `analyze-start` / `analyze-cancel` / `analyze-status`（服务端 plan/trace 来源见下）。
-- **增量分批**：先用本地只读的 `db analyze-batch-plan --id <id> --tables <清单>` 得到确定性批次及按每表 60 秒计算的启发式规划估算；这里生成的是本地批次方案，不是服务端 `planId`，不会创建或预留任务。该估算不是 SLA，不得驱动超时、取消、重试、自动重启或状态判断。再逐批调用一次 `analyze-start`；每批独立保存其返回的 `planId`，同一 dblink 严格串行。`PENDING / RUNNING / RETRYING / CANCELING` 均不得推进下一批。
+- **增量分批**：先用本地只读的 `db analyze-batch-plan --id <id> --tables <清单>` 得到确定性批次及 `planningEstimate`；这里生成的是本地批次方案，不是服务端 `planId`，不会创建或预留任务。再逐批调用一次 `analyze-start`，读取真实 `planId` 与当前任务的 `serverEstimate`；每批独立保存其返回的 `planId`，同一 dblink 严格串行。两类估算都不得驱动超时、取消、重试、自动重启或状态判断，`PENDING / RUNNING / RETRYING / CANCELING` 均不得推进下一批。
 - **取消已有任务**：只使用正在跟踪的原 `planId` 执行 `analyze-cancel --plan <原 planId>`；取消分支不得调用 `analyze-start`，也不得用可能变化的 `latestAnalysisTraceId` 替换已知目标。
 - **失败恢复**：全部批次结束后以完整 `db diff --all --changed-only` 获取未收敛表，逐表串行执行 `analyze-start --tables <单表>`，每表只恢复一次；累计原因计数只作可能不完整的参考展示。Agent 可语义理解原始 `errorMsg` 辅助解释和建议，但两者都不驱动任务状态、重提任务或收敛判断。
 - **ER 图引导**：`db analyze-status` 终态成功后，检查并转述 `data.links.erPage`；若没有 `data.links`，补 `--appcode` 或进入已配置 app 的项目上下文后重查。
