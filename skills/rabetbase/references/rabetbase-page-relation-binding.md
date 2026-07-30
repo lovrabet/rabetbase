@@ -67,5 +67,6 @@ Agent 不得假设存在自动修复命令，也不得把 audit 结果直接转�
 - `wrong_code`：值字段不一致，需要确认关系方向后再修正。
 - `wrong_state`：字段绑定的 state key 与数据源 id 不一致。
 - `missing`：关系字段没有找到可识别绑定。
+- `ambiguous_binding`：字段候选、目标数据集 URI/ID 和 state key 无法收敛到唯一数据源；查看 `currentBinding.candidates` 中的数据源 ID、URI、code 和 label，人工确认后再修改页面，不能默认取第一项。
 - `custom_options`：字段使用枚举数组，且 From 字段自身存在 `optionsType=custom`。
 - `pageStatus=main_sub_missing`：`relation.bizRelationType=main_sub` 命中 CREATE / UPDATE / DETAIL 页面，且 `LrSmartCreate` / `LrSmartDetail` / `LrSmartUpdate` 中未识别到对象类型的 `props.sub_info`；`status` 仍保留原有字段绑定检查结果。

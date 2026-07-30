@@ -34,18 +34,19 @@ rabetbase menu list --verbose --format json
 |------|------|------|------|------|
 | `--appcode <code>` | string | 否 | 配置解析 | 显式指定 App Code，覆盖配置文件 |
 | `--verbose` | boolean | 否 | `false` | 每个菜单项额外返回 `extend` 排障字段 |
-| `--format <fmt>` | string | 否 | `pretty` | 输出格式 |
+| `--format <fmt>` | string | 否 | `compress` | 输出格式 |
 | `--jq <expr>` | string | 否 | — | 对最终 JSON 信封执行 jq；仅配合 `json` / `compress` |
 
 `menu list` 不提供 `--path` / `--label` / `--resources-only` 等领域筛选 flag。需要过滤时使用 `--jq`。
 
 ## 输出
 
-`json` / `compress` 信封的 `data`：
+`json` / `compress` 信封的 `data` 包含全量 `snapshotHash`：
 
 ```json
 {
   "total": 1,
+  "snapshotHash": "sha256:<hex>",
   "menus": [
     {
       "id": 21,
@@ -56,6 +57,10 @@ rabetbase menu list --verbose --format json
       "type": "procode",
       "visible": true,
       "sort": 0,
+      "childrenIds": [],
+      "childrenCount": 0,
+      "pageId": null,
+      "pageType": "",
       "resources": [
         "https://cdn.example.com/app.js"
       ]
@@ -75,6 +80,10 @@ rabetbase menu list --verbose --format json
 - `visible`
 - `sort`
 - `resources`
+- `childrenIds`
+- `childrenCount`
+- `pageId`
+- `pageType`
 
 `--verbose` 只额外返回 `extend`，不返回服务端原始 `raw`。
 
@@ -83,6 +92,7 @@ rabetbase menu list --verbose --format json
 - `menus[]` 顺序是 DFS 前序：父节点在前，子节点紧随其后，兄弟节点按 `sort` 升序。
 - 字符串字段缺失时返回空字符串。
 - 布尔 / 数值字段缺失时返回 `null`。
+- folder 的 `path` 可能由平台生成；`menu list` 按线上事实原样返回。
 - `extend.resources` 会被归一化为 `resources: string[]`。
 - `extend.resources` 为 JSON 字符串、数组、异常字符串或缺失值时，命令都不会因为资源字段解析失败而失败。
 
@@ -100,10 +110,15 @@ rabetbase menu list --verbose --format json
 - 不做本地 `src/pages` 与线上菜单 diff；这类对比使用 `menu sync`。
 - 不做智能列表页菜单审计；dataset-scoped 页面事实使用 `page standard-page-status`。
 - 不修改菜单资源；更新 JS / CSS 资源 URL 使用 `menu update`，并先执行 dry-run。
-- 不直接删除菜单；当前高风险清理优先生成平台手动删除清单，由用户在随当前 `rabetbase` 环境解析的 `<appBaseUrl>/pages` 或精细页面入口确认后处理。
+- 不修改菜单；空 folder 删除使用计划化的 `menu delete`，分组生命周期使用 `group-create/group-update/regroup-start`，写操作都必须先 dry-run。
 
 ## 参考
 
 - [menu sync](rabetbase-menu-sync.md)
 - [menu update](rabetbase-menu-update.md)
+- [menu delete](rabetbase-menu-delete.md)
+- [menu group-create](rabetbase-menu-group-create.md)
+- [menu group-update](rabetbase-menu-group-update.md)
+- [menu regroup-start](rabetbase-menu-regroup-start.md)
+- [task status](rabetbase-task-status.md)
 - [SKILL.md](../SKILL.md)

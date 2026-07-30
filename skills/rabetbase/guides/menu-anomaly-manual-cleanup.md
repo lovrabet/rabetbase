@@ -1,13 +1,14 @@
-# 菜单异常审计与人工修复
+# 菜单异常审计与安全修复
 
-用于重复 `path`、根级菜单重名、疑似菜单同步重复创建等场景。推荐方式是只读审计并生成平台人工处理清单。
+用于重复 `path`、根级菜单重名、疑似菜单同步重复创建等场景。默认通过 `menu list` 审计；CLI 只计划删除事实明确的空 folder，其余菜单在平台处理后回查。
 
 ## 执行原则
 
 - 菜单事实只从 `rabetbase menu list --verbose` 获取。
 - 不绕过 `rabetbase menu list --verbose` 读取菜单配置。
-- Agent 只生成异常清单、平台链接和复查命令，不代替用户删除。
-- 用户删除前必须在平台页面核对 `id / label / path / parentId`，不能只凭名称或链接判断。
+- 删除只能使用精确 folder ID，不得根据 label/path 自动猜测目标。
+- CLI 删除目标必须同时满足 `type=folder`、`childrenCount=0`、`pageId=null`、`resources=[]`。
+- 删除先用 `--id` 和 `--plan-out` 生成计划，确认后只使用 `--plan <file> --yes` 执行；普通页面菜单和层级调整交由平台处理。
 
 ## 平台入口
 
@@ -46,7 +47,7 @@ daily      https://daily.lovrabet.com/web-app/app/<appCode>
 rabetbase menu list --appcode <appCode> --verbose --format json
 ```
 
-`menu list` 返回扁平数组；`childrenCount` 需要用 `menus.filter(item => item.parentId === menu.id).length` 反推。
+`menu list` 返回 DFS 扁平数组，并直接提供 `childrenIds`、`childrenCount`、`pageId` 和 `pageType`。
 
 2. 按规则分类异常：
 
@@ -67,7 +68,7 @@ rabetbase menu list --appcode <appCode> --verbose --format json
 - 不同父级下的同名 `label`。
 - folder 没有 resources。
 
-3. 输出人工处理清单：
+3. 输出修复清单：
 
 ```text
 平台总入口: <appBaseUrl>/pages
@@ -78,18 +79,47 @@ path: <path>
 建议保留:
 - id: <id>, label: <label>, parentId: <parentId>, resources: <count>
 建议删除:
-- id: <id>, label: <label>, parentId: <parentId>, childrenCount: <count>, resources: <count>
+- id: <id>, label: <label>, type: <type>, parentId: <parentId>, childrenCount: <count>, pageId: <pageId|null>, resources: <count>
 停止条件:
 - 平台无法确认该 id
+- type 不是 folder
 - children 不为空
-- pageId 被保留菜单共享
+- pageId 不为空
+- resources 不为空
 - 平台显示与清单不一致
 ```
 
-4. 用户完成平台手动删除后，再读取菜单事实并复查：
+4. 仅对确认满足空 folder 合同的单个目标先预演：
+
+```bash
+rabetbase menu delete \
+  --appcode <appCode> \
+  --id <menuId> \
+  --expect-parent-id <id|root> \
+  --expect-path '<path>' \
+  --expected-children-count 0 \
+  --dry-run \
+  --plan-out ./menu-delete-<menuId>.plan.json \
+  --format compress
+```
+
+确认 dry-run 的 `before`、`snapshotHash`、`type=folder`、`childrenCount=0`、`pageId=null` 和 `resources=[]` 后，在 30 分钟内执行：
+
+```bash
+rabetbase menu delete \
+  --plan ./menu-delete-<menuId>.plan.json \
+  --yes \
+  --format compress
+```
+
+计划绑定 `appCode`、菜单快照和完整目标事实；任一事实漂移、时间字段异常或计划过期都应重新生成计划。需要管理 folder 的 label 或 sort 时使用 `group-update`；普通菜单删除或调整归属时转平台处理，并在完成后用 `menu list` 回查。
+
+5. 再读取菜单事实并复查：
 
 ```bash
 rabetbase menu list --appcode <appCode> --verbose --format json
 ```
 
 复查至少确认重复 `path` 清零、目标保留菜单仍存在、resources 符合预期。
+
+CLI 返回 blocker 或目标不是空 folder 时，把清单交给用户在平台页面处理；处理后仍用 `menu list` 回查。

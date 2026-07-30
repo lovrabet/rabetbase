@@ -21,7 +21,7 @@
 ### 2. 校验依赖事实
 BFF 涉及数据集时，执行 `rabetbase dataset detail --code <数据集编码> --format json`（或 `compress`）确认字段名、类型、必填字段、枚举值、关联关系。禁止凭经验猜字段名，禁止把 Demo 或历史案例里的字段、表名、枚举值复制到当前脚本。
 
-纯消息通知 ENDPOINT 可以不依赖数据集，但必须按 [`backend-function.md`](backend-function.md) 的“消息通知扩展”核对 `configCode`、`audiences` 和 `message`。先执行以下只读命令获取当前应用的 EMAIL 配置：
+不读写数据集的纯消息通知 ENDPOINT 可以不依赖数据集；业务明确要求在数据集操作执行前发送预通知或告警时使用 Before HOOK；作为数据集操作成功后副作用的通知，只有响应结果已包含通知所需字段时才使用 After HOOK。三者都必须按 [`backend-function.md`](backend-function.md) 的“消息通知扩展”核对 `configCode`、`audiences` 和 `message`。先执行以下只读命令获取当前应用的 EMAIL 配置：
 
 ```bash
 rabetbase notification config-list --type EMAIL --format compress
@@ -54,7 +54,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 新建脚本应使用 **`rabetbase bff create`**，在 **`.rabetbase/bff/<appCode>/...`** 下生成脚手架后再编辑（路径与 `bff status` / `bff push` 一致）。**不要**在 `src/` 或仓库任意目录手写 BFF 再期望被 CLI 识别。
 已有脚本仅在上述 BFF 树内修改；与 `backend-function.md` 中的目录约定一致。
 
-需要由 CLI 直接调用并发送通知时，创建 `ENDPOINT`。在脚本中使用 `await context.client.extension.execute("notification", "send", ...)`；不要把通知能力伪装成数据集 HOOK，也不要把 `appCode`、渠道地址或密钥作为外部参数透传。
+通知需要在数据集 `create` / `update` / `delete` 执行前明确预告，并且通知失败应阻止本次操作时，选择 Before HOOK；通知由数据集操作成功触发，且响应结果已包含通知所需字段时，选择 After HOOK；响应结果不包含通知所需字段时，选择能在写入前读取并暂存必要字段、在成功后发送通知的受控 `ENDPOINT`。三者都使用 `await context.client.extension.execute("notification", "send", ...)`，并由 runtime 注入可信 `appCode` 和当前用户；不要把 `appCode`、渠道地址或密钥作为外部参数透传。
 
 ### 5. 自检
 * 方法名正确
@@ -68,7 +68,9 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 * 没有在 BFF 中使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
 * 参数校验、错误处理、脱敏
 * 通知型 BFF 只传 `configCode` / `audiences` / `message`，并且没有 `${...}` 模板表达式、旧 MANUAL 参数或渠道密钥
-* 通知型正式 ENDPOINT 限制调用者可传的字段、`configCode` 和接收对象范围，不形成任意通知转发器
+* 通知型 ENDPOINT 限制调用者可传的字段、`configCode` 和接收对象范围，不形成任意通知转发器
+* 通知型 Before HOOK 使用“即将执行”或“准备执行”的消息语义，`await` 发送后返回原始 `params`；不直接返回通知扩展结果，并明确接受“通知已发送但后续业务仍可能失败”
+* 通知型 After HOOK 只使用业务接口响应结果或固定可信规则派生接收对象与消息；若通知失败或超时，按业务操作可能已完成、通知状态未知处理，不得自动重试原业务请求
 
 ### 6. 检查本地状态
 执行 `rabetbase bff status --format json`：
@@ -98,7 +100,7 @@ lovrabet bff exec --appcode <appCode> --name <functionName> --params '<json>' --
 边界：
 * 通知型 BFF 的 smoke 会真实发送外部消息；必须通过已确认上下文或显式 `--appcode` 锁定同一 app，执行前向用户展示 app、函数名、`configCode`、接收对象和消息摘要并取得明确确认
 * `lovrabet bff detail` 只确认运行契约和版本，不返回脚本源码；通知参数必须来自本地已审查脚本或明确业务契约，不能按函数名猜
-* 通知执行超时或客户端未拿到结果时不要自动重试，先按“状态未知”处理，避免重复发送
+* 通知执行超时或客户端未拿到结果时，先按“状态未知”处理；不得自动重试，避免重复发送
 * `lovrabet` CLI 不可用、未配置或无权限时，明确记录“运行态 smoke 未执行”，不要把它写成 `rabetbase` 验证已通过
 * 管理态已同步但运行态仍返回旧版本时，优先按传播延迟 / 缓存延迟处理：等待后重试；必要时再对目标脚本执行一次精确 `bff push --force --type <type> --name <name>`
 * 多次重试仍旧版本时，记录平台运行态缓存风险并上报；不要通过修改 Skill、配置文件或另建脚本来掩盖

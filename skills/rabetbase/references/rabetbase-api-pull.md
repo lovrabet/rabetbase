@@ -63,6 +63,10 @@ rabetbase api pull --appcode app-order-001
 
 默认 `prefix` 为空（单应用），多应用非 default 应用使用应用名作为 prefix。
 
+## 生成标识符
+
+`api pull` 遵循 [`best-practices.md`](../guides/best-practices.md) 的动态标识符原则，确保生成的 TypeScript 标识符合法且稳定。数字开头的 App Namespace 使用 `APP` 领域前缀，运行时 AppCode 保持不变；该前缀不适用于其他代码生成场景。
+
 ## 前置条件
 
 - 已完成 `rabetbase auth` 登录

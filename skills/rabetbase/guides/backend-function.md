@@ -513,7 +513,17 @@ const rows = result.execResult;
 
 ## 消息通知扩展
 
-需要让 BFF 直接发送应用级消息通知时，使用运行时注入的扩展入口：
+### 类型选择
+
+消息通知可以出现在以下三类脚本中：
+
+* **Before HOOK**：用于在数据集操作执行前发送明确的预通知或告警，例如高风险变更开始提醒。仅当业务接受“通知已发送但后续操作仍可能失败”，并且希望通知失败时阻止本次操作，才使用该方式。消息必须使用“即将执行”或“准备执行”语义，不得宣称操作已经成功。
+* **After HOOK**：用于数据集操作成功后的通知副作用。After HOOK 的 `params` 是业务接口响应结果，不是原始请求参数或操作前记录；仅当响应结果或固定可信规则已包含通知所需事实时才使用。`create` / `update` / `delete` 的响应若不含这些字段，不得把 `params` 当作“当前记录”，应改用能在写入前读取并暂存必要字段、在成功后发送通知的受控 ENDPOINT。
+* **ENDPOINT**：用于页面、CLI 或其他服务显式调用的独立通知流程。调用方只传经过校验的最小业务字段，不能控制渠道配置、任意收件人或完整消息。
+
+三者都使用 `context.client.extension.execute("notification", "send", params)`；`appCode` 和当前用户由 runtime 的可信脚本上下文注入，不能从 `params` 伪造。
+
+下面是 ENDPOINT 使用运行时通知扩展的完整示例：
 
 ```javascript
 const CONFIG_CODE = "<confirmed-config-code>";
@@ -542,7 +552,51 @@ export default async function sendOrderNotification(params, context) {
 }
 ```
 
-这是正式 ENDPOINT 的安全起点：部署前必须把两个占位值替换为当前应用已确认的配置编码和角色编码；调用方只能提供经过校验的最小业务字段，不能控制 `configCode`、`audiences` 或完整 `message`。不要改写成 `context.client.notification.send(...)`、旧 MANUAL 通知参数或脚本内 `fetch(...)`。
+这是 ENDPOINT 的安全调用起点：部署前必须把两个占位值替换为当前应用已确认的配置编码和角色编码；调用方只能提供经过校验的最小业务字段，不能控制 `configCode`、任意 `audiences` 或完整 `message`。Before HOOK 从已确认的请求和可信上下文派生消息，After HOOK 只能使用响应结果或固定可信规则。三者都不要改写成 `context.client.notification.send(...)`、旧 MANUAL 通知参数或脚本内 `fetch(...)`。
+
+### Before HOOK 调用方式
+
+Before HOOK 在业务接口执行前运行。通知调用必须使用 `await`；发送完成后返回原始 `params`，让后续接口继续使用原请求参数：
+
+```javascript
+const CONFIG_CODE = "<confirmed-config-code>";
+const ALLOWED_AUDIENCES = [
+  { type: "ROLE", codes: ["<confirmed-role-code>"] },
+];
+
+export default async function beforeNotifyOrderUpdate(params, context) {
+  const orderNo =
+    typeof params?.orderNo === "string" ? params.orderNo.trim() : "";
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(orderNo)) {
+    throw new Error(
+      "orderNo must be 1-64 letters, numbers, underscores, or hyphens",
+    );
+  }
+
+  await context.client.extension.execute("notification", "send", {
+    configCode: CONFIG_CODE,
+    audiences: ALLOWED_AUDIENCES,
+    message: {
+      title: "订单变更即将执行",
+      summary: "订单 " + orderNo + " 即将执行变更，请关注后续结果",
+      theme: "orange",
+    },
+  });
+
+  return params;
+}
+```
+
+Before HOOK 不得写成 `return await context.client.extension.execute(...)`。通知扩展返回的是 `{ sent, configCode, channelType, message }`；如果把它作为 Hook 返回值，runtime 会将其当作新的接口请求参数，覆盖原始 `params`。
+
+Before HOOK 的执行边界：
+
+* 通知失败会直接抛错，后续业务接口不会执行
+* 通知发送成功只表示预通知已发出；后续业务操作仍可能校验失败、执行失败或回滚
+* 消息标题和摘要必须表达“即将执行”或“准备执行”，不能表达“已完成”或“执行成功”
+* `configCode` 和允许的接收范围应固定在受控脚本中，不能由接口调用方覆盖
+
+After HOOK 通知失败或超时时，原业务操作可能已经完成，通知发送状态也可能未知；不得因此自动重试原业务请求。
 
 ### 获取 configCode
 
@@ -617,14 +671,14 @@ rabetbase notification config-list --type EMAIL --format compress
 }
 ```
 
-`sent: true` 表示运行时通知分发成功，不表示接收人已经阅读。配置不存在、接收人解析为空、参数不合法或渠道调用失败会直接抛错，并保留通知错误码和消息。
+`sent: true` 表示本次运行时通知分发成功，不表示接收人已经阅读，也不提供 exactly-once 保证。配置不存在、接收人解析为空、参数不合法或渠道调用失败会直接抛错，并保留通知错误码和消息。
 
 通知发送是外部可见副作用：
 
 * 创建/推送脚本的 dry-run 不会发送通知；只有执行 BFF 才会发送
 * 运行 smoke 前必须向用户展示当前应用、函数名、`configCode`、接收对象和消息摘要并取得确认
 * 面向多人调用的正式 ENDPOINT 必须在调用扩展前校验 `params` 的字段、类型和接收对象范围；固定业务通知优先在脚本内固定 `configCode` 和允许的接收范围，不要把任意渠道或任意收件人转发能力暴露给调用者
-* 超时或客户端未拿到结果时，发送状态可能未知；不要自动重试，避免重复通知
+* 超时或客户端未拿到结果时，发送状态可能未知；不得自动重试，避免重复通知
 * 不要在数据库事务中发送通知；先完成并提交业务写入，再执行通知调用
 * 若运行环境报告没有 `notification` 扩展，停止并确认目标 runtime 已包含该能力；不要回退到旧 MANUAL 参数或自行发 HTTP 请求
 
