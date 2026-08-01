@@ -7,8 +7,8 @@
 ## 命令
 
 ```bash
-rabetbase menu group-create --label "用户管理" --parent-id <folderId> --sort 10 --dry-run --format compress
-rabetbase menu group-create --label "用户管理" --parent-id <folderId> --sort 10 --yes --format compress
+rabetbase menu group-create --label "用户管理" --parent-id "<parent-folder-id>" --sort 10 --dry-run --format compress
+rabetbase menu group-create --label "用户管理" --parent-id "<parent-folder-id>" --sort 10 --yes --format compress
 ```
 
 ## Flags

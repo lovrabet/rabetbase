@@ -54,6 +54,7 @@ rabetbase menu list --verbose --format json
       "depth": 0,
       "label": "Orders",
       "path": "/orders",
+      "url": "https://example.com/orders?hideShell=true",
       "type": "procode",
       "visible": true,
       "sort": 0,
@@ -76,6 +77,7 @@ rabetbase menu list --verbose --format json
 - `depth`
 - `label`
 - `path`
+- `url`
 - `type`
 - `visible`
 - `sort`
@@ -93,6 +95,7 @@ rabetbase menu list --verbose --format json
 - 字符串字段缺失时返回空字符串。
 - 布尔 / 数值字段缺失时返回 `null`。
 - folder 的 `path` 可能由平台生成；`menu list` 按线上事实原样返回。
+- `url` 是可审计的菜单事实，按线上值原样返回，并参与快照哈希和写后核验。
 - `extend.resources` 会被归一化为 `resources: string[]`。
 - `extend.resources` 为 JSON 字符串、数组、异常字符串或缺失值时，命令都不会因为资源字段解析失败而失败。
 
@@ -115,6 +118,7 @@ rabetbase menu list --verbose --format json
 ## 参考
 
 - [menu sync](rabetbase-menu-sync.md)
+- [menu external-link-create](rabetbase-menu-external-link-create.md)
 - [menu update](rabetbase-menu-update.md)
 - [menu delete](rabetbase-menu-delete.md)
 - [menu group-create](rabetbase-menu-group-create.md)

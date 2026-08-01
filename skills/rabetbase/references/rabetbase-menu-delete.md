@@ -7,7 +7,7 @@
 ## 命令
 
 ```bash
-rabetbase menu delete --id <folderId> --expected-children-count 0 --dry-run --plan-out ./menu-delete.plan.json --format compress
+rabetbase menu delete --id "<folder-id>" --expected-children-count 0 --dry-run --plan-out ./menu-delete.plan.json --format compress
 rabetbase menu delete --plan ./menu-delete.plan.json --yes --format compress
 ```
 

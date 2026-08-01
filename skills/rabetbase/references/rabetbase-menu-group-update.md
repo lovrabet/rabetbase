@@ -7,8 +7,8 @@
 ## 命令
 
 ```bash
-rabetbase menu group-update --id <folderId> --label "客户管理" --sort 20 --dry-run --format compress
-rabetbase menu group-update --id <folderId> --label "客户管理" --sort 20 --yes --format compress
+rabetbase menu group-update --id "<folder-id>" --label "客户管理" --sort 20 --dry-run --format compress
+rabetbase menu group-update --id "<folder-id>" --label "客户管理" --sort 20 --yes --format compress
 ```
 
 至少提供 `--label`、`--sort` 之一。

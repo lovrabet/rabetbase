@@ -7,9 +7,9 @@
 ## 命令
 
 ```bash
-rabetbase menu regroup-start --label "业务管理" --menu-ids <menuId1>,<menuId2> --dry-run --format compress
-rabetbase menu regroup-start --label "业务管理" --menu-ids <menuId1>,<menuId2> --yes --format compress
-rabetbase task status --task-id <taskId> --format compress
+rabetbase menu regroup-start --label "业务管理" --menu-ids "<menu-id-1>,<menu-id-2>" --dry-run --format compress
+rabetbase menu regroup-start --label "业务管理" --menu-ids "<menu-id-1>,<menu-id-2>" --yes --format compress
+rabetbase task status --task-id "<task-id>" --format compress
 ```
 
 ## Flags
