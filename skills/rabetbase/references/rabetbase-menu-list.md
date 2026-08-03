@@ -13,14 +13,17 @@ rabetbase menu list --format compress
 # 人类阅读
 rabetbase menu list --format json
 
-# 按 path 过滤
-rabetbase menu list --format json --jq '.data.menus[] | select(.path | contains("orders"))'
+# 按 path 片段过滤（替换占位符）
+rabetbase menu list --format json --jq '.data.menus[] | select(.path | contains("<path-fragment>"))'
 
-# 按 label 过滤
-rabetbase menu list --format json --jq '.data.menus[] | select(.label | contains("用户"))'
+# 按 label 片段过滤（替换占位符）
+rabetbase menu list --format json --jq '.data.menus[] | select(.label | contains("<label-fragment>"))'
 
 # 仅查看配置了资源 URL 的菜单
 rabetbase menu list --format json --jq '.data.menus[] | select(.resources | length > 0)'
+
+# 查看最近更新人和更新时间
+rabetbase menu list --format compress --jq '.data.menus[] | {id, label, path, updateUserId, updateUserName, updateTime}'
 
 # 排查 extend.resources 原始形态
 rabetbase menu list --verbose --format json
@@ -52,9 +55,9 @@ rabetbase menu list --verbose --format json
       "id": 21,
       "parentId": null,
       "depth": 0,
-      "label": "Orders",
-      "path": "/orders",
-      "url": "https://example.com/orders?hideShell=true",
+      "label": "Example Menu",
+      "path": "/example-page",
+      "url": "https://example.com/example-page?hideShell=true",
       "type": "procode",
       "visible": true,
       "sort": 0,
@@ -64,7 +67,10 @@ rabetbase menu list --verbose --format json
       "pageType": "",
       "resources": [
         "https://cdn.example.com/app.js"
-      ]
+      ],
+      "updateUserId": "user-1",
+      "updateUserName": "张三",
+      "updateTime": "2026-08-02T12:00:00Z"
     }
   ]
 }
@@ -86,6 +92,9 @@ rabetbase menu list --verbose --format json
 - `childrenCount`
 - `pageId`
 - `pageType`
+- `updateUserId`
+- `updateUserName`
+- `updateTime`
 
 `--verbose` 只额外返回 `extend`，不返回服务端原始 `raw`。
 
@@ -94,6 +103,7 @@ rabetbase menu list --verbose --format json
 - `menus[]` 顺序是 DFS 前序：父节点在前，子节点紧随其后，兄弟节点按 `sort` 升序。
 - 字符串字段缺失时返回空字符串。
 - 布尔 / 数值字段缺失时返回 `null`。
+- 最近更新人和更新时间直接取线上菜单事实；字段缺失时返回 `null`，不回退为创建人或本地 Git 用户。
 - folder 的 `path` 可能由平台生成；`menu list` 按线上事实原样返回。
 - `url` 是可审计的菜单事实，按线上值原样返回，并参与快照哈希和写后核验。
 - `extend.resources` 会被归一化为 `resources: string[]`。
@@ -103,6 +113,7 @@ rabetbase menu list --verbose --format json
 
 - 查询当前 App 已有哪些线上菜单。
 - 确认菜单路径、层级和可见状态。
+- 查看菜单最近更新人和更新时间，辅助确认菜单整理的协作对象。
 - 查看菜单是否已配置 CDN 资源 URL。
 - 审计重复 path、根级 label 重复、孤儿父节点等菜单异常，并生成平台人工处理清单。
 - 修改菜单资源 URL 前确认当前资源现状；写入入口使用 `menu update`。

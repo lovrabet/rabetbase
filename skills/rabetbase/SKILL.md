@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.3.10
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、通知配置、菜单事实读取与同步、应用文件、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset relation-audit、dataset delete、dataset restore、废弃数据集、恢复数据集、dataset rename、dataset field-update、dataset extend-update、dataset business-group-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-batch-plan、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、BF 消息通知、BFF 消息通知、Backend Function 消息通知、notification config-list、EMAIL configCode、通知配置、notification.send、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、appcode、app list、workspace、workspace init、workspace use、workspace add、workspace remove、多应用、默认应用、menu list、menu external-link-create、外链菜单创建、菜单异常审计、菜单手动删除清单、menu sync、menu update、角色、用户组、权限、role、permit、role list、role create、role user-add、role user-remove、user-resolve、销售组、加入开发者、page-set、page-get、row-roles、SELF、ALL、行级权限、role-menus-set、role-apis-set、菜单权限、API 权限、DEV、CUSTOM、project create、project upgrade、schema、jq、compress、file upload、file query-url、文件上传、长期链接、issue report、平台问题、platform issue、问题上报。"
+version: 2.3.11
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、通知配置、菜单事实读取与同步、应用文件、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset relation-audit、dataset delete、dataset restore、废弃数据集、恢复数据集、dataset rename、dataset field-update、dataset extend-update、dataset business-group-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-batch-plan、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、BF 消息通知、BFF 消息通知、Backend Function 消息通知、notification config-list、EMAIL configCode、通知配置、notification.send、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、appcode、app list、workspace、workspace init、workspace use、workspace add、workspace remove、多应用、默认应用、menu list、menu external-link-create、外链菜单创建、菜单异常审计、菜单手动删除清单、menu sync、menu update、menu move、菜单移动、角色、用户组、权限、role、permit、role list、role create、role user-add、role user-remove、user-resolve、销售组、加入开发者、page-set、page-get、row-roles、SELF、ALL、行级权限、role-menus-set、role-apis-set、菜单权限、API 权限、DEV、CUSTOM、project create、project upgrade、schema、jq、compress、file upload、file query-url、文件上传、长期链接、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -281,7 +281,7 @@ const result = await client.bff.execute<DashboardData>({
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
 | 管理运行态 app-config | [`rabetbase app-config list/get/set/delete`](references/rabetbase-app-config.md) | 运行态 app-config 管理面；默认不输出明文 value，`set/delete` 先 `--dry-run` |
 | 获取 BFF 通知配置 `configCode` | [`rabetbase notification config-list`](references/rabetbase-notification-config-list.md) | 默认查询 EMAIL 应用级通知配置；不输出渠道地址、配置内容或凭据 |
-| 查看线上菜单事实 / 菜单异常审计 | [`rabetbase menu list`](references/rabetbase-menu-list.md) | 返回 DFS 事实、children/page、URL 和 snapshotHash；异常治理先读 [`menu-anomaly-manual-cleanup`](guides/menu-anomaly-manual-cleanup.md) |
+| 查看线上菜单事实 / 菜单异常审计 | [`rabetbase menu list`](references/rabetbase-menu-list.md) | 返回 DFS 事实、children/page、URL、最近更新人/时间和 snapshotHash；异常治理先读 [`menu-anomaly-manual-cleanup`](guides/menu-anomaly-manual-cleanup.md) |
 | 创建外部网站链接菜单 | [`rabetbase menu external-link-create`](references/rabetbase-menu-external-link-create.md) | 显式选择 `embedded` 应用内嵌入或 `new-window` 新窗口打开；仅接受 HTTPS；先 dry-run，再显式 `--yes` |
 | 同步本地微前端路由到平台 | [`rabetbase menu sync`](references/rabetbase-menu-sync.md) | 扫描 `src/pages` 创建缺失的 `procode` 菜单；不上传构建产物；正式执行前先 `--dry-run` |
 | 修改微前端菜单资源 URL | [`rabetbase menu update`](references/rabetbase-menu-update.md) | 高频高风险写入；用 ID/path 精确选目标或显式 `--all`，默认 patch 且保留加载模式，先 dry-run 再复用参数加 `--yes` |
@@ -291,9 +291,10 @@ const result = await client.bff.execute<DashboardData>({
 | 把员工加入/移出角色 | [`rabetbase role user-add / user-remove`](references/rabetbase-role-user-add.md) | 内部全量 read-merge-write，只改目标角色；`high-risk-write`，先 `--dry-run` |
 | 配置页面权限 / 行级只看自己 | [`rabetbase permit page-get / page-set`](references/rabetbase-permit-page-set.md) | 行级 SELF 用 `page-set --row-roles SELF`；只改传入槽位，其余原样回写 |
 | 收紧角色菜单/接口访问（如销售组不看财务） | [`rabetbase permit role-menus-set / role-apis-set`](references/rabetbase-permit-role-menus-set.md) | 先 `dataset list`/`menu list` 定位，再显式 `--menus`/`--datasets`；一期不自动 suggest |
-| 按 ID 删除空分组 | [`rabetbase menu delete`](references/rabetbase-menu-delete.md) | 仅删除无 children、无 pageId、无 resources 的 folder；dry-run 必须写出计划 |
+| 按 ID 删除菜单或目录树 | [`rabetbase menu delete`](references/rabetbase-menu-delete.md) | 精确删除空 folder/非 folder 叶子；非空 folder 显式 `--recursive`，计划按叶子优先批量提交并回读 |
 | 创建空菜单分组 | [`rabetbase menu group-create`](references/rabetbase-menu-group-create.md) | group 持久化为 `type=folder`，保留平台生成的非空 path；可指定父 folder/root 和 sort |
 | 修改菜单分组 | [`rabetbase menu group-update`](references/rabetbase-menu-group-update.md) | 只允许修改 folder 的 label 或 sort，不调整父级 |
+| 移动已有叶子菜单 | [`rabetbase menu move`](references/rabetbase-menu-move.md) | 使用精确源 ID、目标父级 ID 和当前父级断言；单项 dry-run 后显式 `--yes` |
 | 异步新建根分组 | [`rabetbase menu regroup-start`](references/rabetbase-menu-regroup-start.md) | 只接收精确非 folder 叶子 ID；返回 taskId，非幂等请求不自动重提 |
 | 查询通用异步任务 | [`rabetbase task status`](references/rabetbase-task-status.md) | 按 taskId + appCode 查询 `PENDING / PROCESSING / SUCCESS / FAILED`；只读，不重启业务操作 |
 | 查找数据集 | [`rabetbase dataset list --name "xxx"`](references/rabetbase-dataset-list.md) | 默认返回全部 DO V2 数据集；查指定来源用 `--source DB_TABLE` / `--source METADATA`；也可 `--code` 精确查 |
@@ -366,7 +367,7 @@ const result = await client.bff.execute<DashboardData>({
 | File | [`upload` / `query-url`](references/rabetbase-file.md) |
 | Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
 | Runtime App Config Management | [`app-config list/get/set/delete`](references/rabetbase-app-config.md) |
-| Menu | [`list`](references/rabetbase-menu-list.md) / [`external-link-create`](references/rabetbase-menu-external-link-create.md) / [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) / [`delete`](references/rabetbase-menu-delete.md) / [`group-create`](references/rabetbase-menu-group-create.md) / [`group-update`](references/rabetbase-menu-group-update.md) / [`regroup-start`](references/rabetbase-menu-regroup-start.md) |
+| Menu | [`list`](references/rabetbase-menu-list.md) / [`external-link-create`](references/rabetbase-menu-external-link-create.md) / [`sync`](references/rabetbase-menu-sync.md) / [`update`](references/rabetbase-menu-update.md) / [`delete`](references/rabetbase-menu-delete.md) / [`group-create`](references/rabetbase-menu-group-create.md) / [`group-update`](references/rabetbase-menu-group-update.md) / [`move`](references/rabetbase-menu-move.md) / [`regroup-start`](references/rabetbase-menu-regroup-start.md) |
 | Async Tasks | [`task status`](references/rabetbase-task-status.md) |
 | Notification Configuration | [`notification config-list`](references/rabetbase-notification-config-list.md) |
 | Roles | [`list`](references/rabetbase-role-list.md) / `detail` / `create` / `update` / `delete` / [`user-resolve`](references/rabetbase-role-user-resolve.md) / [`user-add` / `user-remove`](references/rabetbase-role-user-add.md) |
@@ -389,7 +390,7 @@ const result = await client.bff.execute<DashboardData>({
 | ----------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | `read`            | 只读查询，随时可执行                                                                                    | 直接执行                                         |
 | `write`           | 修改数据，如 `sql pull`                                                                                 | 先 `--dry-run` 预览，再正式执行                  |
-| `high-risk-write` | 影响运行时行为，如 `menu external-link-create/delete/group-create/group-update/regroup-start/update` / `sql create` / `sql push` / `sql delete` / `bff push` / `bff delete` | `menu delete` 正式执行必须消费未过期计划并显式 `--yes`；其他菜单生命周期命令正式执行必须显式 `--yes` |
+| `high-risk-write` | 影响运行时行为，如 `menu external-link-create/delete/group-create/group-update/move/regroup-start/update` / `sql create` / `sql push` / `sql delete` / `bff push` / `bff delete` | `menu delete` 正式执行必须消费未过期计划并显式 `--yes`；其他菜单生命周期命令正式执行必须显式 `--yes` |
 
 `sql validate` 仍是 SQL 内容校验入口；`sql save` 已废弃，不再作为推荐写入路径。
 

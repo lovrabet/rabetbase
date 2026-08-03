@@ -1,14 +1,15 @@
 # 菜单异常审计与安全修复
 
-用于重复 `path`、根级菜单重名、疑似菜单同步重复创建等场景。默认通过 `menu list` 审计；CLI 只计划删除事实明确的空 folder，其余菜单在平台处理后回查。
+用于重复 `path`、根级菜单重名、疑似菜单同步重复创建等场景。默认通过 `menu list` 审计；CLI 只按精确 ID 生成可审阅计划，页面菜单或目录树必须完整暴露影响后再执行。
 
 ## 执行原则
 
 - 菜单事实只从 `rabetbase menu list --verbose` 获取。
 - 不绕过 `rabetbase menu list --verbose` 读取菜单配置。
-- 删除只能使用精确 folder ID，不得根据 label/path 自动猜测目标。
-- CLI 删除目标必须同时满足 `type=folder`、`childrenCount=0`、`pageId=null`、`resources=[]`。
-- 删除先用 `--id` 和 `--plan-out` 生成计划，确认后只使用 `--plan <file> --yes` 执行；普通页面菜单和层级调整交由平台处理。
+- 删除只能使用精确菜单 ID，不得根据 label/path 自动猜测目标。
+- 单删允许 `resources=[]` 的空 folder 或任意非 folder 叶子菜单；非空 folder 必须显式 `--recursive`。
+- 页面菜单删除会触发平台既有 Page/PageSchema 级联；同一 pageId 被计划外菜单引用时必须阻断。
+- 删除先用 `--id` 和 `--plan-out` 生成计划，确认后只使用 `--plan <file> --yes` 执行；层级调整仍交由平台处理。
 
 ## 平台入口
 
@@ -82,14 +83,13 @@ path: <path>
 - id: <id>, label: <label>, type: <type>, parentId: <parentId>, childrenCount: <count>, pageId: <pageId|null>, resources: <count>
 停止条件:
 - 平台无法确认该 id
-- type 不是 folder
-- children 不为空
-- pageId 不为空
-- resources 不为空
+- 目标不是空 folder、非 folder 叶子或已完整计划的 folder 子树
+- pageId 被计划外菜单引用
+- folder resources 不为空
 - 平台显示与清单不一致
 ```
 
-4. 仅对确认满足空 folder 合同的单个目标先预演：
+4. 对确认后的精确目标先预演。空 folder 或非 folder 叶子使用单目标计划：
 
 ```bash
 rabetbase menu delete \
@@ -103,16 +103,28 @@ rabetbase menu delete \
   --format compress
 ```
 
-确认 dry-run 的 `before`、`snapshotHash`、`type=folder`、`childrenCount=0`、`pageId=null` 和 `resources=[]` 后，在 30 分钟内执行：
+非空 folder 使用递归计划，并完整审阅 `targets`、`deleteOrder`、`cascade.pages` 和 `warnings`：
 
 ```bash
 rabetbase menu delete \
-  --plan ./menu-delete-<menuId>.plan.json \
+  --appcode <appCode> \
+  --id <folderId> \
+  --recursive \
+  --dry-run \
+  --plan-out ./menu-tree-delete-<folderId>.plan.json \
+  --format compress
+```
+
+确认 dry-run 的 `before`、`snapshotHash`、完整目标集合和叶子优先顺序后，在 30 分钟内执行：
+
+```bash
+rabetbase menu delete \
+  --plan <reviewed-plan-file> \
   --yes \
   --format compress
 ```
 
-计划绑定 `appCode`、菜单快照和完整目标事实；任一事实漂移、时间字段异常或计划过期都应重新生成计划。需要管理 folder 的 label 或 sort 时使用 `group-update`；普通菜单删除或调整归属时转平台处理，并在完成后用 `menu list` 回查。
+计划绑定 `appCode`、菜单快照、完整目标事实和删除顺序；任一事实漂移、计划缺项、时间字段异常或计划过期都应重新生成计划。发生部分失败时以 `remainingIds` 为事实重新生成计划，不复用旧计划。需要管理 folder 的 label 或 sort 时使用 `group-update`；调整归属仍转平台处理，并在完成后用 `menu list` 回查。
 
 5. 再读取菜单事实并复查：
 
@@ -122,4 +134,4 @@ rabetbase menu list --appcode <appCode> --verbose --format json
 
 复查至少确认重复 `path` 清零、目标保留菜单仍存在、resources 符合预期。
 
-CLI 返回 blocker 或目标不是空 folder 时，把清单交给用户在平台页面处理；处理后仍用 `menu list` 回查。
+CLI 返回 blocker 时不要绕过；把清单交给用户核实计划外引用或平台事实，处理后仍用 `menu list` 回查。
