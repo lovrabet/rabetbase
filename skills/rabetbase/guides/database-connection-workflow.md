@@ -92,6 +92,8 @@ db analyze-batch-plan --id <id> --tables <toAnalyzeTables> --format compress
     → 如果没有明确返回 `data.planId`，立即停止；请求结果不确定时不得盲目重试
   db analyze-status --id <id> --plan <当前批次 planId>
     → 始终查询当前批次的同一 planId
+    → 对照 data.requestedAnalysis 核验最初提交范围；它不代表实际执行范围
+    → data.hasMultipleAttempts=true 只表示观察到多个执行尝试，不推断执行连续性或实际分析范围
     → PENDING / RUNNING / RETRYING / CANCELING：继续等待，不启动下一批
     → SUCCESS：进入下一批
     → PARTIAL_SUCCESS：记录失败事实后进入下一批
@@ -124,6 +126,8 @@ db diff --id <id> --all --changed-only
 
 - 规划出的每个批次对应一个真实且独立的 `planId`；不存在聚合父 planId，也不得把多个 planId 合成为一个虚假标识。
 - 状态查询超时、断网或临时 API 失败时，继续使用同一 `planId` 恢复查询，不重新执行 `analyze-start`。
+- `data.attemptElapsedMs` 是当前或最近执行尝试耗时；累计墙钟时间看 `data.totalElapsedMs`。两者都只用于观察，不驱动自动超时或重启。
+- `data.requestedAnalysis` 只还原最初请求范围；`data.hasMultipleAttempts` 只表示观察到多个执行尝试。两者都不能证明实际执行范围。
 - 同一个 dblink 不并行启动多个单表任务。单表任务进入 `PARTIAL_SUCCESS`、`FAILED` 或 `CANCELLED` 后记录结果并继续下一张，避免一张异常表阻断其它表。
 - 同一张表到达终态后，本轮编排不再无限提交；最终仍未收敛时返回表名、单表任务 `planId`、原始终态及可用排障信息。
 - `data.accumulatedErrorTypeCounts` 只原样展示并注明可能不完整；字段缺失、为空或原因码大小写不一致均不得改变编排。

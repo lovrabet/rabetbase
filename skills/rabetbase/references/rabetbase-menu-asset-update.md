@@ -1,4 +1,4 @@
-# menu update
+# menu asset-update
 
 更新指定线上微前端菜单的 CDN 资源 URL。
 
@@ -8,22 +8,22 @@
 
 ```bash
 # 交互模式（TTY）
-rabetbase menu update
+rabetbase menu asset-update
 
 # 使用 menu list 返回的真实 path 精确预览并更新
-rabetbase menu update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --dry-run --format compress
-rabetbase menu update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --yes --format compress
+rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --dry-run --format compress
+rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --yes --format compress
 
 # 按菜单 ID 精确更新，并显式切换加载方式
-rabetbase menu update --menu-ids "<menu-id>" --load-mode fetch --params '{"jsUrl":"https://...js"}' --dry-run --format compress
+rabetbase menu asset-update --menu-ids "<menu-id>" --load-mode fetch --params '{"jsUrl":"https://...js"}' --dry-run --format compress
 
 # 明确需要全量发布时显式选择全部
-rabetbase menu update --all --params '{"jsUrl":"https://...js","cssUrl":"https://...css"}' --dry-run --format compress
+rabetbase menu asset-update --all --params '{"jsUrl":"https://...js","cssUrl":"https://...css"}' --dry-run --format compress
 ```
 
 ## 高频 SOP：修改菜单资源 URL
 
-修改菜单中的 JS / CSS 资源 URL 是 `menu update` 的主路径，不需要 `menu detail` 或其他配置更新命令。
+修改菜单中的 JS / CSS 资源 URL 是 `menu asset-update` 的主路径，不需要 `menu detail` 或其他配置更新命令。
 
 1. **先确认资源现状**，只看已配置资源的菜单：
 
@@ -47,13 +47,13 @@ rabetbase menu list --format json --jq '.data.menus[] | select(.resources | leng
 4. **必须先 dry-run**，检查 `diffs[]` 的 `before.resources`、`after.resources` 和 `warnings`；显式传 `--load-mode` 时还要核对 before/after `loadScriptMode`：
 
 ```bash
-rabetbase menu update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --dry-run --format compress
+rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --dry-run --format compress
 ```
 
 5. **正式执行必须复用 dry-run 的同一组 selector、`--mode` 和 `--params`**：
 
 ```bash
-rabetbase menu update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --yes --format compress
+rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --yes --format compress
 ```
 
 6. **执行后回查资源现状**：
@@ -66,16 +66,16 @@ rabetbase menu list --format json --jq '.data.menus[] | select(.resources | leng
 
 ```bash
 # 只替换 CSS，保留已有 JS
-rabetbase menu update --paths "<menu-path>" --params '{"cssUrl":"https://cdn.example.com/app.css"}' --dry-run --format compress
-rabetbase menu update --paths "<menu-path>" --params '{"cssUrl":"https://cdn.example.com/app.css"}' --yes --format compress
+rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://cdn.example.com/app.css"}' --dry-run --format compress
+rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://cdn.example.com/app.css"}' --yes --format compress
 
 # 只替换 JS，保留已有 CSS
-rabetbase menu update --menu-ids "<menu-id>" --params '{"jsUrl":"https://cdn.example.com/app.js"}' --dry-run --format compress
-rabetbase menu update --menu-ids "<menu-id>" --params '{"jsUrl":"https://cdn.example.com/app.js"}' --yes --format compress
+rabetbase menu asset-update --menu-ids "<menu-id>" --params '{"jsUrl":"https://cdn.example.com/app.js"}' --dry-run --format compress
+rabetbase menu asset-update --menu-ids "<menu-id>" --params '{"jsUrl":"https://cdn.example.com/app.js"}' --yes --format compress
 
 # 显式更新全部菜单的 JS + CSS
-rabetbase menu update --all --params '{"jsUrl":"https://cdn.example.com/app.js","cssUrl":"https://cdn.example.com/app.css"}' --dry-run --format compress
-rabetbase menu update --all --params '{"jsUrl":"https://cdn.example.com/app.js","cssUrl":"https://cdn.example.com/app.css"}' --yes --format compress
+rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/app.js","cssUrl":"https://cdn.example.com/app.css"}' --dry-run --format compress
+rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/app.js","cssUrl":"https://cdn.example.com/app.css"}' --yes --format compress
 ```
 
 ## 参数
@@ -101,7 +101,7 @@ rabetbase menu update --all --params '{"jsUrl":"https://cdn.example.com/app.js",
 
 ## 输出
 
-- 成功：`✓ Menu update completed: N menu(s) updated`
+- 成功：`✓ Menu asset update completed: N menu(s) updated`
 - 无目标：`! No menus with existing resources found`
 - 部分失败：`! N menu(s) failed`
 - `--dry-run`：返回 `diffs[]`，包含 `id / label / path / before.resources / after.resources / warnings`；显式传 `--load-mode` 时还包含 before/after `loadScriptMode`
@@ -125,10 +125,11 @@ rabetbase menu update --all --params '{"jsUrl":"https://cdn.example.com/app.js",
 - 只想换 CSS 却显式使用 `replace`，导致已有 JS 被删除风险。
 - dry-run 已出现删除 JS warning，仍未取得用户明确确认就继续执行。
 - patch 报告同类型资源不唯一时尝试用 `--force` 绕过；应先确认完整资源集合，只有明确重写时才改用 `replace`。
-- 把资源 URL 修改误判为需要 `menu detail` / `config-update`；资源 URL 变更统一使用 `menu update`。
+- 把资源 URL 修改误判为需要 `menu detail` / `config-update`；资源 URL 变更统一使用 `menu asset-update`。
 
 ## 参考
 
 - [SKILL.md](../SKILL.md)
 - [menu list](rabetbase-menu-list.md)
+- [menu external-link-update](rabetbase-menu-external-link-update.md)
 - [menu sync](rabetbase-menu-sync.md)

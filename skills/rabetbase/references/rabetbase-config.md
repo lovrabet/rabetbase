@@ -183,7 +183,7 @@ CLI flag (--appcode, --env, --format, --app ...)
 - **`inherit: true`（显式全量合并）**：标量字段项目级覆盖全局级；`apps` 深度合并（项目同名覆盖全局同名，其余保留）；`defaultApp` 仅当项目级显式声明时才覆盖全局级。等价于历史默认行为，需要跨项目共享全局 `apps` 时显式开启。
 - **`inherit: false`（完全隔离）**：忽略全局配置，仅使用项目级字段；适用于强隔离场景（如多客户）。
 
-> **为什么默认改成项目主导**：避免 `~/.lovrabet.json` 中的 `defaultApp` / `apps` 在用户进入空白目录或新项目时被无声继承（曾导致 menu update 误改其他应用资源）。`api list` / `api pull` / `app list` 仍可通过 `--global` 显式查看合并视图。
+> **为什么默认改成项目主导**：避免 `~/.lovrabet.json` 中的 `defaultApp` / `apps` 在用户进入空白目录或新项目时被无声继承（曾导致 menu asset-update 误改其他应用资源）。`api list` / `api pull` / `app list` 仍可通过 `--global` 显式查看合并视图。
 
 ## 示例
 

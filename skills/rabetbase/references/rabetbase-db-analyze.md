@@ -89,13 +89,17 @@ rabetbase db analyze-status --id 10157 --plan <traceId> --format compress
 | 字段 | 语义 |
 |------|------|
 | `data.status` | 后端原始任务对象，保留 `status / jobContext / errorMsg` 等排障事实 |
+| `data.requestedAnalysis` | 从原始 `inputParams` 还原的提交范围：`mode` 为 `TARGETED / FULL / UNKNOWN`，并附 `tableCount / tableNames`；仅表示最初请求，不表示实际执行范围 |
+| `data.requestedAnalysisParseWarning` | `inputParams` 缺失、非法或无法表达分析范围时的警告；成功还原时为 `null` |
 | `data.parsedJobContext` | `jobContext` 为 JSON 对象时的完整解析结果；空值或非法值返回 `null` |
 | `data.jobContextParseWarning` | 非法 JSON 或非对象 JSON 的解析警告；正常或空上下文为 `null` |
 | `data.accumulatedErrorTypeCounts` | 原样读取 `parsedJobContext.accumulatedErrorTypeCounts` 的非空对象；缺失、空对象或非法类型返回 `null`，原因码大小写不做归一化 |
 | `data.accumulatedErrorTypeCountsAdvisory` | 累计计数的数据质量提示；当前只作为参考信息展示，不作为自动决策输入 |
 | `data.isTerminal` | 仅 `SUCCESS / PARTIAL_SUCCESS / FAILED / CANCELLED` 为 `true` |
 | `data.isRetrying` | 仅原始状态为 `RETRYING` 时为 `true` |
-| `data.elapsedMs` | 优先使用服务端 `costTimeMs`，否则由任务时间戳计算；无法计算时为 `null` |
+| `data.attemptElapsedMs` | 当前或最近一次执行尝试耗时：优先使用服务端 `costTimeMs`，否则由 `startTime` 计算；无法计算时为 `null` |
+| `data.totalElapsedMs` | 从 `firstStartTime` 到 `endTime` 或当前查询时刻的 plan 墙钟耗时；缺少可靠时间戳时为 `null` |
+| `data.hasMultipleAttempts` | `firstStartTime` 与 `startTime` 都有效且不相同时为 `true`，表示服务端开启过后续执行尝试 |
 
 `PENDING / RUNNING / RETRYING / CANCELING` 与未知状态都不是终态。不要根据 `failedTables`、`retryCount` 或错误文案推测状态。`PARTIAL_SUCCESS` 只表示任务已到终态；必须复跑 `db diff --all --changed-only` 验证目标差异收敛，才能得出本轮分析完成结论。
 
@@ -103,7 +107,7 @@ rabetbase db analyze-status --id 10157 --plan <traceId> --format compress
 
 CLI 不通过固定格式或正则把 `errorMsg` 转换成机器协议；`data.status.errorMsg` 原文仍完整保留。Agent 可以语义理解该原文，并将其作为低置信度辅助证据，用于解释异常、提出排障建议和问题上报，但不得覆盖 `status` 的任务生命周期事实，不得替代最终完整 `db diff` 的收敛结论，也不得仅凭文案重新提交任务。服务端契约完成“顶层异常持久化、成功态保留、同表同轮去重”的回归验收前，`accumulatedErrorTypeCounts` 只作为参考信息展示，不驱动自动分支。
 
-`RETRYING` 状态下的服务端 `costTimeMs` 可能只代表当前或最近一轮执行耗时，因此此时的 `elapsedMs` 不应解释为整个任务的累计总耗时。
+`RETRYING` 状态下的服务端 `costTimeMs` 可能只代表当前或最近一轮执行耗时，因此 `attemptElapsedMs` 不应解释为整个任务的累计总耗时。同一 `planId` 出现后续执行尝试，不证明尝试间执行连续性；`requestedAnalysis` 只反映原请求，当前状态契约不提供实际执行范围，CLI 不猜测二者是否一致。
 
 ## 输出链接
 

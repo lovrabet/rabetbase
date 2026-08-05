@@ -2,7 +2,7 @@
 
 创建一个外部网站链接菜单。使用产品打开方式选择应用内嵌入或新窗口打开，不要求使用者理解服务端菜单类型。
 
-> **风险等级：high-risk-write** — 创建后会直接影响当前 App 的运行时菜单；先 dry-run，确认后显式传入 `--yes`。
+> **风险等级：write** — 创建一个新入口，不覆盖既有菜单；建议先 dry-run，正式执行不要求显式 `--yes`。
 
 ## 命令
 
@@ -18,7 +18,6 @@ rabetbase menu external-link-create \
   --label "帮助中心" \
   --url "https://help.example.com" \
   --open-mode new-window \
-  --yes \
   --format compress
 ```
 
@@ -34,7 +33,6 @@ rabetbase menu external-link-create \
 | `--visible` | boolean | 否 | `true` | 是否显示菜单；隐藏菜单传 `--visible=false` |
 | `--appcode <code>` | string | 否 | 配置解析 | 显式指定 App Code |
 | `--dry-run` | boolean | 否 | `false` | 输出创建计划，不写入 |
-| `--yes` | boolean | 正式执行必填 | — | 明确确认高风险写入 |
 
 ## 安全与输出
 
@@ -60,5 +58,6 @@ rabetbase menu external-link-create \
 ## 参考
 
 - [menu list](rabetbase-menu-list.md)
+- [menu external-link-update](rabetbase-menu-external-link-update.md)
 - [menu group-create](rabetbase-menu-group-create.md)
 - [SKILL.md](../SKILL.md)
