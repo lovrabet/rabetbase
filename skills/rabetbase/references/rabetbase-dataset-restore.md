@@ -33,6 +33,8 @@ rabetbase dataset restore --dbid 10282 --expected-count 3 --confirm --yes --form
 ## 行为
 
 - 命令只在已删除数据集中定位目标。
+- 目标列表只用于定位；`relatedPageCount` 分页查询 `getDeletedPageList(type=STANDARD)`，并按页面 `datasetIds` 聚合。
+- 不读取 `get-dataset-list` 响应中的 `relationPages`。
 - 正式执行调用 `/smartapi/dataset/restore-dataset`。
 - 服务端会恢复数据集，并恢复该数据集关联的已删除页面和菜单。
 - `--dbid` 批量恢复建议始终配合 `--expected-count`。

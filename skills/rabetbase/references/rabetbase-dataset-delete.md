@@ -33,6 +33,8 @@ rabetbase dataset delete --dbid 10282 --expected-count 3 --confirm --yes --forma
 ## 行为
 
 - 命令只在未删除数据集中定位目标。
+- 目标列表只用于定位；`relatedPageCount` 读取每个 Dataset 的 `get-driven-data.relatedPageInfoList`，表示当前有效关联页面数。
+- 不读取 `get-dataset-list` 响应中的 `relationPages`。
 - 正式执行调用 `/smartapi/dataset/delete-dataset`。
 - 服务端会软删除数据集，并软删除该数据集关联页面和菜单。
 - `--dbid` 批量废弃建议始终配合 `--expected-count`。

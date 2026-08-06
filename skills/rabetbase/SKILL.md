@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.3.13
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、通知配置、菜单事实读取与同步、应用文件、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset relation-audit、dataset delete、dataset restore、废弃数据集、恢复数据集、dataset rename、dataset field-update、dataset extend-update、dataset business-group-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-batch-plan、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、BF 消息通知、BFF 消息通知、Backend Function 消息通知、notification config-list、EMAIL configCode、通知配置、notification.send、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、appcode、app list、workspace、workspace init、workspace use、workspace add、workspace remove、多应用、默认应用、menu list、menu external-link-create、menu external-link-update、外链菜单创建、外链 URL 更新、菜单异常审计、菜单手动删除清单、menu sync、menu asset-update、菜单资源更新、menu move、菜单移动、角色、用户组、权限、role、permit、role list、role create、role user-add、role user-remove、user-resolve、销售组、加入开发者、page-set、page-get、row-roles、SELF、ALL、行级权限、role-menus-set、role-apis-set、菜单权限、API 权限、DEV、CUSTOM、project create、project upgrade、schema、jq、compress、file upload、file query-url、文件上传、长期链接、issue report、平台问题、platform issue、问题上报。"
+version: 2.3.14
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、智能列表页（Smart List Page）、SQL 查询、BFF 脚本、通知配置、菜单事实读取与同步、应用文件、OCR 识别、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset relation-audit、dataset delete、dataset restore、废弃数据集、恢复数据集、dataset rename、dataset field-update、dataset extend-update、dataset business-group-update、businessGroup、字段对象更新、doType、options、智能列表页、Smart List Page、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、page restore、恢复已删除页面、dblink、数据库连接、schema 分析、db list、db detail、db test、db tables、db diff、db diff --table、db analyze-batch-plan、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、BF 消息通知、BFF 消息通知、Backend Function 消息通知、notification config-list、EMAIL configCode、通知配置、notification.send、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、appcode、app list、workspace、workspace init、workspace use、workspace add、workspace remove、多应用、默认应用、menu list、menu external-link-create、menu external-link-update、外链菜单创建、外链 URL 更新、菜单异常审计、菜单手动删除清单、menu sync、menu asset-update、菜单资源更新、menu move、菜单移动、角色、用户组、权限、role、permit、role list、role create、role user-add、role user-remove、user-resolve、销售组、加入开发者、page-set、page-get、row-roles、SELF、ALL、行级权限、role-menus-set、role-apis-set、菜单权限、API 权限、DEV、CUSTOM、project create、project upgrade、schema、jq、compress、file upload、file query-url、ocr recognize、文件上传、OCR 识别、发票识别、图片识别、长期链接、issue report、平台问题、platform issue、问题上报。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -70,6 +70,7 @@ metadata:
    - 遇到“关联数据带不出 / 标准页面没有生成关联关系 / 页面关联绑定异常”类问题，固定顺序是：`dataset relations` 只读确认关系事实 → `dataset relation-audit` 审计关系事实风险 → `page standard-page-status` 判断页面是否存在 → `page relation-audit` 审计页面绑定；若关系事实本身不对，先按 [`dataset relation-create/update/delete`](references/rabetbase-dataset-relation-mutations.md) 做 `--dry-run` 方案并等用户确认；已有页面再 `page sync --dry-run`，无页面走 `page generate-start --dry-run`
    - `page sync` 只负责同步已有智能列表页，不是数据集关系修复命令，也不能承诺自动修复所有 `wrong_code` / `wrong_label` / `missing`
    - 本地 schema 开发：[`page pull`](references/rabetbase-page-pull.md) → IDE 编辑 → [`page push`](references/rabetbase-page-push.md)
+   - 恢复已删除 STANDARD/JSX 页面：先读 [`page restore`](references/rabetbase-page-restore.md)，默认按 ID 自动识别类型；存在跨类型同 ID 时显式传 `--page-type`
    - 需要理解 formal schema 组件语义时，再按需阅读 `knowledge/page-schema/` 下的 PageSchema 组件资料；不要把它与 `rabetbase page` 命令 reference 混淆
 6. **Legacy modernization / Application Blueprint 工作流**
    - 当用户要把无人交接老项目、外包接手项目或遗留系统翻新到 Lovrabet 体系时，先阅读 [`guides/legacy-application-blueprint-workflow.md`](guides/legacy-application-blueprint-workflow.md)
@@ -275,6 +276,7 @@ const result = await client.bff.execute<DashboardData>({
 | 上报平台问题 | [`rabetbase issue report`](references/rabetbase-issue-report.md) | 由 Skill 组织完整客观事实，禁止代替平台侧做根因判断或方案设计 |
 | 上传应用文件 | [`rabetbase file upload`](references/rabetbase-file.md) | 返回可持久保存的 `filePath` |
 | 获取文件访问链接 | [`rabetbase file query-url`](references/rabetbase-file.md) | 默认短效；Markdown/HTML URL-only 内容显式加 `--long-term` |
+| 识别图片、PDF 或发票文字 | [`rabetbase ocr recognize`](references/rabetbase-ocr.md) | 支持 URL 或本地文件；本地文件自动串联上传、短效 URL 与 OCR |
 | 导出命令契约（flags/risk 等） | [`rabetbase schema`](references/rabetbase-schema.md) | 与 `--help` 同源；**无需登录**；大结果用 `--format compress` |
 | 更新 CLI 版本 | [`rabetbase update`](references/rabetbase-update.md) | 自动检测最新版本并升级 |
 | 初始化/切换当前工作目录应用 | [`rabetbase workspace`](references/rabetbase-workspace.md) | 写当前目录 `.rabetbase.json`；不从全局复制 cookie/accessKey |
@@ -319,6 +321,7 @@ const result = await client.bff.execute<DashboardData>({
 | 同步已有智能列表页 | [`rabetbase page sync --datasetcode <code>`](references/rabetbase-page-sync.md) | 数据集字段变更后同步到关联智能列表页 |
 | 拉取页面 schema 到本地 | [`rabetbase page pull --id <pageId>`](references/rabetbase-page-pull.md) | 写入 `.rabetbase/page/<appCode>/`，进入本地编辑工作流 |
 | 推送本地页面 schema | [`rabetbase page push --id <pageId>`](references/rabetbase-page-push.md) | 推送后自动回拉 canonical schema 覆盖本地 |
+| 恢复已删除页面 | [`rabetbase page restore --id <pageId>`](references/rabetbase-page-restore.md) | 支持 STANDARD/JSX 自动识别；跨类型同 ID 时显式传 `--page-type` |
 | 数据库连接（dblink）/ 测连 / 结构分析 | [`rabetbase db list`](references/rabetbase-db-list.md) 起 | **`id`**、**trace/plan id** 与“终态 + 复跑 diff”完成口径见 [database-connection-workflow.md](guides/database-connection-workflow.md)；各子命令见 `references/rabetbase-db-*.md` |
 | 生成 API 客户端代码 | [`rabetbase api pull`](references/rabetbase-api-pull.md) | 拉取数据集并生成 `src/api/` TypeScript 代码 |
 | 查看生成的 API 模型 | [`rabetbase api list`](references/rabetbase-api-list.md) | 列出已生成的数据模型 |
@@ -376,11 +379,12 @@ const result = await client.bff.execute<DashboardData>({
 | Permissions | [`page-get` / `page-set`](references/rabetbase-permit-page-set.md) / `role-menus` / [`role-menus-set`](references/rabetbase-permit-role-menus-set.md) / [`role-apis-set`](references/rabetbase-permit-role-apis-set.md) |
 | app commands | [`list`](references/rabetbase-app-list.md)（只读事实；平台目录用 `list --remote`）。登记/移除应用改用 `workspace add` / `workspace remove` |
 | dataset commands | [`list`](references/rabetbase-dataset-list.md) / [`detail`](references/rabetbase-dataset-detail.md) / [`delete`](references/rabetbase-dataset-delete.md) / [`restore`](references/rabetbase-dataset-restore.md) / [`generate-start/status`](references/rabetbase-dataset-generate.md) / [`rename`](references/rabetbase-dataset-rename.md) / [`field-update`](references/rabetbase-dataset-field-update.md) / [`extend-update`](references/rabetbase-dataset-extend-update.md) / [`business-group-update`](references/rabetbase-dataset-business-group-update.md) / [`operations`](references/rabetbase-dataset-operations.md) / [`relations`](references/rabetbase-dataset-relations.md) / [`relation-audit`](references/rabetbase-dataset-relation-audit.md) / [`relation-create/update/delete`](references/rabetbase-dataset-relation-mutations.md) |
-| page commands | [`generate-start`](references/rabetbase-page-generate-start.md) / [`generate-status`](references/rabetbase-page-generate-status.md) / [`standard-page-status`](references/rabetbase-standard-page-status.md) / [`relation-audit`](references/rabetbase-page-relation-binding.md) / [`sync`](references/rabetbase-page-sync.md) / [`pull`](references/rabetbase-page-pull.md) / [`push`](references/rabetbase-page-push.md) |
+| page commands | [`generate-start`](references/rabetbase-page-generate-start.md) / [`generate-status`](references/rabetbase-page-generate-status.md) / [`standard-page-status`](references/rabetbase-standard-page-status.md) / [`relation-audit`](references/rabetbase-page-relation-binding.md) / [`sync`](references/rabetbase-page-sync.md) / [`pull`](references/rabetbase-page-pull.md) / [`push`](references/rabetbase-page-push.md) / [`restore`](references/rabetbase-page-restore.md) |
 | Database Connections (`db`) | [`list`](references/rabetbase-db-list.md) / [`detail`](references/rabetbase-db-detail.md) / [`create`](references/rabetbase-db-create.md) / [`update`](references/rabetbase-db-update.md) / [`delete`](references/rabetbase-db-delete.md) / [`test`](references/rabetbase-db-test.md) / [`analyze`](references/rabetbase-db-analyze.md) / [`tables`](references/rabetbase-db-tables.md) / [`diff`](references/rabetbase-db-diff.md) |
 | api commands | [`pull`](references/rabetbase-api-pull.md) / [`list`](references/rabetbase-api-list.md) |
 | sql commands | [`list`](references/rabetbase-sql-list.md) / [`detail`](references/rabetbase-sql-detail.md) / [`create`](references/rabetbase-sql-create.md) / [`status`](references/rabetbase-sql-status.md) / [`pull`](references/rabetbase-sql-pull.md) / [`push`](references/rabetbase-sql-push.md) / [`delete`](references/rabetbase-sql-delete.md) / [`validate`](references/rabetbase-sql-validate.md) / [`save`（deprecated）](references/rabetbase-sql-save.md) / [`exec`](references/rabetbase-sql-exec.md) |
 | bff commands | [`list`](references/rabetbase-bff-list.md) / [`detail`](references/rabetbase-bff-detail.md) / [`create`](references/rabetbase-bff-create.md) / [`status`](references/rabetbase-bff-status.md) / [`pull`](references/rabetbase-bff-pull.md) / [`push`](references/rabetbase-bff-push.md) / [`delete`](references/rabetbase-bff-delete.md) |
+| file / ocr commands | [`file upload/query-url`](references/rabetbase-file.md) / [`ocr recognize`](references/rabetbase-ocr.md) |
 | codegen commands | [`sdk`](references/rabetbase-codegen-sdk.md) / [`sql`](references/rabetbase-codegen-sql.md) |
 | CLI Built-in Skill | [`install`](references/rabetbase-cli-skill-install.md) |
 
@@ -390,7 +394,7 @@ const result = await client.bff.execute<DashboardData>({
 
 | 级别              | 含义                                                                                                    | 使用方式                                         |
 | ----------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `read`            | 只读查询，随时可执行                                                                                    | 直接执行                                         |
+| `read`            | 不创建、更新或删除业务数据；可包含未绑定文件上传、OCR 服务调用等受控副作用                              | 可直接执行；文件与 OCR 仍需核对目标应用和敏感内容 |
 | `write`           | 修改数据，如 `sql pull`、`menu external-link-create`                                                    | 先 `--dry-run` 预览，再正式执行；external-link-create 不要求 `--yes` |
 | `high-risk-write` | 影响运行时行为，如 `menu external-link-update/asset-update/delete/group-create/group-update/move/regroup-start` / `sql create` / `sql push` / `sql delete` / `bff push` / `bff delete` | `menu delete` 正式执行必须消费未过期计划并显式 `--yes`；其他高风险菜单命令正式执行必须显式 `--yes` |
 

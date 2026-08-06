@@ -8,7 +8,7 @@
 rabetbase file upload --file ./evidence.png --appcode app-demo --format compress
 ```
 
-`upload` 是 write 命令，支持 `--dry-run`。本地文件必须存在、必须是普通文件且不能超过 50 MB。成功后保留返回的 `filePath`，用于业务字段或后续查询 URL。
+`upload` 的风险等级为 `read`，支持 `--dry-run`。上传只生成尚未绑定业务记录的远端文件对象，不创建、更新或删除业务数据；它仍会把本地文件发送到目标应用，执行前需要核对应用和敏感文件范围。本地文件必须存在、必须是普通文件且不能超过 50 MB。成功后保留返回的 `filePath`，用于业务字段或后续查询 URL。
 
 ## 查询访问 URL
 
