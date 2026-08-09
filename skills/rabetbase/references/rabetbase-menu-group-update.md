@@ -1,6 +1,6 @@
 # menu group-update
 
-按 ID 修改现有 folder 的名称或 sort，不调整父级。
+按 ID 修改现有 folder 的名称或 sort，不调整父级。`--label` 为现有脚本保留；新流程只修改菜单名称时，统一使用与类型无关的 `menu rename`。
 
 > **风险等级：high-risk-write** — 必须先 dry-run，正式执行必须显式 `--yes`。
 
@@ -35,6 +35,7 @@ rabetbase menu group-update --id "<folder-id>" --label "客户管理" --sort 20 
 
 ## 相关命令
 
+- [menu rename](rabetbase-menu-rename.md)
 - [menu group-create](rabetbase-menu-group-create.md)
 - [menu regroup-start](rabetbase-menu-regroup-start.md)
 - [menu list](rabetbase-menu-list.md)

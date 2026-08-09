@@ -114,7 +114,7 @@ BFF HOOK 可以挂在 `DB_TABLE` 或 `METADATA` 数据集上；是否可挂某�
 
 ### METADATA HOOK 脚本内部限制
 
-METADATA 数据集没有 DB_TABLE 数据源上下文，脚本中优先使用标准 SDK 操作，例如 `filter`、`getOne`、`create`、`update`、`delete`。
+METADATA 数据集没有 DB_TABLE 数据源上下文，脚本中优先使用标准 SDK 操作，例如 `filter`、`getOne`、`create`、`batchCreate`、`update`、`delete`。
 
 不要在这类脚本中使用：
 
@@ -327,9 +327,74 @@ const record = await models[TABLES.primary].getOne({ id: params.id });
 |------|--------|------|
 | `getOne({ id })` | `object \| null` | 按主键查询单条 |
 | `filter(params)` | `{ tableData, paging, tableColumns? }` | 高级过滤查询，数据在 `tableData`，不是 `list` |
+| `aggregate(params)` | `{ tableData, paging, tableColumns? }` | DB_TABLE 单表聚合，数据在 `tableData` |
 | `create(data)` | `number` | 创建记录，返回新记录 ID，不返回完整对象 |
+| `batchCreate(rows)` | `Array<number | string>` | 批量创建同一数据集记录；ID 元素类型取决于数据集主键，顺序与输入一致 |
 | `update({ id, ...fields })` | 无业务对象 | 更新记录（id 支持数组批量，最多 1000 条） |
 | `delete({ id })` | 无业务对象 | 删除记录（id 支持数组批量，最多 1000 条） |
+
+### 批量新增与批量更新
+
+`batchCreate(rows)` 的 `rows` 必须是非空对象数组，直接传数组，不使用 `{"items":[...]}` 包装。批量数量不得超过运行时上限（默认 1000 条）。返回值是与输入顺序一致的新记录 ID 数组，元素类型取决于数据集主键：
+
+```javascript
+const createdIds = await models[TABLES.detail].batchCreate([
+  { primary_id: params.primaryId, item_code: "A" },
+  { primary_id: params.primaryId, item_code: "B" },
+]);
+
+await models[TABLES.primary].update({
+  id: [1, 2, 3],
+  status: "DONE",
+});
+```
+
+批量更新仍使用 `update({ id: [...], ...fields })`。不存在 `batchUpdate()`，也不要写成 `update([{ id: 1, ... }, { id: 2, ... }])`。示例中的字段名、ID 和枚举值都必须替换为 `dataset detail` 已确认的真实值。
+
+### aggregate 调用与选型
+
+`` context.client.models[`dataset_${datasetCode}`].aggregate(params) `` 是 BFF 的数据集 Instant API。实际脚本仍按上文的数据集映射，通过 `models[TABLES.xxx]` 访问；示例字段只用于展示参数契约，编写业务脚本前必须用 `dataset detail` 替换为真实字段：
+
+```javascript
+const aggregateResult = await models[TABLES.primary].aggregate({
+  where: { status: { $eq: "ACTIVE" } },
+  aggregate: [
+    { type: "SUM", column: "amount", alias: "totalAmount" },
+    { type: "COUNT", column: "id", alias: "recordCount", distinct: true },
+  ],
+  groupBy: ["company_id"],
+  having: { company_id: { $notNull: true } },
+  orderBy: [{ totalAmount: "desc" }],
+  currentPage: 1,
+  pageSize: 20,
+});
+
+const rows = aggregateResult.tableData;
+```
+
+聚合类型支持 `SUM`、`AVG`、`COUNT`、`MAX`、`MIN`。聚合项使用 `column` 指定真实数据集字段，可按需提供 `alias` 和 `distinct`；需要四舍五入时设置 `round: true`，`round: true` 时必须同时提供整数 `precision`。分组字段写入 `groupBy`。`having` 使用与 `where` 相同的对象结构，其中字段必须是真实数据集字段；示例使用真实分组字段 `company_id`，不要使用聚合输出别名。
+
+### 聚合别名使用边界
+
+`aggregate[].alias` 只定义聚合结果的输出字段名，不会成为新的数据集字段。当前服务端契约如下：
+
+| 位置 | 聚合别名 | 约束 |
+|------|----------|------|
+| `aggregate[].alias` | 支持 | 仅定义返回结果字段名 |
+| `select` | 不支持 | 使用真实数据集字段 |
+| `where` | 不支持 | 使用真实数据集字段 |
+| `having` | 不支持 | 使用真实数据集字段 |
+| `groupBy` | 不支持 | 使用真实数据集字段 |
+| `orderBy` | 支持 | 可以引用聚合输出别名 |
+
+需要按聚合结果过滤且 `aggregate()` 无法用真实字段表达时，使用已配置的 Custom SQL。不要在运行时静默切换到 Custom SQL，也不要动态拼接 SQL。
+
+选型规则：
+
+* 单个 `DB_TABLE` 数据集的简单聚合优先使用 `aggregate()`，不要先写 Custom SQL
+* 只有 JOIN、跨表统计、数据库特有函数或 `aggregate()` 无法表达的查询才使用已配置的 Custom SQL
+* `aggregate()` 返回值与 `filter()` 一样，从 `.tableData` 读取数据，不要按 SQL 数组返回值处理
+* `METADATA` 数据集不支持 `aggregate()` 或 Custom SQL；不要在失败后静默降级为动态 SQL
 
 正确处理 `create()` 返回值：
 
@@ -724,7 +789,8 @@ await context.client.db.transaction(async (tx) => {
 
 * 单次脚本数据库调用尽量控制在 `50` 次以内
 * 可批量查询时，用 `filter + $in`
-* 可批量写入时，优先考虑自定义 SQL
+* 同一数据集批量新增优先使用 `batchCreate()`；相同字段值的批量更新优先使用 `update({ id: [...] })`
+* 只有 Instant API 无法表达的复杂写入才考虑已有且契约可信的 Custom SQL
 
 ## 禁止事项
 
@@ -750,7 +816,10 @@ await context.client.db.transaction(async (tx) => {
 * [ ] 数据集映射使用 `"dataset_" + 32 位编码`
 * [ ] 单条查询统一使用 `getOne`
 * [ ] 列表查询使用 `filter`，并从 `.tableData` 读取结果
+* [ ] DB_TABLE 简单单表聚合优先使用 `aggregate()`，并从 `.tableData` 读取结果
 * [ ] `create()` 返回值按新记录 ID 处理，没有访问 `.id`
+* [ ] `batchCreate()` 直接接收非空对象数组，并按新记录 ID 数组处理返回值
+* [ ] 批量更新使用 `update({ id: [...] })`，没有使用不存在的 `batchUpdate()` 或记录数组参数
 * [ ] 枚举/选择字段写入 `options[].value`，不是展示 `label`
 * [ ] SQL 返回值按 BFF 语义处理
 * [ ] 未设置系统自动维护字段

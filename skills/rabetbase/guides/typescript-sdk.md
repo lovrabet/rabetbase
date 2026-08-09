@@ -137,7 +137,7 @@ await client.models.customer.delete({
 当数据量超过 1000 时，需要手动分批：
 
 ```typescript
-async function batchUpdate(ids: number[], batchSize = 1000) {
+async function updateInBatches(ids: number[], batchSize = 1000) {
   for (let i = 0; i < ids.length; i += batchSize) {
     const batch = ids.slice(i, i + batchSize);
     await client.models.customer.update({ id: batch, status: 'processed' });

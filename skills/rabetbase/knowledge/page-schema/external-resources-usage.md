@@ -44,12 +44,14 @@ tags: [page-schema, external-resources, custom-sql, bff, permission]
     { "type": "COUNT", "column": "id", "alias": "recordCount", "distinct": true }
   ],
   "groupBy": ["company_id"],
-  "having": { "totalAmount": { "$gt": 10000 } },
+  "having": { "company_id": { "$notNull": true } },
   "orderBy": [{ "totalAmount": "desc" }],
   "currentPage": 1,
   "pageSize": 20
 }
 ```
+
+`having` 与 `where` 使用相同的对象结构，字段名必须是数据集真实字段；聚合结果别名可用于 `orderBy`。
 
 **聚合函数类型**：`SUM` / `AVG` / `COUNT` / `MAX` / `MIN`
 

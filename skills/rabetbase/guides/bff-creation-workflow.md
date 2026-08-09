@@ -29,7 +29,7 @@ rabetbase notification config-list --type EMAIL --format compress
 
 从 `data.configs[]` 按 `configName` / `description` 选择配置，并使用同一项的 `configCode`。命令不会输出 `channelConfig`、`endpointUrl` 或通知凭据。没有结果或存在多个候选且业务目标不明确时，停下向用户确认；不得猜测。不要把 dataset 级通知通道的 `channelCode` 当成 BFF 所需的应用级 `configCode`。
 
-BFF HOOK 可挂载 `DB_TABLE` 或 `METADATA` 数据集，具体 operation 以平台返回为准。`METADATA` 数据集不支持 SQL / aggregate 路径；脚本中应使用 `context.client.models.dataset_<code>` 的标准操作能力。
+BFF HOOK 可挂载 `DB_TABLE` 或 `METADATA` 数据集，具体 operation 以平台返回为准。`METADATA` 数据集不支持 SQL / aggregate 路径；脚本中应使用 `` context.client.models[`dataset_${datasetCode}`] `` 的标准操作能力。
 
 常用字段投影：
 
@@ -63,6 +63,8 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 * METADATA 数据集的 BFF / HOOK 不走 SQL 或 aggregate；只使用平台返回的标准数据操作
 * `filter()` 结果从 `.tableData` 读取，不是 `.list`
 * `create()` 返回新记录 ID，不是完整对象；不要访问 `created.id`
+* `batchCreate()` 返回新记录 ID 数组；入参直接使用非空对象数组，不使用 `{"items":[...]}` 包装
+* 批量更新使用 `update({ id: [...] })`；不存在 `batchUpdate()`，也不传记录数组
 * 枚举/选择字段写入 `options[].value`，不是展示 `label`
 * BFF 中 `sql.execute` 返回数组，不是 `{ execSuccess, execResult }`
 * 没有在 BFF 中使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
@@ -139,6 +141,8 @@ lovrabet bff exec --appcode <appCode> --name <functionName> --params '<json>' --
 | 模型键 | 可通过初始化/生成代码使用 alias | 使用 `"dataset_" + 32 位数据集 code` |
 | `filter()` 返回 | `tableData` 为列表数据 | `tableData` 为列表数据，不是 `list` |
 | `create()` 返回 | 以 SDK 文档/类型为准 | 新记录 ID，不是完整对象 |
+| `batchCreate()` 返回 | 以 SDK 文档/类型为准 | 新记录 ID 数组；直接传非空对象数组 |
+| 批量更新 | 以 SDK 文档/类型为准 | `update({ id: [...] })`；不存在 `batchUpdate()` |
 | SDK 初始化能力 | `createClient` / `registerModels` | 不可用；`context.client` 由平台注入 |
 | 前端调 BFF | `client.bff.execute({ scriptName, params })` 返回业务数据 | — |
 | 发送应用级通知 | — | `context.client.extension.execute("notification", "send", { configCode, audiences, message })` |
