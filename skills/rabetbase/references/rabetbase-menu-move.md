@@ -4,8 +4,6 @@
 
 把当前 App 中一个已有的非 folder 叶子菜单移动到已有 folder 或根级，或者在当前父级内调整该叶子的 sort。
 
-> **风险等级：high-risk-write** — 必须先 dry-run，正式执行必须显式 `--yes`。
-
 ## Read before writing
 
 ```bash
@@ -25,7 +23,7 @@ rabetbase menu move --id "<menu-id>" --parent-id "<folder-id|root>" --expect-par
 ## Execute
 
 ```bash
-rabetbase menu move --id "<menu-id>" --parent-id "<folder-id|root>" --expect-parent-id "<current-folder-id|root>" --yes --format compress
+rabetbase menu move --id "<menu-id>" --parent-id "<folder-id|root>" --expect-parent-id "<current-folder-id|root>" --format compress
 ```
 
 每次只执行一个源菜单。前一项只有在 `data.verification.matchesRequestedState=true` 后才处理下一项；首个失败立即停止。

@@ -8,9 +8,6 @@
 
 ```bash
 rabetbase auth logout
-
-# deprecated alias
-rabetbase logout
 ```
 
 ## 参数
@@ -26,7 +23,6 @@ rabetbase logout
 
 - 删除的是本地 cookie 文件，不影响其他设备
 - 退出后需重新 `rabetbase auth` 才能使用 API 命令
-- `rabetbase logout` 是 deprecated alias，建议使用 `rabetbase auth logout`
 
 ## 参考
 

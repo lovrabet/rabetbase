@@ -13,10 +13,10 @@
 核心覆盖：
 
 * 通过 `rabetbase` CLI 管理数据集（Dataset）、自定义 SQL、BFF 脚本
-* SQL 创建、校验（`sql validate`）、保存（`sql save`）与冲突处理
+* SQL 创建、校验（`sql validate`）、推送（`sql push`）与冲突处理
 * BFF 脚本编写规范与安全保存流程
 * Lovrabet TypeScript SDK 的正确使用方式（filter / aggregate / sql.execute / bff.execute）
-* 多应用配置与切换（`app add` / `workspace use --app` / `--app`）
+* 多应用配置与切换（`workspace add` / `workspace use --app` / `--app`）
 * 团队协作中的冲突检测与防覆盖规范
 
 ## 安装
@@ -41,7 +41,7 @@ npm install -g @lovrabet/rabetbase-cli
 
 ```bash
 rabetbase auth
-rabetbase project init
+rabetbase workspace init --appcode <code>
 ```
 
 ## 仓库结构

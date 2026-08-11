@@ -2,13 +2,11 @@
 
 创建一个空菜单分组。group 是命令领域名称，线上持久化类型为 `folder`。
 
-> **风险等级：high-risk-write** — 必须先 dry-run，正式执行必须显式 `--yes`。
-
 ## 命令
 
 ```bash
 rabetbase menu group-create --label "用户管理" --parent-id "<parent-folder-id>" --sort 10 --dry-run --format compress
-rabetbase menu group-create --label "用户管理" --parent-id "<parent-folder-id>" --sort 10 --yes --format compress
+rabetbase menu group-create --label "用户管理" --parent-id "<parent-folder-id>" --sort 10 --format compress
 ```
 
 ## Flags
@@ -19,7 +17,6 @@ rabetbase menu group-create --label "用户管理" --parent-id "<parent-folder-i
 | `--parent-id <id\|root>` | string | 否 | 父 folder；默认 root |
 | `--sort <n>` | number | 否 | 非负整数；默认目标父级同级末尾 |
 | `--dry-run` | boolean | 预览时 | 返回创建计划，不写入 |
-| `--yes` | boolean | 正式执行时 | 显式授权创建 |
 
 ## 事实约束
 

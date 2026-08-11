@@ -18,9 +18,6 @@ rabetbase init --appcode <code> --env daily
 
 # 写入全局配置
 rabetbase init --appcode <code> --global
-
-# 委托给旧 Ink 初始化流程
-rabetbase init --project
 ```
 
 ## 参数
@@ -30,17 +27,15 @@ rabetbase init --project
 | `--appcode <code>` | string | 否 | — | 直接写入配置，跳过交互选择 |
 | `--env <env>` | string | 否 | `production` | 目标环境：`production` / `daily` |
 | `--global` | boolean | 否 | `false` | 写入全局配置而非项目配置 |
-| `--project` | boolean | 否 | `false` | 委托给旧 Ink 初始化流程 |
 
 ## 执行逻辑
 
 按优先级自动路由：
 
-1. **`--project`** → 委托给旧版 Ink init 流程
-2. **老项目检测**（仅 project scope）→ 若检测到旧配置文件（如 `.lovrabet.json`）且无 `.rabetbase.json`，自动触发 `project upgrade`
-3. **`--appcode`** → 直接写入配置（单应用或 CI 模式）
-4. **CI 无 `--appcode`** → 报错 `flag_missing`
-5. **TTY 交互** → 从平台拉取应用列表，用户多选后写入配置
+1. **老项目检测**（仅 project scope）→ 若检测到旧配置文件（如 `.lovrabet.json`）且无 `.rabetbase.json`，自动触发 `project upgrade`
+2. **`--appcode`** → 直接写入配置（单应用或 CI 模式）
+3. **CI 无 `--appcode`** → 报错 `flag_missing`
+4. **TTY 交互** → 从平台拉取应用列表，用户多选后写入配置
 
 ## 输出
 

@@ -50,10 +50,6 @@ rabetbase api pull --appcode app-order-001
 - **`api pull` 使用的 cookie、apiDir、appcode 等**均来自**项目文件**（默认行为下 cookie/accessKey 仍可从全局白名单继承）。
 - **`--global` 多应用列表**始终从全局+项目双层取 apps，不受 inherit 限制。
 
-## 风险等级
-
-`write` — 修改本地文件系统，生成/覆盖 TypeScript 文件。
-
 ## 输出文件
 
 | 文件 | 说明 |

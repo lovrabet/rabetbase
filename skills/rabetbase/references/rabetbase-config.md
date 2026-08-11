@@ -87,7 +87,7 @@ CLI 对旧版顶层 `appcode` 仍兼容读取，但它已经不是推荐主模�
 }
 ```
 
-每个 app profile 可单独覆盖顶层字段。CLI 运行时根据 `--app <name>` 或 `defaultApp` 选择激活的 profile。
+每个 app profile 可单独覆盖普通顶层字段。`riskLevel` 是安全例外：默认值为 `high-risk-write`，全局、项目、profile 与环境变量都作为 ceiling，最终取最严格值。CLI 运行时根据 `--app <name>` 或 `defaultApp` 选择激活的 profile。
 
 管理命令（声明式 flags，非位置参数）：
 
@@ -113,7 +113,7 @@ rabetbase workspace remove product --yes
 | `format` | string | — | 默认输出格式。可选值：`json`、`pretty`、`compress`。不设则命令默认 `compress` |
 | `pageSize` | number | — | 默认分页大小，用于 `sql list` 等分页命令 |
 | `riskLevel` | string | `"high-risk-write"` | 允许执行的最高风险等级。可选值：`read`、`write`、`high-risk-write`。兼容旧名 `maxRisk` |
-| `inherit` | boolean | 省略 | 配置继承模式。**省略**（默认）：项目主导，仅从全局白名单继承 cookie/accessKey/locale/format/riskLevel/pageSize，不继承 apps/defaultApp/appcode。**`true`**：全量合并全局+项目（旧行为，需显式开启）。**`false`**：完全隔离，不继承任何全局字段 |
+| `inherit` | boolean | 省略 | 配置继承模式。**省略**（默认）：项目主导，仅从全局白名单继承 cookie/accessKey/locale/format/riskLevel/pageSize，不继承 apps/defaultApp/appcode。**`true`**：全量合并全局+项目（旧行为，需显式开启）。**`false`**：普通字段完全隔离；全局 `riskLevel` 仍作为不可绕过的上限 |
 | `apiDir` | string | `"./src/api"` | `api pull` 生成代码的输出目录 |
 | `template_base_url` | string | 平台默认 CDN | 模板 CDN 基础 URL，一般无需修改 |
 | `defaultApp` | string | — | 多应用模式下的默认应用名称 |
@@ -133,7 +133,7 @@ rabetbase workspace remove product --yes
 | `accessKey` | string | 覆盖顶层 `accessKey` |
 | `format` | string | 覆盖顶层 `format` |
 | `pageSize` | number | 覆盖顶层 `pageSize` |
-| `riskLevel` | string | 覆盖顶层 `riskLevel` |
+| `riskLevel` | string | 只能继续收紧顶层 `riskLevel`，不能提权 |
 | `locale` | string | 覆盖顶层 `locale` |
 
 ## 优先级
@@ -166,7 +166,7 @@ CLI flag (--appcode, --env, --format, --app ...)
 | `RABETBASE_ACCESS_KEY` | `accessKey` | Access Key |
 | `RABETBASE_FORMAT` | `format` | 输出格式 |
 | `RABETBASE_PAGE_SIZE` | `pageSize` | 分页大小 |
-| `RABETBASE_RISK_LEVEL` | `riskLevel` | 最高风险等级 |
+| `RABETBASE_RISK_LEVEL` | `riskLevel` | 临时风险上限，只能收紧，不能提权 |
 | `RABETBASE_VERBOSE` | — | 全局 verbose 开关（`1` 或 `true` 启用），仅环境变量，不支持配置文件 |
 | `RABETBASE_APP` | — | 无项目显式选择时的临时应用名 fallback（显式切换优先用 `--app`） |
 
@@ -179,9 +179,9 @@ CLI flag (--appcode, --env, --format, --app ...)
 
 合并策略由项目级 `inherit` 字段控制（三态）：
 
-- **省略 `inherit`（默认，项目主导）**：项目级配置自给自足；仅从全局白名单继承 `cookie`、`accessKey`、`locale`、`format`、`riskLevel`、`pageSize`，**不继承** `apps` / `defaultApp` / `appcode` / `env` 等业务字段。项目级显式声明的字段覆盖全局白名单。
+- **省略 `inherit`（默认，项目主导）**：项目级配置自给自足；仅从全局白名单继承 `cookie`、`accessKey`、`locale`、`format`、`riskLevel`、`pageSize`，**不继承** `apps` / `defaultApp` / `appcode` / `env` 等业务字段。普通字段由项目级显式值覆盖；`riskLevel` 始终取全局与项目顶层的更严格值。
 - **`inherit: true`（显式全量合并）**：标量字段项目级覆盖全局级；`apps` 深度合并（项目同名覆盖全局同名，其余保留）；`defaultApp` 仅当项目级显式声明时才覆盖全局级。等价于历史默认行为，需要跨项目共享全局 `apps` 时显式开启。
-- **`inherit: false`（完全隔离）**：忽略全局配置，仅使用项目级字段；适用于强隔离场景（如多客户）。
+- **`inherit: false`（普通字段完全隔离）**：业务与偏好字段只使用项目级值；安全例外是全局 `riskLevel` 仍参与最严格上限计算，项目不能借此提权。
 
 > **为什么默认改成项目主导**：避免 `~/.lovrabet.json` 中的 `defaultApp` / `apps` 在用户进入空白目录或新项目时被无声继承（曾导致 menu asset-update 误改其他应用资源）。`api list` / `api pull` / `app list` 仍可通过 `--global` 显式查看合并视图。
 
@@ -213,12 +213,12 @@ rabetbase dataset list --appcode "$RABETBASE_APPCODE"
 
 ```json
 {
+  "riskLevel": "write",
   "defaultApp": "order",
   "apps": {
     "order": {
       "appcode": "app-order-001",
-      "env": "daily",
-      "riskLevel": "write"
+      "env": "daily"
     },
     "product": {
       "appcode": "app-product-002",

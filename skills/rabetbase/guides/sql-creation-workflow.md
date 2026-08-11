@@ -61,7 +61,7 @@ rabetbase sql create --name <sqlName> --db-id <dbId> --mode mybatisXml --format 
 .rabetbase/sql/<appCode>/<dbName|db-<id>>/<sqlCode>_<sqlName>.sql|xml
 ```
 
-不要默认把长期源文件放在 `queries/`、`src/` 等目录；`sql save` 已废弃，不再作为长期工作流入口。
+不要默认把长期源文件放在 `queries/`、`src/` 等目录；长期维护统一使用同步目录。
 
 CLI 会自动维护 `@lovrabet` 头注释，例如：
 
@@ -171,15 +171,3 @@ DELETE / DDL（DROP / ALTER / CREATE / TRUNCATE）属高风险，不建议进入
 |------|---------|---------------------|
 | 返回值 | `{ execSuccess, execResult }` | 直接返回数组 |
 | 调用 | `client.sql.execute({ sqlCode, params })` | `context.client.sql.execute({ sqlCode, params })` |
-
-## 已废弃命令
-
-`rabetbase sql save` 已废弃。若用户提到旧流程，直接迁移为：
-
-```bash
-# 新建
-rabetbase sql create --name <sqlName> --db-id <dbId> --mode sql --format json
-
-# 修改
-rabetbase sql push --sqlcode <sqlCode> --yes --format json
-```

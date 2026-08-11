@@ -61,16 +61,17 @@ Start 阶段禁止同时传 `--name`、`--description`、`--design-output`。Sta
 优先使用 start 输出里的 `query.command`：
 
 ```bash
-rabetbase dataset generate-status --operation-id op-xxx --format compress
+rabetbase dataset generate-status --task-id 2da9d1d7-8e34-4ce5-97af-72d2df9870aa --format compress
 ```
 
-如果没有 `operationId`，使用 `clientOperationId`：
+如果旧响应没有 `taskId`，可回退 `operationId`；如果两者都没有，再使用 `clientOperationId`：
 
 ```bash
+rabetbase dataset generate-status --operation-id op-xxx --format compress
 rabetbase dataset generate-status --client-operation-id dataset-generate-xxx --format compress
 ```
 
-`--operation-id` 与 `--client-operation-id` 二选一。只有 status 输出 `status=generated_dataset_created` 且包含 `createdDataset.code` 时，后续才可执行 `dataset detail`、`page generate-start` 或 `api pull`。
+`--task-id`、`--operation-id` 与 `--client-operation-id` 必须且只能传一个。taskId 是首选恢复标识；CLI 会把它映射为后端 Dataset status 的 `operationId` query，服务端接口本身没有原生 taskId query。只有 status 输出 `status=generated_dataset_created` 且包含非空 `createdDataset.code` 时，后续才可执行 `dataset detail`、`page generate-start` 或 `api pull`。
 
 ## dry-run
 
@@ -90,7 +91,7 @@ rabetbase dataset generate-start \
   --dry-run \
   --format compress
 
-rabetbase dataset generate-status --operation-id op-xxx --dry-run --format compress
+rabetbase dataset generate-status --task-id 2da9d1d7-8e34-4ce5-97af-72d2df9870aa --dry-run --format compress
 ```
 
 Preview dry-run 只返回将调用的 preview endpoint 和 body，不写文件。Start dry-run 会读取本地 design 文件，并返回将调用的 start endpoint 和 body，但不提交任务。Status dry-run 只返回将查询的 status endpoint。
@@ -122,7 +123,8 @@ Start 输出的 `data` 包含：
 {
   "operation": "dataset.generate.start",
   "appCode": "app-xxx",
-  "operationId": "op-xxx",
+  "taskId": "2da9d1d7-8e34-4ce5-97af-72d2df9870aa",
+  "operationId": "2da9d1d7-8e34-4ce5-97af-72d2df9870aa",
   "clientOperationId": "dataset-generate-xxx",
   "jobStatus": "PENDING",
   "progressRate": 0,
@@ -131,7 +133,7 @@ Start 输出的 `data` 包含：
   "status": "operation_pending",
   "nextAction": "query_operation_status",
   "query": {
-    "command": "rabetbase dataset generate-status --operation-id op-xxx --format compress"
+    "command": "rabetbase dataset generate-status --task-id 2da9d1d7-8e34-4ce5-97af-72d2df9870aa --format compress"
   }
 }
 ```
@@ -142,7 +144,8 @@ Status 成功后的 `data` 包含：
 {
   "operation": "dataset.generate.status",
   "appCode": "app-xxx",
-  "operationId": "op-xxx",
+  "taskId": "2da9d1d7-8e34-4ce5-97af-72d2df9870aa",
+  "operationId": "2da9d1d7-8e34-4ce5-97af-72d2df9870aa",
   "clientOperationId": "dataset-generate-xxx",
   "jobStatus": "SUCCESS",
   "progressRate": 100,
@@ -159,7 +162,7 @@ Status 成功后的 `data` 包含：
   },
   "nextAction": null,
   "query": {
-    "command": "rabetbase dataset generate-status --operation-id op-xxx --format compress"
+    "command": "rabetbase dataset generate-status --task-id 2da9d1d7-8e34-4ce5-97af-72d2df9870aa --format compress"
   }
 }
 ```
@@ -169,7 +172,7 @@ Status 成功后的 `data` 包含：
 | status | 含义 |
 |--------|------|
 | `operation_pending` | 任务等待执行 |
-| `operation_running` | 任务执行中 |
+| `operation_running` | 任务执行中；服务端 `PROCESSING` / `RUNNING` 等非终态均继续查询同一个 taskId |
 | `generated_dataset_created` | Dataset 已创建，可使用 `createdDataset.code` |
 | `operation_failed` | 任务失败，查看 `errorMsg` |
 | `unknown_reconcile_failed` | 任务状态无法与 Dataset 结果对应，继续用 `query.command` 查询或人工确认 |
@@ -179,6 +182,8 @@ Status 成功后的 `data` 包含：
 - 先执行 preview，审阅 `--design-output` 文件，再执行 start。
 - 不要把 preview 输出视为已创建 Dataset。
 - 不要把 start 输出视为已创建 Dataset；必须用 `generate-status` 查询到 `generated_dataset_created`。
+- `PENDING` / `PROCESSING` 都不是完成；始终继续查询同一个 taskId。
+- 超时、未知状态或 start 响应丢失时只做状态恢复，不得自动重提生成请求。
 - 成功后用 `rabetbase dataset detail --code <createdDataset.code> --format compress` 确认结构。
 - 如需生成智能列表页，再执行 `rabetbase page generate-start --datasetcode <createdDataset.code> --format compress`。
 - 真实业务行数据验证交接到 `lovrabet data filter|getOne`。
@@ -191,7 +196,7 @@ Status 成功后的 `data` 包含：
 | Preview 传了 `--design-file` | 去掉 `--design-file`，或改用 `--apply` |
 | Start 缺 `--design-file` | 指向已审阅的 design JSON 文件 |
 | Start 同时传了 `--name` / `--description` / `--design-output` | 删除这些 preview 参数 |
-| Status 缺任务标识 | 传 `--operation-id` 或 `--client-operation-id` |
+| Status 缺任务标识 | 首选传 `--task-id`；旧响应才回退 `--operation-id` 或 `--client-operation-id` |
 | design 文件不是 JSON object | 修正为 JSON object 后重试 |
 
 ## 参考

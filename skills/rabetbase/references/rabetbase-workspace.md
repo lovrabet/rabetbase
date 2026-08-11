@@ -39,7 +39,7 @@ rabetbase workspace remove <name> [--global]
 - `workspace use --app crm`：切换当前目录默认应用；如果 `crm` 只存在于全局配置，会复制非敏感 profile 字段到当前目录。
 - `workspace use --app crm --appcode app-xxx`：直接在当前目录新增或更新 `crm`，并设为默认应用。
 - `workspace add crm --appcode app-xxx`：登记应用 profile（默认写当前项目，`--global` 写全局）；当前无 `defaultApp` 时首个自动设为默认。已存在则更新。
-- `workspace remove crm`：移除应用 profile（high-risk-write）。默认按「项目优先、其次全局」定位要删的那一层，`--global` 强制删全局；若删的是当前 `defaultApp`，自动切到剩余的第一个；若该应用在项目与全局都有定义，只删单侧并在结果里提示另一侧仍存在。
+- `workspace remove crm`：移除本地应用 profile。默认按「项目优先、其次全局」定位要删的那一层，`--global` 强制删全局；若删的是当前 `defaultApp`，自动切到剩余的第一个；若该应用在项目与全局都有定义，只删单侧并在结果里提示另一侧仍存在。
 
 `workspace init` / `workspace use` 不会从全局配置复制 `cookie` / `accessKey` 到项目文件。若当前项目文件里原本已有这些字段，更新应用时会保留它们。
 

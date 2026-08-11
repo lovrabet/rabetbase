@@ -1,7 +1,7 @@
 # 冲突检测与未完成写入处理
 
 **文档版本**: v4.0
-**适用于**: SQL / BFF 资源的远端写入、同步与历史兼容返回
+**适用于**: SQL / BFF 资源的远端写入与同步
 
 > **与 SKILL.md 的关系**：[SKILL.md](../SKILL.md) 只保留硬性规则；本文件负责解释什么叫“远端未写入成功”，以及 AI 应该如何沟通。
 
@@ -9,7 +9,7 @@
 
 ## 当前主工作流
 
-当前推荐路径不是 `save`：
+当前推荐路径：
 
 - **SQL**
   - 新建：`rabetbase sql create`
@@ -19,10 +19,6 @@
   - 新建本地脚手架：`rabetbase bff create`
   - 推送远端：`rabetbase bff push`
   - 删除远端：`rabetbase bff delete`
-
-`sql save` 只保留为**迁移提示**入口；`bff save` 不再是主工作流命令。AI 不应再围绕它们设计新步骤。
-
----
 
 ## 什么时候算“没有写入成功”
 
@@ -69,10 +65,6 @@
 | `bff push --yes` 成功 | 是 | 告知已推送远端，可附带 lockKey / 名称 |
 | `blocked: true` / `action: blocked` | 否 | 明确说平台未保存，提示手动处理或联系相关人 |
 | 校验失败 / validation error | 否 | 说明未写入远端，先修内容或参数 |
-| `sql save` 返回 deprecated | 否 | 说明旧命令未执行保存，引导迁移到 `sql create` / `sql push` |
-
----
-
 ## blocked 场景
 
 当返回 `blocked: true` 或语义等价的“平台冲突 / 非本人资源 / 平台限制”时：
@@ -87,19 +79,6 @@
 这次没有同步到 Lovrabet 平台。平台返回了冲突/阻断提示：<message>。
 如果需要继续修改，请先到平台处理冲突，或联系上次提交人；本地内容可以先保留。
 ```
-
----
-
-## 历史兼容返回
-
-如果用户或旧脚本仍触发历史 `save` 链路：
-
-- `sql save`
-  - 当前应视为**迁移提示**
-  - AI 要直接引导到 `sql create` / `sql push`
-- `bff save`
-  - 不再作为当前主命令说明
-  - 若文档或用户提到它，统一迁移到 `bff create` / `bff push`
 
 ---
 
@@ -118,19 +97,6 @@
 ```
 
 解释：**预览成功，不等于远端已执行**。
-
-### 迁移提示
-
-```json
-{
-  "ok": false,
-  "error": {
-    "message": "`rabetbase sql save` has been deprecated."
-  }
-}
-```
-
-解释：**旧命令未执行保存，应该迁移流程**。
 
 ### 冲突/阻断
 

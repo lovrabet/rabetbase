@@ -2,7 +2,7 @@
 
 执行 `package.json` 中定义的脚本。
 
-> **风险等级：取决于执行的脚本** — `start`/`dev` 会先做版本检查。
+> **风险等级：high-risk-write** — 任意 package script 都可能修改本地文件、调用远端服务或执行发布动作。独立 CLI 需要人工提升顶层 `riskLevel`，正式执行还需交互确认或显式传 `--yes`；嵌入式 Rabetbase 工具暂不开放 `run`。
 
 ## 命令
 
@@ -36,7 +36,6 @@ rabetbase run build -- --mode production
 - **自动检测包管理器**：按 lock 文件判断 bun / pnpm / yarn / npm
 - **`start` / `dev` 脚本**：执行前自动检查 CLI 和 SDK 版本，有更新时打印升级警告
 - **`preview --watch`**：并行启动 `vite build --watch` 和 `vite preview`，适合开发时预览生产构建
-- **`build` / `start` / `preview`**：有 deprecated alias 可直接 `rabetbase build`、`rabetbase start`、`rabetbase preview`
 
 ## 输出
 
@@ -46,7 +45,8 @@ rabetbase run build -- --mode production
 ## 提示
 
 - 必须在包含 `package.json` 的项目根目录执行
-- 优先使用 `rabetbase run <script>` 而非 deprecated alias
+- 先审阅目标 script 的实际命令体和参数；不要把脚本名当成只读能力
+- 所有项目脚本统一使用 `rabetbase run <script>`
 
 ## 参考
 

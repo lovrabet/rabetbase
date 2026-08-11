@@ -2,8 +2,6 @@
 
 从 lovrabet-cli 迁移到 rabetbase-cli。
 
-> **风险等级：high-risk-write** — 删除文件、修改配置、卸载/安装包。
-
 ## 命令
 
 ```bash

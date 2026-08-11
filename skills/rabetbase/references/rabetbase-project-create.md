@@ -18,9 +18,6 @@ rabetbase project create --name my-project
 
 # 非交互模式（必须传 name）
 rabetbase project create my-project --appcode <code> --env production
-
-# 别名
-rabetbase create my-project --appcode <code>
 ```
 
 ## 参数
@@ -41,7 +38,6 @@ rabetbase create my-project --appcode <code>
 
 - `--name` 和位置参数二选一，`--name` 优先
 - 非交互模式下缺少项目名会报错
-- 旧命令 `rabetbase create` 是此命令的 deprecated alias
 - 新项目中的 `.rabetbase.json` **只继承**全局中的少量偏好（如 `cookie`、`accessKey`、`locale`、`format`、`riskLevel`），**不会**把全局的 `apps` / `defaultApp` 复制进新项目
 
 ## 参考

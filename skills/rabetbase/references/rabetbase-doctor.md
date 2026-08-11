@@ -1,6 +1,6 @@
 # doctor
 
-诊断 CLI 配置问题，打印当前生效的配置、API 域名和认证状态。
+诊断 CLI 与 Built-in Skill 一致性、当前生效的配置、API 域名和认证状态。
 
 遇到配置错误、`auth_required`、`api_error` 等问题时，先运行此命令定位根因。
 
@@ -19,6 +19,7 @@ rabetbase doctor check
 | 段落 | 说明 |
 |------|------|
 | CLI Version | 当前 CLI 版本（含 build number） |
+| Built-in Skill | 目标路径、包版本、Skill 版本、内容状态；不一致时给出 `rabetbase cli-skill install` 修复命令 |
 | Config Files | 全局和项目级配置文件路径 |
 | Config JSON | 分别检测全局/项目配置文件是否为**合法 JSON**；非法时标红并给出解析错误（常见于尾随逗号、注释等，会导致该侧配置在合并时被忽略） |
 | Merged Config | 合并后的所有配置项（appCode / env / cookie / apiDir 等） |
@@ -44,6 +45,10 @@ rabetbase doctor
 # 项目里「明明配了 apps 但行为像没配」— 先看 Config JSON 是否 Invalid
 rabetbase doctor
 # 若 Project JSON 为 ✗，修正 .rabetbase.json 语法后再试
+
+# Skill 缺失、版本不一致或内容被修改时
+rabetbase doctor
+rabetbase cli-skill install
 ```
 
 ## 独立部署场景

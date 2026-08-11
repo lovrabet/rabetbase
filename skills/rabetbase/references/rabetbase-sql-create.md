@@ -2,8 +2,6 @@
 
 先在远端创建一条新的自定义 SQL，再在本地同步目录中生成初始文件并写入 `.rabetbase/sql.lock.json`。
 
-> **风险等级：high-risk-write** — 建议先 `--dry-run` 预览；正式执行需 `--yes` 或交互确认。
-
 ## 命令
 
 ```bash
@@ -20,7 +18,6 @@ rabetbase sql create --name getUserMapper --db-id 10001 --mode mybatisXml --form
 | `--db-id <id>` | number | 交互补全 / 非交互必填 | — | 目标数据库 ID |
 | `--mode <mode>` | string | 交互补全 / 非交互必填 | — | 本地文件模式：`sql` 或 `mybatisXml` |
 | `--dry-run` | boolean | 否 | — | 预览目标路径与请求体 |
-| `--yes` | boolean | 否 | — | 跳过高风险确认 |
 | `--format <fmt>` | string | 否 | `compress` | 输出格式 |
 
 ## 本地输出
@@ -35,7 +32,7 @@ rabetbase sql create --name getUserMapper --db-id 10001 --mode mybatisXml --form
 
 ## 提示
 
-- 团队长期维护 SQL 时，优先用 `sql create` 建立本地同步资产，而不是直接 `sql save`
+- 团队长期维护 SQL 时，用 `sql create` 建立本地同步资产
 - 生成后通常继续执行：编辑本地文件 → `sql validate --file ...` → `sql status` → `sql push --sqlcode ... --dry-run` → `sql push --sqlcode ... --yes`
 
 ## 参考

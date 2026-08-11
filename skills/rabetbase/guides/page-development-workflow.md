@@ -74,14 +74,14 @@ rabetbase page sync --datasetcode <datasetCode> --dry-run --format json
 
 不要在已有页面时继续强行 `generate-start --apply`，也不要在完全没页时直接 `sync`。
 
-真实提交生成后，保存返回的 `operationId` 和 `clientOperationId`，并用同一任务标识查询：
+真实提交生成后，保存返回的 `taskId`、`operationId` 和 `clientOperationId`，优先直接执行返回的 `query.command`，用同一任务标识查询：
 
 ```bash
 rabetbase page generate-start --datasetcode <datasetCode> --apply --format json
-rabetbase page generate-status --datasetcode <datasetCode> --operation-id <operationId> --format json
+rabetbase page generate-status --datasetcode <datasetCode> --task-id <taskId> --format json
 ```
 
-查询超时或网络失败时继续查询原任务，不重新提交生成。成功终态后，从 `standardPageStatus.pageSets[]` 读取页面事实和 `versionTag`；存在多个完整组、残留页或冲突时交给用户确认，不猜测页面组。
+`taskId` 是首选查询标识；只有旧响应没有 taskId 时才回退 `operationId`，两者都丢失时再用 `clientOperationId`。三种标识必须且只能传一个。查询超时、未知状态或网络失败时继续查询原任务，不重新提交生成。成功终态后，从 `standardPageStatus.pageSets[]` 读取页面事实和 `versionTag`；存在多个完整组、残留页或冲突时交给用户确认，不猜测页面组。
 
 ### 4. 拉取页面 schema 到本地
 
@@ -146,7 +146,7 @@ rabetbase page push --datasetcode <datasetCode> --version-tag <tag> --format jso
 ### A. 首次补齐智能列表页
 
 ```text
-dataset detail → standard-page-status → page generate-start（默认预览） → page generate-start --apply → 保存 operation ID → page generate-status → 从 standardPageStatus.pageSets[] 选择 versionTag
+dataset detail → standard-page-status → page generate-start（默认预览） → page generate-start --apply → 保存 taskId → page generate-status → 从 standardPageStatus.pageSets[] 选择 versionTag
 ```
 
 适用于：

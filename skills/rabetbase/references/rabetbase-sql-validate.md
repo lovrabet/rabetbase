@@ -65,7 +65,7 @@ rabetbase sql validate --file .rabetbase/sql/app-xxxxxxxx/sample_db/report.sql -
 - 空索引元数据返回 `INDEX_METADATA_UNAVAILABLE`；静态审计不能替代数据库执行计划
 - `JOIN_INDEX_MISSING` 仅表示非空索引元数据中没有相关字段；`JOIN_INDEX_NOT_USABLE` 表示相关字段不构成完整最左前缀
 - `JOIN_PREDICATE_UNSUPPORTED` 表示 JOIN 方向、目标或谓词不能安全分析；发现这类 JOIN 时 `checked` 仍为 `true`
-- `sql save` 的内置校验与此命令完全共用同一个 `validateSql()` 核心，不可跳过
+- `sql create` 与 `sql push` 的校验复用同一个 `validateSql()` 核心，不可跳过
 
 ## 参考
 

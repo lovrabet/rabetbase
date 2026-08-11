@@ -369,8 +369,6 @@ await context.client.sql.execute({
 2. 获得返回或已存在的 `sqlCode`
 3. 在代码中调用 `context.client.sql.execute({ sqlCode, params })`
 
-`sql save` 已废弃；若看到旧资料提它，统一迁移到 `sql create` / `sql push`。
-
 详见：`sql-creation-workflow.md`
 
 ---
