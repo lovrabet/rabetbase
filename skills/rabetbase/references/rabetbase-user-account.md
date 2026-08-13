@@ -18,7 +18,6 @@ rabetbase user-account dingding-sandbox-bind \
 ```bash
 rabetbase user-account dingding-sandbox-bind \
   --ding-talk-user-id <id> \
-  --yes \
   --format compress
 ```
 

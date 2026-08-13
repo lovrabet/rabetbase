@@ -1,6 +1,6 @@
 # rabetbase notification config-list
 
-只读查询当前应用的应用级通知渠道配置，主要用于获取 BFF 消息通知扩展需要的 `configCode`。
+只读查询当前应用的应用级通知渠道配置，主要用于获取 BFF 消息通知扩展需要的应用级 `configCode`。
 
 ## 命令
 
@@ -69,7 +69,7 @@ await context.client.extension.execute("notification", "send", {
 边界：
 
 * `configCode` 是应用级通知配置编码。
-* dataset 级通知通道的 `channelCode` 不能替代 `configCode`。
+* 数据集级通知通道的 `channelCode` 不能替代应用级 `configCode`；创建、更新和删除应用级配置见 [`rabetbase-notification-config-mutations.md`](rabetbase-notification-config-mutations.md)。
 * 没有查询结果时，不要编造配置编码。
 * 多个候选无法判断时，向用户确认，不要默认取第一条。
 * 该命令不会发送通知，也不会修改平台配置。

@@ -2,7 +2,7 @@
 
 按精确 ID 原地更新一个既有 `iframe` 或 `link` 叶子菜单的 URL。只修改 URL，不删除重建菜单。
 
-> **风险等级：high-risk-write** — 会改变线上菜单实际打开地址；必须先 dry-run，正式执行显式传 `--yes`。
+> **风险等级：write** — 会改变线上菜单实际打开地址；建议先 dry-run，正式执行复用相同参数并移除 `--dry-run`。
 
 ## 命令
 
@@ -20,7 +20,6 @@ rabetbase menu external-link-update \
   --url "https://admin.example.com/new-page?hideShell=true" \
   --expect-url "https://admin.example.com/old-page?hideShell=true" \
   --expect-parent-id "<folder-id|root>" \
-  --yes \
   --format compress
 ```
 
@@ -34,7 +33,6 @@ rabetbase menu external-link-update \
 | `--expect-parent-id <id\|root>` | string | 是 | — | 始终断言当前父级 |
 | `--appcode <code>` | string | 否 | 配置解析 | 显式指定 App Code |
 | `--dry-run` | boolean | 否 | `false` | 输出精确 URL patch，不写入 |
-| `--yes` | boolean | 正式执行必填 | — | 明确确认高风险写入 |
 
 ## 目标边界
 

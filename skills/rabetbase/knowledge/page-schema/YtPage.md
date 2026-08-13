@@ -14,7 +14,7 @@ tags: [page, layout, page-schema]
 
 | 类型 | 判断条件 | 特点 | 场景 |
 |------|----------|------|------|
-| 磁贴布局 | 包含 `YtRglContainer` | 网格定位、支持并排 | 仪表盘、数据看板 |
+| 磁贴布局 | 包含 `YtRglContainer` | 网格定位、支持并排 | 多区域表单、列表与详情组合 |
 | 流式布局 | 无 `YtRglContainer` | 上下排列 | 表单页、详情页 |
 
 ---
@@ -56,7 +56,6 @@ tags: [page, layout, page-schema]
 |------|------|
 | 每行总宽度 | 必须为 12 |
 | Filter/Table | 必须独占一行（w: 12） |
-| 图表并排 | 两个图表各占 w: 6 |
 
 ---
 
@@ -82,31 +81,6 @@ tags: [page, layout, page-schema]
 ---
 
 ## 常见布局场景
-
-### 并排图表
-
-```json
-{
-  "RGLlayout": [
-    {"i": "chart1", "w": 6, "h": 20, "x": 0, "y": 0},
-    {"i": "chart2", "w": 6, "h": 20, "x": 6, "y": 0}
-  ]
-}
-```
-
-### 统计卡 + 图表
-
-```json
-{
-  "RGLlayout": [
-    {"i": "stat1", "w": 3, "h": 10, "x": 0, "y": 0},
-    {"i": "stat2", "w": 3, "h": 10, "x": 3, "y": 0},
-    {"i": "stat3", "w": 3, "h": 10, "x": 6, "y": 0},
-    {"i": "stat4", "w": 3, "h": 10, "x": 9, "y": 0},
-    {"i": "chart1", "w": 12, "h": 20, "x": 0, "y": 10}
-  ]
-}
-```
 
 ### Filter + Table
 
@@ -151,19 +125,11 @@ tags: [page, layout, page-schema]
     "componentName": "YtRglContainer",
     "props": {
       "RGLlayout": [
-        {"i": "node_stat1", "w": 3, "h": 8, "x": 0, "y": 0},
-        {"i": "node_stat2", "w": 3, "h": 8, "x": 3, "y": 0},
-        {"i": "node_stat3", "w": 3, "h": 8, "x": 6, "y": 0},
-        {"i": "node_stat4", "w": 3, "h": 8, "x": 9, "y": 0},
-        {"i": "node_filter", "w": 12, "h": 10, "x": 0, "y": 8, "autoHeight": true},
-        {"i": "node_table", "w": 12, "h": 30, "x": 0, "y": 18}
+        {"i": "node_filter", "w": 12, "h": 10, "x": 0, "y": 0, "autoHeight": true},
+        {"i": "node_table", "w": 12, "h": 30, "x": 0, "y": 10}
       ]
     },
     "children": [
-      {"id": "node_stat1", "componentName": "LrSmartStatistic"},
-      {"id": "node_stat2", "componentName": "LrSmartStatistic"},
-      {"id": "node_stat3", "componentName": "LrSmartStatistic"},
-      {"id": "node_stat4", "componentName": "LrSmartStatistic"},
       {"id": "node_filter", "componentName": "LrSmartFilter"},
       {"id": "node_table", "componentName": "LrSmartTable"}
     ]

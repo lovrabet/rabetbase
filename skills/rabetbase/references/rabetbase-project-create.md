@@ -38,6 +38,9 @@ rabetbase project create my-project --appcode <code> --env production
 
 - `--name` 和位置参数二选一，`--name` 优先
 - 非交互模式下缺少项目名会报错
+- 项目名只接受字母、数字、`-`、`_`，不能传绝对路径、`../`、子目录路径或 Windows 保留名称
+- 交互与非交互模式使用同一创建流程，都会安装依赖、格式化代码并写入项目配置
+- 项目模板从 CDN 下载并校验 SHA-256；CDN 不可用、模板不兼容或校验失败时命令停止，修复后重试
 - 新项目中的 `.rabetbase.json` **只继承**全局中的少量偏好（如 `cookie`、`accessKey`、`locale`、`format`、`riskLevel`），**不会**把全局的 `apps` / `defaultApp` 复制进新项目
 
 ## 参考

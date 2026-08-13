@@ -226,7 +226,7 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 
 确认无误后执行：
 
-* `rabetbase bff push --yes --type <type> --name <name> --format json`
+* `rabetbase bff push --type <type> --name <name> --format json`
 
 如果目标是同步远端到本地，则执行：
 
@@ -387,12 +387,12 @@ const rows = aggregateResult.tableData;
 | `groupBy` | 不支持 | 使用真实数据集字段 |
 | `orderBy` | 支持 | 可以引用聚合输出别名 |
 
-需要按聚合结果过滤且 `aggregate()` 无法用真实字段表达时，使用已配置的 Custom SQL。不要在运行时静默切换到 Custom SQL，也不要动态拼接 SQL。
+需要按聚合结果过滤且 `aggregate()` 无法用真实字段表达时，使用已发布的 Custom SQL。不要在运行时静默切换到 Custom SQL，也不要动态拼接 SQL。
 
 选型规则：
 
 * 单个 `DB_TABLE` 数据集的简单聚合优先使用 `aggregate()`，不要先写 Custom SQL
-* 只有 JOIN、跨表统计、数据库特有函数或 `aggregate()` 无法表达的查询才使用已配置的 Custom SQL
+* 只有 JOIN、跨表统计、数据库特有函数或 `aggregate()` 无法表达的查询才使用已发布的 Custom SQL
 * `aggregate()` 返回值与 `filter()` 一样，从 `.tableData` 读取数据，不要按 SQL 数组返回值处理
 * `METADATA` 数据集不支持 `aggregate()` 或 Custom SQL；不要在失败后静默降级为动态 SQL
 
@@ -554,6 +554,8 @@ export default async function runBusinessFlow(params, context) {
 ```
 
 ## SQL 调用规则
+
+BFF 入参使用业务参数；需要执行 SQL 时，通过已发布 Custom SQL 的 `sqlCode` + `params` 调用。执行失败时保留并报告原始错误，根据 SQL 资源状态、参数与权限定位问题。
 
 在 BFF 中使用：
 

@@ -33,7 +33,7 @@ rabetbase sql create --name getUserMapper --db-id 10001 --mode mybatisXml --form
 ## 提示
 
 - 团队长期维护 SQL 时，用 `sql create` 建立本地同步资产
-- 生成后通常继续执行：编辑本地文件 → `sql validate --file ...` → `sql status` → `sql push --sqlcode ... --dry-run` → `sql push --sqlcode ... --yes`
+- 生成后通常继续执行：编辑本地文件 → `sql validate --file ...` → `sql status` → `sql push --sqlcode ... --dry-run` → `sql push --sqlcode ...`
 
 ## 参考
 

@@ -5,6 +5,7 @@
 ## 何时用
 
 - 已用 `db list` 拿到 `id`，需要比列表更全的字段
+- 读取 `tableCount`，按 200 张表阈值决定是否先刷新差异结果
 - 需要当前 **`latestAnalysisTraceId`** 查询最新分析状态；取消已知任务时仍使用正在跟踪的原 planId
 
 ## 命令
@@ -22,6 +23,8 @@ rabetbase db detail --id 10157 --format compress
 | `--format` | string | 否 | 默认 **compress** |
 
 ## 参考
+
+输出中的 `tableCount` 是当前连接表数量：不大于 200 时通常直接读取 `db diff`；大于 200 时建议先执行 `db diff-refresh-start/status`。字段缺失时不猜测数量，也不隐式刷新。
 
 - [database-connection-workflow.md](../guides/database-connection-workflow.md)
 - [SKILL.md](../SKILL.md)

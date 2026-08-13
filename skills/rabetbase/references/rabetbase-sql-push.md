@@ -2,15 +2,15 @@
 
 将本地同步目录中的 SQL 文件上传到远端，并刷新 `.rabetbase/sql.lock.json`。
 
-> **风险等级：high-risk-write** — 建议先 `--dry-run` 预览；正式执行需 `--yes` 或交互确认。
+> **风险等级：write** — 建议先 `--dry-run` 预览。
 
 ## 命令
 
 ```bash
 rabetbase sql push --format json
 rabetbase sql push --sqlcode 2305f915-dd48cd4c --dry-run --format json
-rabetbase sql push --sqlcode 2305f915-dd48cd4c --yes --format json
-rabetbase sql push --sqlcode 2305f915-dd48cd4c --force --yes --format json
+rabetbase sql push --sqlcode 2305f915-dd48cd4c --format json
+rabetbase sql push --sqlcode 2305f915-dd48cd4c --force --format json
 ```
 
 ## 参数
@@ -20,7 +20,6 @@ rabetbase sql push --sqlcode 2305f915-dd48cd4c --force --yes --format json
 | `--sqlcode <code>` | string | 否 | — | 仅推指定 SQL；不传则扫描当前应用同步目录下的全部 SQL |
 | `--force` | boolean | 否 | — | 即使本地 hash 与 lock 一致也强制推送 |
 | `--dry-run` | boolean | 否 | — | 仅预览会推哪些 SQL |
-| `--yes` | boolean | 否 | — | 跳过高风险确认 |
 | `--format <fmt>` | string | 否 | `compress` | 输出格式 |
 
 ## 行为说明

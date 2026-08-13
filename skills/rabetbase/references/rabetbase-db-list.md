@@ -27,7 +27,7 @@ rabetbase db list --appcode app-xxxx --format compress
 
 ## 输出要点
 
-- `connections[]`：每条含 `id`、`dbName`、`dbType`、`latestAnalysisStatus`、`latestAnalysisTraceId` 等
+- `connections[]`：每条含 `id`、`dbName`、`dbType`、`latestAnalysisStatus`、`latestAnalysisTraceId`，以及服务端提供时的 `tableCount` 等
 - 返回中密码已脱敏
 - 若接口未返回分页元数据，`paging.totalCount` 为 `null` 并带 `note`，**勿将本页条数当作全量总数**
 

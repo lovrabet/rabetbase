@@ -20,4 +20,4 @@ rabetbase page react-list --appcode <appCode> --format json
 
 - `label`：页面名称
 - `pageUrl`：查看最新保存内容的页面地址，包含尚未发布的修改；日常为 `https://daily.lovrabet.com/web-app/app/<appCode>/pages/<path>`，线上为 `https://app.lovrabet.com/app/<appCode>/pages/<path>`
-- `editPageUrl`：打开页面编辑器的地址，可继续修改页面；线上域名为 `app.lovrabet.com`，日常域名为 `daily.lovrabet.com`
+- `editPageUrl`：打开页面编辑器的地址，可继续修改页面；线上为 `https://app.lovrabet.com/app/<appCode>/ide/<pageId>`，日常为 `https://daily.lovrabet.com/web-app/app/<appCode>/ide/<pageId>`

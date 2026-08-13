@@ -2,7 +2,7 @@
 
 更新指定线上微前端菜单的 CDN 资源 URL。
 
-> **风险等级：high-risk-write** — 修改线上菜单运行资源；非交互正式执行必须显式 `--yes`。
+> **风险等级：write** — 修改线上菜单运行资源；建议先 dry-run，正式执行复用相同参数并移除 `--dry-run`。
 
 ## 命令
 
@@ -12,7 +12,7 @@ rabetbase menu asset-update
 
 # 使用 menu list 返回的真实 path 精确预览并更新
 rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --dry-run --format compress
-rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --yes --format compress
+rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --format compress
 
 # 按菜单 ID 精确更新，并显式切换加载方式
 rabetbase menu asset-update --menu-ids "<menu-id>" --load-mode fetch --params '{"jsUrl":"https://...js"}' --dry-run --format compress
@@ -53,7 +53,7 @@ rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://.
 5. **正式执行必须复用 dry-run 的同一组 selector、`--mode` 和 `--params`**：
 
 ```bash
-rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --yes --format compress
+rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://...css"}' --format compress
 ```
 
 6. **执行后回查资源现状**：
@@ -67,15 +67,15 @@ rabetbase menu list --format json --jq '.data.menus[] | select(.resources | leng
 ```bash
 # 只替换 CSS，保留已有 JS
 rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://cdn.example.com/app.css"}' --dry-run --format compress
-rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://cdn.example.com/app.css"}' --yes --format compress
+rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://cdn.example.com/app.css"}' --format compress
 
 # 只替换 JS，保留已有 CSS
 rabetbase menu asset-update --menu-ids "<menu-id>" --params '{"jsUrl":"https://cdn.example.com/app.js"}' --dry-run --format compress
-rabetbase menu asset-update --menu-ids "<menu-id>" --params '{"jsUrl":"https://cdn.example.com/app.js"}' --yes --format compress
+rabetbase menu asset-update --menu-ids "<menu-id>" --params '{"jsUrl":"https://cdn.example.com/app.js"}' --format compress
 
 # 显式更新全部菜单的 JS + CSS
 rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/app.js","cssUrl":"https://cdn.example.com/app.css"}' --dry-run --format compress
-rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/app.js","cssUrl":"https://cdn.example.com/app.css"}' --yes --format compress
+rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/app.js","cssUrl":"https://cdn.example.com/app.css"}' --format compress
 ```
 
 ## 参数
@@ -86,7 +86,6 @@ rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/ap
 | `--menu-ids <csv>` | string | 至少一个 selector | — | 精确菜单 ID；只接受正安全整数；可与 paths 组合，不可与 all 组合 |
 | `--paths <csv>` | string | 至少一个 selector | — | 精确菜单 path；可与 menu-ids 组合，不可与 all 组合 |
 | `--all` | boolean | 至少一个 selector | `false` | 显式选择所有已有 resources 的菜单；不可与 ID/path 组合 |
-| `--yes` | boolean | 正式执行必填 | — | 跳过高风险确认并更新已选择菜单，必须配合有效 `--params` |
 | `--mode <mode>` | string | 否 | `patch` | `patch` 只在目标唯一时替换传入的同类型资源并保留其他资源；`replace` 将传入 URL 作为完整 `resources` |
 | `--load-mode <mode>` | string | 否 | 保留线上值 | 显式修改为 `import`、`script` 或 `fetch` |
 | `--force` | boolean | 否 | `false` | 允许 `replace` 删除已有 JS 资源；仅用于明确的资源降级/迁移 |
@@ -96,7 +95,7 @@ rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/ap
 ## 执行模式
 
 1. **selector + `--params` + `--dry-run`** — 非交互预览精确目标；全量必须显式 `--all`
-2. **selector + `--params` + `--yes`** — 正式更新精确目标；必须复用 dry-run 参数
+2. **selector + `--params`** — 正式更新精确目标；必须复用 dry-run 参数并移除 `--dry-run`
 3. **TTY 交互式** — 未给 selector 时展示全部有资源菜单并二次确认；给 selector 时只展示目标
 
 ## 输出
@@ -109,7 +108,7 @@ rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/ap
 ## 提示
 
 - 仅更新已配置了资源 URL 且被 selector 命中的菜单
-- 非交互和 dry-run 缺 selector 会被拒绝；`--yes` 不能裸跑；空 `--params` 也会被拒绝
+- 非交互和 dry-run 缺 selector 会被拒绝；空 `--params` 也会被拒绝
 - 写入采用 read-modify-write：默认只更新 `extend.resources`，保留 `loadScriptMode` 和其他扩展字段
 - 只有显式传 `--load-mode` 才修改加载方式
 - 默认 `patch`；使用 `replace` 时仍会阻止无意删除已有 JS
@@ -120,7 +119,7 @@ rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/ap
 ## 常见错误
 
 - 跳过 `--dry-run` 直接写入。
-- `--yes` 裸跑、缺 selector 或传空 `--params`。
+- 缺 selector 或传空 `--params`。
 - 需要单菜单更新却使用 `--all`。
 - 只想换 CSS 却显式使用 `replace`，导致已有 JS 被删除风险。
 - dry-run 已出现删除 JS warning，仍未取得用户明确确认就继续执行。

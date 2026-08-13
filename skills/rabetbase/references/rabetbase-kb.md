@@ -11,9 +11,9 @@ rabetbase kb list --format compress
 rabetbase kb list --appcode app-xxxxx --title "业务规则" --format compress
 rabetbase kb detail --id 60 --format compress
 rabetbase kb create --title "业务规则" --file ./knowledge.md --dry-run
-rabetbase kb create --title "业务规则" --file ./knowledge.md --yes
+rabetbase kb create --title "业务规则" --file ./knowledge.md
 rabetbase kb update --id 60 --file ./knowledge.md --expected-version 2 --dry-run
-rabetbase kb update --id 60 --file ./knowledge.md --expected-version 2 --yes
+rabetbase kb update --id 60 --file ./knowledge.md --expected-version 2
 rabetbase kb delete --id 60 --dry-run
 rabetbase kb delete --id 60 --yes
 ```
@@ -33,9 +33,10 @@ rabetbase kb delete --id 60 --yes
 
 ## create
 
+- `create/update` 为 `write`，正式执行不要求 `--yes`；仍应先审阅 dry-run。
 - 只需 `--title`、`--file`；应用由标准全局应用解析得到。
 - 写前按 `(company, appCode, title)` 精确检查重复。
-- 正式执行必须显式 `--yes`，请求最多提交一次。
+- 审阅 dry-run 后，使用相同参数移除 `--dry-run` 正式执行；请求最多提交一次。
 - 正常响应使用服务端返回 VO/ID 并按 ID 回读。只有底层响应不确定时，才按同一 company/app/title 三元组做只读恢复；零条或多条都返回 outcome unknown，绝不自动重提。
 - 授权、权限、参数和其他确定性服务端错误直接失败，不能用旧状态回读伪装成成功。
 
@@ -50,6 +51,7 @@ rabetbase kb delete --id 60 --yes
 ## delete
 
 - 已验证服务端合同：`POST /admin/knowledge-base/delete`，请求体 `{id}`，成功为 `Result<Void>`。
+- `delete` 保持 `high-risk-write`；正式执行必须显式 `--yes`，并建议先审阅 dry-run。
 - 写前读取目标，校验 ID、company scope、appCode、可选 expected-version 和安全快照；`--expected-version` 仍是非原子断言，dry-run 明确输出 `atomicCompareAndSet: false`。
 - 目标明确不存在时返回 no-op 且不发请求；只有服务端 `DATA_NOT_EXIST (306)` 可识别为不存在，`PARAM_INVALID (103)`、权限、认证或传输错误不能降级为 no-op。
 - 正式删除最多提交一次，再按同一 ID 回读；明确不存在用于验证数据库软删除。

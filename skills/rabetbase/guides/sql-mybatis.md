@@ -42,11 +42,11 @@
 * **用途**：确认当前本地文件是否被识别为 `modified` / `added` / `missing` / `unchanged`。
 * **动作**：若状态与预期不符，先解释原因再继续，不要跳过状态检查直接推送。
 
-### 6. `rabetbase sql push --sqlcode xxx --dry-run|--yes --format json`
+### 6. `rabetbase sql push --sqlcode xxx [--dry-run] --format json`
 * **用途**：将同步目录中的本地文件上传到平台。
 * **动作**：
   * 先 `--dry-run` 看预览
-  * 再 `--yes` 正式执行
+  * 再移除 `--dry-run` 正式执行
 * **补充**：
   * 文件名变化会驱动远端 `sqlName` 更新
   * 文件移动到新的数据库目录时，会尝试按目录重绑 `dbId`

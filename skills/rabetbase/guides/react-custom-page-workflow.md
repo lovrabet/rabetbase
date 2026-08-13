@@ -7,6 +7,7 @@
 适用于以下目标：
 
 - 新建或修改 React 自定义页面、看板、门户、落地页或复杂交互页面
+- 使用 ECharts 实现图表、统计卡片和数据大屏
 
 ## 前置上下文
 
@@ -94,6 +95,8 @@ page react-create
 
 ## 数据与服务契约
 
+图表与统计场景使用 `page react-create/update/publish` 管理的 React JSX 页面，呈现层直接使用白名单内的 `echarts@5`。
+
 ### 选型
 
 根据页面的实际业务需求选择数据访问方式，不要为了简单查询引入 SQL 或 BFF：
@@ -101,10 +104,12 @@ page react-create
 | 方式 | 适用场景 | 边界 |
 | --- | --- | --- |
 | 单一数据集请求 | 只涉及一个数据集的查询、详情、分页、筛选、创建、更新或删除 | 严格按照当前数据集 API-doc 返回的调用说明实现，不得自行推测或自由发挥调用标识、方法、字段、参数、返回值或异常处理 |
-| 自定义 SQL | 需要组合多个数据集，或需要数据库完成关联、聚合、分组、排序、计算和复杂筛选 | 先确认 SQL 资源、参数和执行结果，再按 `@lovrabet/sdk` 规范调用；不要在页面中拼接 SQL，也不要把 CLI 的 `data.rows` 当作运行时返回结构 |
-| BFF | 需要注入业务校验、数据转换、加密、条件分支、多步业务编排或外部服务调用 | 将业务逻辑放入已确认的 BFF，由页面通过 SDK 调用；简单数据集请求或单纯数据关联不应额外包装成 BFF |
+| Custom SQL | 需要组合多个数据集，或需要数据库完成关联、聚合、分组、排序、计算和复杂筛选 | 先复用或按 SQL 工作流创建、校验并发布 Custom SQL，再通过 `client.sql.execute({ sqlCode, params })` 调用；不要把 CLI 的 `data.rows` 当作运行时返回结构 |
+| BFF | 需要按当前用户、角色、数据范围或业务规则额外鉴权，或需要数据转换、条件分支、多步编排和外部服务调用 | 将校验和编排放入已确认的 BFF，由页面通过 SDK 调用；前端只传业务参数，BFF 内按需执行已发布的 Custom SQL；简单查询不额外包装成 BFF |
 
-判断顺序：先确认单一数据集请求能否满足需求；数据组合和数据库计算是主要问题时选择自定义 SQL；业务规则、数据处理流程或外部服务协同是主要问题时选择 BFF。三种方式可以根据已确认的 SDK 契约配合使用，但不得自行推测方法、参数或返回结构。
+判断顺序：先确认单一数据集请求能否满足需求；数据组合和数据库计算是主要问题时选择 Custom SQL；当前用户、角色、数据范围或业务规则需要额外控制时选择 BFF。三种方式可以根据已确认的 SDK 契约配合使用，但不得自行推测方法、参数或返回结构。
+
+页面和 BFF 通过已发布 Custom SQL 的 `sqlCode` + `params` 执行查询。Dataset、Custom SQL 或 BFF 执行失败时，保留并报告原始错误，根据资源状态、参数与权限定位问题。
 
 页面需要读取或写入数据集时，先按以下顺序确认事实：
 
@@ -115,13 +120,20 @@ page react-create
 
 页面需要调用自定义 SQL 或 BFF 时，先通过当前 CLI 获取目标资源事实：
 
-1. SQL：执行 `rabetbase sql list`，再执行 `rabetbase sql detail --sqlcode <sqlCode>` 确认目标 SQL
+1. SQL：先执行 `rabetbase sql list` 查找可复用 SQL；命中后执行 `rabetbase sql detail --sqlcode <sqlCode>` 确认目标 SQL。没有满足需求的 SQL 时，先阅读并遵循 [`sql-creation-workflow.md`](sql-creation-workflow.md) 与 [`sql-mybatis.md`](sql-mybatis.md)，完成其中规定的流程后，再使用服务端生成的 `sqlCode` 编写页面
 2. BFF：执行 `rabetbase bff list`，再执行 `rabetbase bff detail --id <id>` 确认目标脚本
 3. 按 `@lovrabet/sdk` 的使用规范实现 `client.sql` 或 `client.bff` 调用，不得根据 CLI 返回结构猜测页面调用参数或返回值
 4. 页面使用自定义 SQL 前，使用代表性参数执行 `rabetbase sql exec --sqlcode <sqlCode> --params <json> --format json`，确认执行没有报错并检查实际数据结构
 5. `sql exec` 仅用于确认 SQL 可执行及返回数据结构。页面代码按 `@lovrabet/sdk` 的使用规范处理 `client.sql` 的返回值，不使用 CLI 输出字段 `data.rows`
 
 当前 CLI 没有按单个数据集返回页面数据访问说明的专用命令。在页面中使用 `client` 前，必须以数据集、SQL 或 BFF 的事实，以及对应的 `@lovrabet/sdk` 使用规范为依据；无法确认的字段、接口路径和响应结构不得猜测。
+
+### ECharts 呈现层
+
+- 在 React 页面中直接使用白名单内的 `echarts@5` 构建图表；按组件生命周期初始化、更新和销毁实例。
+- ECharts 只消费页面已经取得的业务数据，不负责访问数据库、执行 SQL 或做权限判断。
+- `page react-*` 页面与 `project create` 微前端模板是不同运行环境；前者不得因为模板示例使用了包装库，就引入白名单外依赖。
+- 图表查询使用 Dataset、`client.sql.execute({ sqlCode, params })` 或受控 BFF，并完整处理加载、空态、失败和重试行为。
 
 ## 页面开发参考
 

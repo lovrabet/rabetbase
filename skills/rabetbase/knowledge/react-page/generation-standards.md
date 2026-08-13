@@ -23,6 +23,7 @@
 | 路由     | 使用 `navigate` 跳转、使用 `location` 读取地址，不使用 `window.location`                                                  |
 | 样式     | 使用 Ant Design CSS 变量，不写死颜色或其他样式常量                                                                        |
 | 数据访问 | `client` 支持当前页面可用的全部 `@lovrabet/sdk` 能力，先确认数据集、SQL 或 BFF 的事实与 SDK 调用方式，再使用 `client` |
+| 图表     | 使用 `echarts@5` 构建图表、统计卡片与数据大屏；ECharts 只负责呈现，不承担数据访问或权限判断                         |
 
 ### 依赖白名单（严格）
 
@@ -97,10 +98,18 @@ export default App;
 | 方式 | 优先考虑的场景 | 使用边界 |
 | --- | --- | --- |
 | 单一数据集请求 | 只涉及一个数据集的列表查询、详情读取、分页、筛选、创建、更新或删除，且业务逻辑主要由数据集模型能力完成 | 优先使用 API-doc 中确认过的 `client.models` 方法；不要为简单的数据集操作改用 SQL 或 BFF，也不要猜测未在 API-doc 中出现的字段和参数 |
-| 自定义 SQL | 需要一次查询组合多个数据集，或需要数据库完成明确的关联、聚合、分组、排序、计算和复杂筛选 | 先确认 SQL 资源、参数和实际返回结构，再按 SDK 规范调用；不要在页面中拼接 SQL、把 SQL 当作通用业务逻辑容器，或据 CLI 的 `data.rows` 推断运行时返回值 |
-| BFF | 需要在数据操作生命周期中注入业务校验、转换、加密、条件分支、多步编排，或需要调用外部服务 | 将这类业务逻辑放在已确认的 BFF 中，由页面通过 SDK 调用；不要用 BFF 包装本可直接完成的简单 CRUD，也不要在页面中实现应由 BFF 负责的敏感逻辑 |
+| Custom SQL | 需要一次查询组合多个数据集，或需要数据库完成明确的关联、聚合、分组、排序、计算和复杂筛选 | 先复用或按 SQL 工作流创建、校验并发布 Custom SQL，再通过 `client.sql.execute({ sqlCode, params })` 调用；不要在页面中拼接 SQL、把 SQL 当作通用业务逻辑容器，或据 CLI 的 `data.rows` 推断运行时返回值 |
+| BFF | 需要基于当前用户、角色、数据范围或业务规则额外鉴权，或需要转换、加密、条件分支、多步编排和外部服务 | 将校验与业务逻辑放在已确认的 BFF 中，由页面通过 SDK 调用；前端只传业务参数，BFF 内按需执行已发布的 Custom SQL；不要用 BFF 包装本可直接完成的简单查询 |
 
-选择顺序：先判断单一数据集请求是否能直接满足需求；仅在数据组合或数据库计算是主要问题时使用自定义 SQL；当核心问题是业务规则、数据处理流程或外部服务协同时使用 BFF。三种方式的具体方法、参数、返回值和异常形态，均以当前资源事实和 `@lovrabet/sdk` 使用规范为准。
+选择顺序：先判断单一数据集请求是否能直接满足需求；仅在数据组合或数据库计算是主要问题时使用 Custom SQL；当当前用户、角色、数据范围或业务规则需要额外控制时使用 BFF。三种方式的具体方法、参数、返回值和异常形态，均以当前资源事实和 `@lovrabet/sdk` 使用规范为准。
+
+页面和 BFF 通过已发布 Custom SQL 的 `sqlCode` + `params` 执行查询。执行失败时保留并报告原始错误，根据 SQL 资源状态、参数与权限定位问题。
+
+### 图表与统计页面
+
+- 使用 `echarts@5` 构建图表、统计卡片和数据大屏，复用 React 组件生命周期管理图表实例。
+- ECharts option 只负责数据映射与呈现，数据通过 Dataset、已发布的 Custom SQL 或受控 BFF 获取。
+- ECharts 不做权限判断；需要额外用户、角色或数据范围控制时由 BFF 承担。
 
 ### 国际化与样式
 
@@ -161,11 +170,13 @@ const client = useSdkClient();
 
 - 数据集模型调用（如 `models.<dataset>`）的调用标识、方法、参数、返回值和异常形态，严格以当前数据集的 API-doc 返回文档为准，不得自行推测或自由发挥
 - SQL、BFF 及其他非数据集能力的可用方法、参数、返回值和异常形态，均以 `@lovrabet/sdk` 的使用规范为准
+- 页面通过已发布 Custom SQL 的 `sqlCode` + `params` 执行查询
 - 页面调用 SQL 前，先用 `rabetbase sql list` 与 `rabetbase sql detail --sqlcode <sqlCode>` 确认目标资源
 - 生成使用自定义 SQL 的页面代码前，使用代表性参数执行 `rabetbase sql exec --sqlcode <sqlCode> --params <json> --format json`。若返回 `data.error`，先解决执行错误；成功后再根据 `data.rows` 与 `data.rowCount` 确认实际数据结构
 - `sql exec` 仅用于确认 SQL 可执行及返回数据结构。页面代码按 `@lovrabet/sdk` 的使用规范处理 `client.sql` 的返回值，不使用 CLI 输出字段 `data.rows`
 - 页面调用 BFF 前，先用 `rabetbase bff list` 与 `rabetbase bff detail --id <id>` 确认目标资源
 - 数据操作需要注入自定义业务逻辑，例如校验、转换或加密时，优先考虑使用 BFF；页面运行时通过 `client` 按 `@lovrabet/sdk` 规范调用已确认的 BFF
+- Dataset、Custom SQL 或 BFF 执行失败时保留并报告原始错误，根据资源状态、参数与权限定位问题
 - CLI 只用于读取 SQL 与 BFF 的资源事实，页面运行时仍通过 `client` 调用，不在页面中拼接 CLI 命令或平台接口
 - 不在文档中出现的 dataset 字段、参数名、返回形态、方法名不得猜测
 - `client` 只是页面内可直接调用的入口，页面侧不在本地重新创建 `createClient` 或重复注册模型

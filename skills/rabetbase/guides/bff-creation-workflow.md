@@ -87,7 +87,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 * dry-run 不会上传远端，也不会改 lock
 
 ### 8. 推送到平台
-执行 `rabetbase bff push --yes --type <type> --name <name> --format json`：
+执行 `rabetbase bff push --type <type> --name <name> --format json`：
 * 成功项进入 `uploaded`
 * 未变更项进入 `skipped: unchanged`
 * 失败项进入 `failed`
@@ -131,7 +131,7 @@ lovrabet bff exec --appcode <appCode> --name <functionName> --params '<json>' --
 
 ## 修改已有脚本
 
-`rabetbase bff list --format json` → `rabetbase bff detail --id <id> --format json` 拉最新内容 → 如需覆盖本地则 `bff pull` → 修改本地文件 → `bff status` → `bff push --yes`
+`rabetbase bff list --format json` → `rabetbase bff detail --id <id> --format json` 拉最新内容 → 如需覆盖本地则 `bff pull` → 修改本地文件 → `bff status` → `bff push`
 
 ## BFF 语义差异
 

@@ -2,7 +2,7 @@
 
 执行 `package.json` 中定义的脚本。
 
-> **风险等级：high-risk-write** — 任意 package script 都可能修改本地文件、调用远端服务或执行发布动作。独立 CLI 需要人工提升顶层 `riskLevel`，正式执行还需交互确认或显式传 `--yes`；嵌入式 Rabetbase 工具暂不开放 `run`。
+> **风险等级：write** — 任意 package script 都可能修改本地文件、调用远端服务或执行发布动作。执行前必须先审阅 `package.json` 中对应脚本；嵌入式 Rabetbase 工具暂不开放 `run`。
 
 ## 命令
 

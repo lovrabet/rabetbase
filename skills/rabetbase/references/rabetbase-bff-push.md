@@ -2,15 +2,15 @@
 
 把本地 BFF 脚本上传到远端。
 
-> **风险等级：high-risk-write** — 必须显式 `--yes`。
+> **风险等级：write** — 建议先使用 `--dry-run` 预览。
 
 ## 命令
 
 ```bash
-rabetbase bff push --yes --format json
-rabetbase bff push --yes --type ENDPOINT --name getUserList --format json
+rabetbase bff push --format json
+rabetbase bff push --type ENDPOINT --name getUserList --format json
 rabetbase bff push --type ENDPOINT --name getUserList --dry-run --format json
-rabetbase bff push --yes --type HOOK --name beforeFilter --format json
+rabetbase bff push --type HOOK --name beforeFilter --format json
 ```
 
 ## 参数
@@ -21,7 +21,6 @@ rabetbase bff push --yes --type HOOK --name beforeFilter --format json
 | `--name <name>` | string | 否 | — | 仅推指定函数名；传时必须搭配 `--type` |
 | `--force` | boolean | 否 | — | 忽略 hash 保护强制推送 |
 | `--dry-run` | boolean | 否 | — | 仅预览将要推送的本地脚本 |
-| `--yes` | boolean | 是 | — | 跳过高风险确认 |
 | `--format <fmt>` | string | 否 | `pretty` | 输出格式 |
 
 ## 输出

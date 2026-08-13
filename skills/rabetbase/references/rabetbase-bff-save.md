@@ -7,7 +7,7 @@
 > - 本地创建：`rabetbase bff create`
 > - 查看状态：`rabetbase bff status`
 > - 预览上传：`rabetbase bff push --dry-run`
-> - 推送远端：`rabetbase bff push --yes`
+> - 推送远端：`rabetbase bff push`
 > - 拉取远端：`rabetbase bff pull`
 > - 删除脚本：`rabetbase bff delete --yes --target ...`
 
@@ -27,7 +27,7 @@ rabetbase bff save --file ./scripts/getUserInfo.js --name getUserInfo --format j
 rabetbase bff create --type ENDPOINT --name getUserInfo --format json
 # 编辑 .rabetbase/bff/<appCode>/ENDPOINT/getUserInfo.js
 rabetbase bff push --dry-run --format json
-rabetbase bff push --yes --format json
+rabetbase bff push --format json
 ```
 
 ### 旧“更新已有脚本”
@@ -45,7 +45,7 @@ rabetbase bff pull --format json
 # 编辑同步目录中的本地文件
 rabetbase bff status --format json
 rabetbase bff push --dry-run --format json
-rabetbase bff push --yes --format json
+rabetbase bff push --format json
 ```
 
 ## Agent 规则

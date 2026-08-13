@@ -6,10 +6,12 @@
 
 平台是唯一 source of truth。团队长期维护 SQL 时，优先使用 **本地同步工作流**：`sql create / pull / status / push / delete` + `.rabetbase/sql.lock.json`。
 
+SQL 内容编写、参数绑定与 MyBatis 语法以 [`sql-mybatis.md`](sql-mybatis.md) 为准。页面和 BFF 执行已发布的 Custom SQL 时使用 `sqlCode` + `params`。
+
 ## 工作流
 
 ```
-确认需求 → [按需]查现有 SQL → 校验字段 → 拉/落本地（pull/new）→ 编辑本地文件 → [建议]validate → status → push/delete → detail/exec 验证
+确认需求 → [按需]查现有 SQL → 校验字段 → 拉/落本地（pull/create）→ 编辑本地文件 → [建议]validate → status → push/delete → detail/exec 验证
 ```
 
 ### 1. 确认需求
@@ -114,7 +116,7 @@ rabetbase sql push --sqlcode <sqlCode> --dry-run --format json
 确认无误后正式执行：
 
 ```bash
-rabetbase sql push --sqlcode <sqlCode> --yes --format json
+rabetbase sql push --sqlcode <sqlCode> --format json
 ```
 
 补充规则：

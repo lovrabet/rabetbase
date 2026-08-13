@@ -2,13 +2,13 @@
 
 提交一个异步任务：新建根级 folder，并将一组精确的非 folder 叶子菜单放入其中。命令返回重新分组任务的 `taskId/status`。
 
-> **风险等级：high-risk-write** — 必须先 dry-run，正式执行必须显式 `--yes`。
+> **风险等级：write** — 建议先 dry-run，正式执行复用相同参数并移除 `--dry-run`。
 
 ## 命令
 
 ```bash
 rabetbase menu regroup-start --label "业务管理" --menu-ids "<menu-id-1>,<menu-id-2>" --dry-run --format compress
-rabetbase menu regroup-start --label "业务管理" --menu-ids "<menu-id-1>,<menu-id-2>" --yes --format compress
+rabetbase menu regroup-start --label "业务管理" --menu-ids "<menu-id-1>,<menu-id-2>" --format compress
 rabetbase task status --task-id "<task-id>" --format compress
 ```
 
@@ -19,7 +19,6 @@ rabetbase task status --task-id "<task-id>" --format compress
 | `--label <label>` | string | 是 | 新建根 folder 名称；不能与现有根 folder 同名 |
 | `--menu-ids <ids>` | string | 是 | 逗号分隔的精确叶子菜单 ID，最多 100 个 |
 | `--dry-run` | boolean | 预览时 | 返回当前快照、before/after 和请求体，不写入 |
-| `--yes` | boolean | 正式执行时 | 显式授权重新分组 |
 
 ## 状态流
 

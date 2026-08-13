@@ -87,7 +87,7 @@ CLI 对旧版顶层 `appcode` 仍兼容读取，但它已经不是推荐主模�
 }
 ```
 
-每个 app profile 可单独覆盖普通顶层字段。`riskLevel` 是安全例外：默认值为 `high-risk-write`，全局、项目、profile 与环境变量都作为 ceiling，最终取最严格值。CLI 运行时根据 `--app <name>` 或 `defaultApp` 选择激活的 profile。
+每个 app profile 可单独覆盖普通顶层字段。`riskLevel` 是安全例外：默认值为 `write`，全局、项目与 profile 决定基础上限并取最严格值；环境变量只能继续收紧，不能提权。CLI 运行时根据 `--app <name>` 或 `defaultApp` 选择激活的 profile。权限不足时只能提醒用户手动编辑配置；Agent 和自动化脚本不得自行修改 `riskLevel` 或尝试提权。
 
 管理命令（声明式 flags，非位置参数）：
 
@@ -112,7 +112,7 @@ rabetbase workspace remove product --yes
 | `accessKey` | string | — | Access Key 认证（预留，未来替代 cookie） |
 | `format` | string | — | 默认输出格式。可选值：`json`、`pretty`、`compress`。不设则命令默认 `compress` |
 | `pageSize` | number | — | 默认分页大小，用于 `sql list` 等分页命令 |
-| `riskLevel` | string | `"high-risk-write"` | 允许执行的最高风险等级。可选值：`read`、`write`、`high-risk-write`。兼容旧名 `maxRisk` |
+| `riskLevel` | string | `"write"` | 允许执行的最高风险等级。可选值：`read`、`write`、`high-risk-write`。兼容旧名 `maxRisk` |
 | `inherit` | boolean | 省略 | 配置继承模式。**省略**（默认）：项目主导，仅从全局白名单继承 cookie/accessKey/locale/format/riskLevel/pageSize，不继承 apps/defaultApp/appcode。**`true`**：全量合并全局+项目（旧行为，需显式开启）。**`false`**：普通字段完全隔离；全局 `riskLevel` 仍作为不可绕过的上限 |
 | `apiDir` | string | `"./src/api"` | `api pull` 生成代码的输出目录 |
 | `template_base_url` | string | 平台默认 CDN | 模板 CDN 基础 URL，一般无需修改 |

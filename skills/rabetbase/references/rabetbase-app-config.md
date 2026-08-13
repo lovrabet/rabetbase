@@ -11,7 +11,7 @@ rabetbase app-config list --format compress
 rabetbase app-config get <key> --format compress
 rabetbase app-config get <key> --reveal --format compress
 rabetbase app-config set <key> --from-env ENV_NAME --dry-run
-rabetbase app-config set <key> --from-env ENV_NAME --yes
+rabetbase app-config set <key> --from-env ENV_NAME
 rabetbase app-config delete <key> --dry-run
 rabetbase app-config delete <key> --yes
 ```
@@ -66,7 +66,7 @@ rabetbase app-config set vectorengine.apiKey --file ./secret.txt --dry-run
 确认 dry-run 的 `operation`、`selector.appCode`、`selector.key`、`before`、`after` 后，再执行正式写入：
 
 ```bash
-rabetbase app-config set vectorengine.apiKey --from-env VECTORENGINE_API_KEY --yes
+rabetbase app-config set vectorengine.apiKey --from-env VECTORENGINE_API_KEY
 ```
 
 显式位置参数 `<value>` 可用，但不推荐用于敏感值，因为 shell history 可能记录明文。

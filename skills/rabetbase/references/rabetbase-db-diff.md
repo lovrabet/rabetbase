@@ -1,57 +1,76 @@
 # db diff
 
-分页查看**线上库相对上次分析**的 schema 差异（新增表、删除表、改字段等）。只读。
+分页查看数据库表差异或全部数据表。只读。
 
-## 何时用
+## 两种视角
 
-- 表结构变更后，决定是跑全量分析还是 `analyze-start --tables …` 增量
-- 排查「平台数据集与真实库不一致」
+| 视角           | 命令                 | 服务端语义                                                                                              |
+|---|---|---|
+| 差异表（默认） | `db diff`            | 调用 `getDiffTableByPage`。表数量不大于 200 时服务端通常实时计算；大于 200 时可能读取最近一次差异快照。 |
+| 全部表         | `db diff --view all` | 调用实时分页接口，包含 `ALREADY_ANALYZED`，用于查看无差异表或手动选择重新分析。                         |
+
+`--all` 始终表示“聚合当前视角的全部分页”，不表示“全部表”。需要全部表必须显式传 `--view all`。
 
 ## 命令
 
 ```bash
+# 默认差异表视角
 rabetbase db diff --id 10157 --format compress
-rabetbase db diff --id 10157 --table order --page 1 --pagesize 20 --format compress
 rabetbase db diff --id 10157 --all --changed-only --format compress
+
+# 全部表实时视角
+rabetbase db diff --id 10157 --view all --page 1 --pagesize 20 --format compress
+rabetbase db diff --id 10157 --view all --all --format compress
 ```
 
 ## 参数
 
 | Flag | 必填 | 说明 |
-|------|------|------|
+|---|---|---|
 | `--id` | **是** | dblink id |
+| `--view`                | 否     | `diff`（默认）或 `all`                                                                    |
 | `--table` | 否 | 表名模糊过滤 |
 | `--page` / `--pagesize` | 否 | 默认 `1` / `20` |
-| `--all` | 否 | 从第 1 页开始按 `pageSize=100` 自动聚合全部分页；优先级高于 `--page / --pagesize` |
-| `--changed-only` | 否 | 只从 `tables / tableList` 排除 `ALREADY_ANALYZED`；保留 `DELETED_TABLE` |
+| `--all`                 | 否     | 从第 1 页开始按 `pageSize=100` 自动聚合当前视角全部分页；优先级高于 `--page / --pagesize` |
+| `--changed-only`        | 否     | 从输出行中排除 `ALREADY_ANALYZED`；保留 `DELETED_TABLE`                                   |
+
+## 刷新决策
+
+先执行 `db detail --id <id>` 读取 `tableCount`：
+
+- `tableCount <= 200`：直接读取 `db diff`；除非用户明确要求，否则不要刷新。
+- `tableCount > 200`：读取前建议按 [`db diff-refresh-start/status`](rabetbase-db-diff-refresh.md) 刷新差异快照。
+- 用户明确要求“实时刷新/强制刷新”：不考虑表数量，执行刷新。
+- 用户明确要求“不刷新/只看现有结果”：直接读取；大库需提示结果可能滞后。
+- `tableCount` 缺失：直接读取并说明新鲜度未知，不要因为未知而隐式发起写任务。
+
+`db diff` 是只读命令，绝不隐式启动刷新任务。
 
 ## 机器可读摘要
 
 | 字段 | 语义 |
-|------|------|
+|---|---|
+| `view`               | 当前视角：`diff` 或 `all`                                                      |
 | `summaryByType` | 本次查询范围内四种 `diffType` 的计数 |
 | `toAnalyzeTables` | 仅包含 `NEW_TABLE` 与 `MODIFIED_TABLE` 的表名，可传给 `analyze-start --tables` |
 | `deletedTables` | 仅包含 `DELETED_TABLE`，供人工确认，不自动分析或清理 |
 | `modifiedFieldDiffs` | 修改表的新增、删除、变更字段摘要 |
 
-未传 `--all` 时，上述字段只代表当前页；需要完整范围时使用 `--all`。派生字段基于过滤前的查询范围计算，因此使用 `--changed-only` 时，`summaryByType.ALREADY_ANALYZED` 仍可反映原始计数。
+未传 `--all` 时，派生字段只代表当前页。默认差异视角通常不会返回 `physicalTableCount`、`datasetTableCount` 或 `summary`；CLI 不以 `0` 伪造缺失值。全表实时视角在服务端提供这些字段时会原样返回。
 
-## `diffType` 语义（与 yuntoo-web-app 增量分析抽屉一致）
-
-接口返回 `IDbTableDiffInfo.diffType`，工作台「数据库连接 → 增量分析」里对每行表的展示文案如下，可与 CLI 输出对照：
+## `diffType` 语义
 
 | `diffType` | 界面文案 | 含义 |
-|------------|----------|------|
-| `NEW_TABLE` | 表新增 | 物理库中**有**该表，但**尚未纳入**（或尚未完成）上次智能分析；适合勾选后走 `db analyze-start --tables …` 做增量分析。 |
-| `DELETED_TABLE` | 表删除 | 相对上次已分析快照，该表在库侧**已不存在**（或已被移除）；界面上勾选增量分析时**不可选**该行。 |
-| `MODIFIED_TABLE` | 表修改 | 表仍在，但**结构相对上次分析有变**；同条记录里可能有 `fieldDiff`（`addedColumns` / `deletedColumns` / `modifiedColumns`）。 |
-| `ALREADY_ANALYZED` | 无差异 | 当前表结构与上次分析结果**一致**，无需因本表再跑增量（界面用灰色「无差异」标签）。 |
+|---|---|---|
+| `NEW_TABLE`        | 表新增   | 物理库中有该表，但尚未纳入或尚未完成上次智能分析。                     |
+| `DELETED_TABLE`    | 表删除   | 相对上次已分析结果，该表在库侧已不存在或已被移除。                     |
+| `MODIFIED_TABLE`   | 表修改   | 表仍在，但结构相对上次分析有变化。                                     |
+| `ALREADY_ANALYZED` | 无差异   | 当前表结构与上次分析结果一致；在 `--view all` 中可供用户主动重新分析。 |
 
-`DELETED_TABLE` 不会进入 `toAnalyzeTables`。如果自动分页在达到 `totalCount` 前遇到空页或不再产生新的唯一表，命令会失败，不把部分结果当作完整结果返回。
-
-`--all` 聚合的是服务端实时分页结果，不是事务一致性快照。数据库结构在翻页期间持续变化时，结果可能来自不同查询时刻；检测到分页无进展会直接失败。此时应等待库表结构稳定后重试，并在分析结束后再次执行 `db diff --all --changed-only` 验证差异收敛。
+`DELETED_TABLE` 不进入 `toAnalyzeTables`。自动分页在达到 `totalCount` 前遇到空页或没有新增唯一表时，命令失败，不把部分结果伪装成完整结果。
 
 ## 参考
 
+- [差异刷新](rabetbase-db-diff-refresh.md)
 - [database-connection-workflow.md](../guides/database-connection-workflow.md)
 - [SKILL.md](../SKILL.md)

@@ -61,8 +61,8 @@
 |------|----------------|-------------|
 | `sql create --dry-run` 成功 | 否 | 说明只是预览，尚未创建远端 SQL |
 | `bff create` 成功 | 否 | 说明本地脚手架已生成，尚未推送远端 |
-| `sql push --yes` 成功 | 是 | 告知已同步远端，可附带 sqlCode / 路径 |
-| `bff push --yes` 成功 | 是 | 告知已推送远端，可附带 lockKey / 名称 |
+| `sql push` 成功 | 是 | 告知已同步远端，可附带 sqlCode / 路径 |
+| `bff push` 成功 | 是 | 告知已推送远端，可附带 lockKey / 名称 |
 | `blocked: true` / `action: blocked` | 否 | 明确说平台未保存，提示手动处理或联系相关人 |
 | 校验失败 / validation error | 否 | 说明未写入远端，先修内容或参数 |
 ## blocked 场景
