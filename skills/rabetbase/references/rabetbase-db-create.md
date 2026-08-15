@@ -22,6 +22,8 @@ rabetbase db create \
 
 可选：`--dbparam` 连接串附加参数、`--dbdesc` 描述、`--autostart` 创建成功后自动发起 schema 分析（等同再执行一次 `db analyze-start`）。若分析启动失败，连接仍已创建，响应中会含 `data.analysisStartWarning`。写操作支持 **`--dry-run`** 预览请求体（密码不落盘）。
 
+非 dry-run 默认先测试尚未保存的配置；预检失败不会创建连接。只有用户明确要求时才传 `--skip-connection-test`。dry-run 仅展示 `connectionPreflight.enabled`，不会实际建连。
+
 成功响应会返回连接信息与 `data.links.databasePage`，用于引导用户按需打开数据库连接页查看新建连接。
 
 ## 参数（节选）
@@ -34,6 +36,7 @@ rabetbase db create \
 | `--username` / `--password` | 是 | 凭据 |
 | `--dbversion` | 否 | 默认 `8.0` |
 | `--autostart` | 否 | 创建后是否自动启动分析 |
+| `--skip-connection-test` | 否 | 明确跳过保存前连接预检；默认不跳过 |
 
 ## 输出链接
 

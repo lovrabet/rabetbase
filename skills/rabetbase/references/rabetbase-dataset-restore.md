@@ -1,6 +1,6 @@
 # dataset restore
 
-恢复已删除数据集。命令调用服务端恢复接口，将数据集恢复为可用状态，并由服务端恢复该数据集关联的已删除页面和菜单。
+恢复已删除数据集。命令按 Dataset id 定位唯一回收站删除日志并只恢复 Dataset；不会隐式恢复关联页面和菜单。
 
 ## 命令
 
@@ -33,10 +33,9 @@ rabetbase dataset restore --dbid 10282 --expected-count 3 --confirm --yes --form
 ## 行为
 
 - 命令只在已删除数据集中定位目标。
-- 目标列表只用于定位；`relatedPageCount` 分页查询 `getDeletedPageList(type=STANDARD)`，并按页面 `datasetIds` 聚合。
-- 不读取 `get-dataset-list` 响应中的 `relationPages`。
-- 正式执行调用 `/smartapi/dataset/restore-dataset`。
-- 服务端会恢复数据集，并恢复该数据集关联的已删除页面和菜单。
+- dry-run 输出每个 Dataset 的 `relatedPageCount`，便于判断后续是否需要恢复页面。
+- 每个 Dataset 必须恰好匹配一条删除记录；记录缺失或存在多条匹配记录时中止。
+- 恢复结果固定标记 `pagesRestored=false`。关联页面需按需执行 `rabetbase page restore --id <pageId> --appcode <appCode>`；STANDARD 页面恢复会恢复对应菜单。
 - `--dbid` 批量恢复建议始终配合 `--expected-count`。
 - 该命令不会创建新的物理表，也不会修改业务数据。
 
@@ -46,6 +45,7 @@ rabetbase dataset restore --dbid 10282 --expected-count 3 --confirm --yes --form
 
 ```bash
 rabetbase dataset detail --code <datasetCode> --format compress
+rabetbase page restore --id <pageId> --appcode <appCode> --dry-run --format compress
 ```
 
 ## 参考

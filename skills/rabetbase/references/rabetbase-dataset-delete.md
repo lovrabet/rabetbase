@@ -1,6 +1,6 @@
 # dataset delete
 
-废弃数据集。命令调用服务端删除接口，将平台数据集置为已删除，并由服务端同步删除关联页面和菜单；不会删除物理数据库或物理表。
+废弃数据集。默认只删除 Dataset；有关联页面时删除会被阻止。显式 `--cascade --confirm` 才同步删除关联页面和菜单；不会删除物理数据库或物理表。
 
 ## 命令
 
@@ -14,6 +14,7 @@ rabetbase dataset delete --dbid 10282 --expected-count 3 --dry-run --format json
 
 ```bash
 rabetbase dataset delete --dbid 10282 --expected-count 3 --confirm --yes --format json
+rabetbase dataset delete --id 44964 --cascade --confirm --yes --format json
 ```
 
 ## 参数
@@ -25,6 +26,7 @@ rabetbase dataset delete --dbid 10282 --expected-count 3 --confirm --yes --forma
 | `--code <code>` | 与 `--id` / `--dbid` 三选一 | Dataset code |
 | `--dbid <id>` | 与 `--id` / `--code` 三选一 | 废弃该数据库连接下所有未删除数据集 |
 | `--expected-count <n>` | 否 | 命中数量保护；实际命中数不一致时中止 |
+| `--cascade` | 否 | 同时删除关联页面和菜单；默认 `false` |
 | `--confirm` | 正式执行必填 | 确认执行废弃 |
 | `--dry-run` | 否 | 只预览目标列表，不调用删除接口 |
 | `--yes` | 正式执行建议 | 跳过高风险写入确认；非交互环境必填 |
@@ -33,10 +35,10 @@ rabetbase dataset delete --dbid 10282 --expected-count 3 --confirm --yes --forma
 ## 行为
 
 - 命令只在未删除数据集中定位目标。
-- 目标列表只用于定位；`relatedPageCount` 读取每个 Dataset 的 `get-driven-data.relatedPageInfoList`，表示当前有效关联页面数。
-- 不读取 `get-dataset-list` 响应中的 `relationPages`。
-- 正式执行调用 `/smartapi/dataset/delete-dataset`。
-- 服务端会软删除数据集，并软删除该数据集关联页面和菜单。
+- dry-run 输出每个 Dataset 的 `relatedPages` / `relatedPageCount` 和最终 `cascade`。
+- 默认非级联删除；有关联页面时操作中止且不改变资源。
+- 只有显式传 `--cascade --confirm` 才同步删除关联页面和菜单；批量操作逐项报告成功/失败，部分成功不会包装成整体成功。
+- 级联成功会输出 `pageRestoreCommands`。恢复时先执行 `dataset restore`，再按需执行这些 `page restore` 命令。
 - `--dbid` 批量废弃建议始终配合 `--expected-count`。
 - 该命令不会删除物理数据库、数据库连接或物理表。
 

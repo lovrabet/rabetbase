@@ -26,5 +26,7 @@ rabetbase db detail --id 10157 --format compress
 
 输出中的 `tableCount` 是当前连接表数量：不大于 200 时通常直接读取 `db diff`；大于 200 时建议先执行 `db diff-refresh-start/status`。字段缺失时不猜测数量，也不隐式刷新。
 
+`datasetDependency.hasDependencies` 表示当前连接是否仍有有效 Dataset 依赖，`activeDatasetCount` 是依赖数量；明细见同级 `datasets`。
+
 - [database-connection-workflow.md](../guides/database-connection-workflow.md)
 - [SKILL.md](../SKILL.md)

@@ -1,6 +1,6 @@
 # db list
 
-列出当前应用下所有 **数据库连接（dblink）** 及最近一次**分析状态**。**先执行本命令拿到 `id`**，再调用 `db detail` / `db test` / `db tables` 等。
+列出当前应用下所有 **数据库连接（dblink）**、最近一次**分析状态**与 Dataset 依赖状态。**先执行本命令拿到 `id`**，再调用 `db detail` / `db test` / `db tables` 等。
 
 ## 何时用
 
@@ -27,7 +27,8 @@ rabetbase db list --appcode app-xxxx --format compress
 
 ## 输出要点
 
-- `connections[]`：每条含 `id`、`dbName`、`dbType`、`latestAnalysisStatus`、`latestAnalysisTraceId`，以及服务端提供时的 `tableCount` 等
+- `connections[]`：每条含 `id`、`dbName`、`dbType`、`latestAnalysisStatus`、`latestAnalysisTraceId`，以及可用时的 `tableCount` 等
+- `connections[].datasetDependency`：`hasDependencies` 表示是否仍有有效 Dataset 依赖，`activeDatasetCount` 是依赖数量；明细见同级 `datasets`
 - 返回中密码已脱敏
 - 若接口未返回分页元数据，`paging.totalCount` 为 `null` 并带 `note`，**勿将本页条数当作全量总数**
 

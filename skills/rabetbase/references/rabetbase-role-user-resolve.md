@@ -1,6 +1,6 @@
 # rabetbase role user-resolve
 
-把昵称/用户名解析为 `userId`。事实源是当前租户的成员目录（`getByTenantCode`，按当前会话 tenant 解析）。用于 `user-add` / `user-remove` 前先拿到稳定 `userId`。
+把当前租户中的昵称/用户名解析为稳定 `userId`，用于 `user-add` / `user-remove` 前确认唯一人员。
 
 ## 命令
 
@@ -17,7 +17,7 @@ rabetbase role user-resolve --name 小张 --format compress
 
 ## 边界
 
-- 该接口未列入 Apifox 6396450，依赖 live 环境；未登录会报 auth required。
+- 未登录或当前账号无法读取租户成员时会失败，应先恢复 rabetbase 登录状态。
 - 只做只读解析，不写任何角色成员；实际加入用 [`role user-add`](rabetbase-role-user-add.md)。
 
 ## 参考

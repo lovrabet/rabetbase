@@ -99,6 +99,7 @@ db tables --id <id>
 
 ```text
 db create --dbname … --dbtype MYSQL --dburl host:port --username … --password … [--autostart]
+  → 默认先测试未保存配置；失败不创建。只有用户明确要求才加 --skip-connection-test
   → 记下返回的 data.connection.id；可把 data.links.databasePage 返回给用户按需查看
 db test --id <id>        # 可选
 db analyze-start --id <id>
@@ -175,14 +176,17 @@ db analyze-batch-plan --id <id> --tables <toAnalyzeTables> --format compress
 
 ```text
 db detail --id <id>
-db update --id <id> --dburl … [--username …] [--password …]   # 只传要改的字段
+db update --id <id> --dburl … [--username …] [--password …]   # 只传要改的字段；默认保存前测试合并配置
 db test --id <id>
 ```
 
 ### F. 删除连接（高危）
 
 ```text
-db delete --id <id> --yes    # high-risk-write，非交互必须 --yes
+db delete --id <id> --dry-run
+  → 检查 datasetDependency、activeDatasetCount 与 datasets
+db delete --id <id> --expected-dataset-count 0 --confirm --yes
+  → 执行前重新查询；存在 DB_TABLE Dataset 时中止，无 force
 ```
 
 ## 与其它命令的配合

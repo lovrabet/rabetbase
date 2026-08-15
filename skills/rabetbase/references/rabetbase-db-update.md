@@ -1,6 +1,6 @@
 # db update
 
-**增量更新**已有 dblink：只传需要改的 flag，未传的字段保持服务端原值。`write`。
+**增量更新**已有 dblink：只传需要改的 flag，未传的字段保持原值。`write`。
 
 ## 何时用
 
@@ -21,7 +21,9 @@ rabetbase db update --id 10157 --password '***' --format compress
 | `--id` | **是** | dblink id（`db list`） |
 | `--dbname` / `--dburl` / `--username` / `--password` / `--dbparam` / `--dbdesc` | 否 | 仅传要覆盖的项；**不传 `--password` 则不修改密码**（空字符串行为以后端为准） |
 
-写操作支持 **`--dry-run`**：合并当前服务端记录与 CLI 覆盖项后预览（密码脱敏）。
+写操作支持 **`--dry-run`**：合并当前配置与更新项后预览（密码脱敏）。
+
+非 dry-run 默认先测试合并后的完整配置，失败时不提交更新。只有明确传 `--skip-connection-test` 才跳过。已保存密码为掩码且未显式传真实 `--password` 时，在预检和保存前都会中止。
 
 ## 参考
 
