@@ -1,6 +1,6 @@
 # page pull
 
-拉取智能列表页（Smart List Page，DOV2 `smart_page`）的 formal schema 到本地 **`.rabetbase/page/<appCode>/`**，进入 `pull -> IDE 编辑 -> push` 工作流。
+拉取数据列表页（Data List Page，DOV2 `smart_page`）的 formal schema 到本地 **`.rabetbase/page/<appCode>/`**，进入 `pull -> IDE 编辑 -> push` 工作流。
 
 ## 命令
 
@@ -34,7 +34,7 @@ rabetbase page pull --datasetcode 097b7361b76c42bcb12b923fa5a08861 --dry-run --f
 - 单页模式：按 `pageId` 拉取单个页面并更新 lock
 - 批量模式：按数据集筛选关联页面；若存在多个 `versionTag` 组且未指定 `--version-tag`，命令会 fail-fast
 - 本地文件存在未推送修改且未传 `--force` 时，会跳过或报冲突
-- 页面生成链路中的 `versionTag` 来自 `page generate-status` 的 `data.standardPageStatus.pageSets[]`；存在多个候选组时先由用户确认，不按顺序或时间猜测
+- 页面生成链路中的 `versionTag` 来自 `page generate-status` 的 `data.dataListPageStatus.pageSets[]`；存在多个候选组时先由用户确认，不按顺序或时间猜测
 
 ## 提示
 

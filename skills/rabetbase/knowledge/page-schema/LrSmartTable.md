@@ -38,9 +38,9 @@ tags: [table, page-schema, select, orderBy, isFetched, defaultSortOrder, sortabl
 | toolbar.exportButtons | BatchButton[] | 批量操作 |
 | rowSelection.enable | boolean | 行选择 |
 | pagination.enable | boolean | 分页 |
-| pagination.currentPageKey | string | 系统管理的当前页 state key；标准页面更新时保留 |
-| pagination.pageSizeKey | string | 系统管理的每页条数 state key；标准页面更新时保留 |
-| pagination.totalKey | string | 系统管理的总数 state key；标准页面更新时保留 |
+| pagination.currentPageKey | string | 系统管理的当前页 state key；数据列表页更新时保留 |
+| pagination.pageSizeKey | string | 系统管理的每页条数 state key；数据列表页更新时保留 |
+| pagination.totalKey | string | 系统管理的总数 state key；数据列表页更新时保留 |
 | columnSetting.enable | boolean | 列设置 |
 | columnSetting.storageKey | string | 列设置缓存 key |
 | otherTableProps | Record<string, any> | 其他 Ant Design 5 Table 的原生属性 |
@@ -213,11 +213,11 @@ V2 页面生成时已为数据集所有字段全量生成 columns，通过 `isSh
 
 `LrSmartTable` 的分页状态放在页面级 state 中管理，`pagination.currentPageKey`、`pagination.pageSizeKey`、`pagination.totalKey` 用于隔离同一页面中不同表格的分页状态，避免多个表格共用 `currentPage`、`pageSize`、`total` 这类固定 key 后互相影响。
 
-这三个 key 属于系统管理字段，不是业务配置。标准页面中由生成器或修复工具写入；Agent 更新标准页面时应保留已有 key，不主动配置、不主动改名。
+这三个 key 属于系统管理字段，不是业务配置。数据列表页中由生成器或修复工具写入；Agent 更新数据列表页时应保留已有 key，不主动配置、不主动改名。
 
 Agent 规则：
 
-- 常规标准页面更新：保留已有分页 key，只维护业务相关的分页开关、数据源、列和按钮。
+- 常规数据列表页更新：保留已有分页 key，只维护业务相关的分页开关、数据源、列和按钮。
 - 新增带分页的 `LrSmartTable`：由生成器生成表格独立的分页 key，Agent 不手写固定公共 key。
 - 历史 schema 缺失分页 key：作为修复场景补齐，不把它当成普通配置流程。
 
@@ -617,7 +617,7 @@ context 对象在 **JSFunction** 中通过 `config._context` 访问，用于状�
 
 ## 权限配置
 
-当前标准页面由运行时过滤按钮权限。Agent 只需要维护表格按钮本身；按钮是否展示由运行时权限过滤决定。
+当前数据列表页由运行时过滤按钮权限。Agent 只需要维护表格按钮本身；按钮是否展示由运行时权限过滤决定。
 
 | 按钮位置 | 当前权限动作 |
 |----------|--------------|

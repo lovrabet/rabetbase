@@ -35,7 +35,7 @@ rabetbase dataset restore --dbid 10282 --expected-count 3 --confirm --yes --form
 - 命令只在已删除数据集中定位目标。
 - dry-run 输出每个 Dataset 的 `relatedPageCount`，便于判断后续是否需要恢复页面。
 - 每个 Dataset 必须恰好匹配一条删除记录；记录缺失或存在多条匹配记录时中止。
-- 恢复结果固定标记 `pagesRestored=false`。关联页面需按需执行 `rabetbase page restore --id <pageId> --appcode <appCode>`；STANDARD 页面恢复会恢复对应菜单。
+- 恢复结果固定标记 `pagesRestored=false`。关联页面需按需执行 `rabetbase page restore --id <pageId> --appcode <appCode>`；数据列表页恢复会恢复对应菜单。
 - `--dbid` 批量恢复建议始终配合 `--expected-count`。
 - 该命令不会创建新的物理表，也不会修改业务数据。
 

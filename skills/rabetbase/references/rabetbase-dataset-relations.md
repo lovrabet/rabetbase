@@ -57,7 +57,7 @@ rabetbase dataset relations --from-source DB_TABLE --to-source METADATA --format
 
 ## Agent 使用规则
 
-- 页面关系审计、标准页面绑定、字典/选项源判断，直接使用 `dataset relations --format compress`；命令底层默认读取 D0/DO V2 关系事实
+- 页面关系审计、数据列表页绑定、字典/选项源判断，直接使用 `dataset relations --format compress`；命令底层默认读取 D0/DO V2 关系事实
 - 更新或删除前确认 `relationId`；写入前确认来源/目标 `datasetCode + field`、`to.labelField`、`relation.cardinality` 和 `relation.bizRelationType`
 - `DB_TABLE -> METADATA` 表示业务表字段消费 METADATA 字典，不要把它理解为数据库外键
 - `METADATA -> METADATA` 可以是自关联父子关系；是否自关联由 `from.datasetCode === to.datasetCode` 自行判断，不在协议里增加派生字段

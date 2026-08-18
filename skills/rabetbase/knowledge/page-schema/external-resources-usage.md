@@ -176,7 +176,7 @@ HOOK 脚本绑定到数据集 API 上，在 API 执行前或执行后自动触�
 
 ## 4. 权限点使用规范
 
-当前标准页面权限由 `LrSmartTable` 运行时内置逻辑处理，Agent 只维护 `LrSmartTable` schema，不生成权限字段。
+当前数据列表页权限由 `LrSmartTable` 运行时内置逻辑处理，Agent 只维护 `LrSmartTable` schema，不生成权限字段。
 
 ### 4.1 当前实现
 

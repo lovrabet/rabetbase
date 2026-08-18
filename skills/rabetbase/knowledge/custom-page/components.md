@@ -1,6 +1,6 @@
-# React 自定义页面组件用法
+# 自定义页面组件用法
 
-本文件登记 React 自定义页面可复用的 UI 组件规范。生成或修改页面前先阅读 [`generation-standards.md`](generation-standards.md)。
+本文件登记自定义页面可复用的 UI 组件规范。生成或修改页面前先阅读 [`generation-standards.md`](generation-standards.md)。
 
 ## 使用边界
 

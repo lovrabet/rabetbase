@@ -1,6 +1,6 @@
 # page generate-start
 
-异步提交或复用智能列表页（Smart List Page）生成任务。
+异步提交或复用数据列表页（Data List Page）生成任务。
 
 ## 命令
 
@@ -17,10 +17,11 @@ rabetbase page generate-start --alias order --apply --format json
 
 ## 行为说明
 
-- 这是智能列表页生成的 **async-first 提交入口**。
+- 这是数据列表页生成的 **async-first 提交入口**。
 - **默认仅返回 dry-run 预览，不会调用 `generate-standard-pages/start`**；需要真正提交任务必须显式加 `--apply`。`--dry-run` 与不传 `--apply` 行为等价。
-- CLI 会先查 `standard-page-status` 做前置判定。
+- CLI 会先执行 `page data-list-status` 做前置判定；底层仍调用既有服务端 `standard-page-status` 接口。
 - 若允许生成且传入 `--apply`，CLI 会自动生成 `clientOperationId`，并调用 Java 侧 `generate-standard-pages/start`。
+- 提交结果固定返回 `pageType=DATA_LIST` 与 `pagePattern=CRUD_PAGE_SET`；命令不接受 `--page-type` 或 `--page-pattern`。
 - 返回结果里的 `operationId` 是服务端 job 主标识；`clientOperationId` 是调用方恢复 / 幂等锚点。
 - `query.command` 默认给出 `operationId` 查询；调用方若只保留了 `clientOperationId`，也可以用它恢复到同一条任务查询。
 - Agent / 自动化编排优先直接复用返回值里的 `query.command`，不要自己重新拼接恢复查询命令。
@@ -29,4 +30,4 @@ rabetbase page generate-start --alias order --apply --format json
 ## 参考
 
 - [rabetbase-page-generate-status.md](rabetbase-page-generate-status.md)
-- [rabetbase-standard-page-status.md](rabetbase-standard-page-status.md)
+- [rabetbase-data-list-status.md](rabetbase-data-list-status.md)

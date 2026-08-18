@@ -48,7 +48,7 @@ rabetbase dataset relation-delete --appcode <appCode> --relation-id <relationId>
 |------|----|:---:|------|
 | `DB_TABLE` | `DB_TABLE` | 是 | V2 数据集之间关系，底层可映射到表关系 |
 | `DB_TABLE` | `METADATA` | 是 | `DB_TABLE` 字段消费 `METADATA` 字典/选项源 |
-| `METADATA` | `METADATA` | 是 | V2 标准页面/配置数据集关系 |
+| `METADATA` | `METADATA` | 是 | V2 数据列表页/配置数据集关系 |
 | `METADATA` | `DB_TABLE` | 否 | CLI 校验阶段拒绝 |
 
 | Flag | update | 说明 |

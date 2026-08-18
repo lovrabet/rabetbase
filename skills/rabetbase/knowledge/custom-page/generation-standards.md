@@ -1,6 +1,6 @@
-# React 自定义页面生成规范
+# 自定义页面生成规范
 
-本规范用于编写或修改 React 自定义页面的完整 `codeContent`。执行命令流程、参数和发布规则以 [`react-custom-page-workflow.md`](../../guides/react-custom-page-workflow.md) 为准。
+本规范用于编写或修改自定义页面的完整 `codeContent`。执行命令流程、参数和发布规则以 [`custom-page-workflow.md`](../../guides/custom-page-workflow.md) 为准。
 
 ## 使用方式
 
@@ -15,7 +15,7 @@
 
 | 范畴     | 约束                                                                                                                      |
 | -------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 提交内容 | `page react-update` 提交完整页面文件，未提交的已有文件会被删除                                                            |
+| 提交内容 | `page custom-update` 提交完整页面文件，未提交的已有文件会被删除                                                            |
 | 推荐结构 | 页面入口仍为 `src/app/index.jsx`；其余文件和组件目录可按页面需要组织，`src/app/index.css`、`src/locales/index.js`、`src/components/*.jsx` 仅为示例 |
 | 组件复用 | 优先查阅并复用已有组件库和页面已有组件；仅当现有能力无法满足需求时才创建新组件 |
 | 依赖     | 仅使用“依赖白名单”中的包及其子路径                                                                                       |
@@ -61,9 +61,9 @@
 
 ### `src/app/index.jsx` 模板
 
-初始化创建自定义页面时，必须以此模板生成 `src/app/index.jsx`。将 `{{pageName}}` 替换为页面名称；保留词包注册、上下文 Hook 和样式导入，再按需求扩展布局、状态与数据调用。通过 `page react-create --page-content` 初始化创建时，传入的 `src/app/index.jsx` 也必须从此模板派生。
+初始化创建自定义页面时，必须以此模板生成 `src/app/index.jsx`。将 `{{pageName}}` 替换为页面名称；保留词包注册、上下文 Hook 和样式导入，再按需求扩展布局、状态与数据调用。通过 `page create --page-content` 初始化创建时，传入的 `src/app/index.jsx` 也必须从此模板派生。
 
-更新已有页面时，以 `page react-detail` 返回的最新 `codeContent` 为基线；不强制套用或补齐本模板，应仅按更新需求修改页面内容。
+更新已有页面时，以 `page custom-detail` 返回的最新 `codeContent` 为基线；不强制套用或补齐本模板，应仅按更新需求修改页面内容。
 
 ```jsx
 import React from "react";
@@ -402,6 +402,6 @@ const location = useLocation();
 - [ ] 数据集、SQL、BFF 与其他 SDK 调用的资源事实、参数和返回结构均有依据
 - [ ] 路由、状态和错误反馈符合已确认的交互
 - [ ] CSS 未写死颜色或其他样式常量
-- [ ] 已先执行 `page react-create --dry-run` 或 `page react-update --dry-run` 审阅完整提交内容，并通过 CLI 的基础 JS/JSX/TS/TSX 语法校验
+- [ ] 已先执行 `page create --dry-run` 或 `page custom-update --dry-run` 审阅完整提交内容，并通过 CLI 的基础 JS/JSX/TS/TSX 语法校验
 
 CLI 的基础校验只确认页面包含 `.jsx` 或 `.tsx` 文件，且页面内的 JS、JSX、TS、TSX 文件能够解析。变量引用、相对模块导出、数据调用契约和运行时行为必须由本清单和页面发布后的实际使用继续确认

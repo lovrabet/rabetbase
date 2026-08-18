@@ -237,10 +237,14 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 顶部注释必须写清楚：
 
 * 脚本功能描述
-* 接口路径
-* 平台配置地址
-* HTTP 请求参数
+* 脚本类型与脚本名称
+* 真实接口路径、平台配置地址和本地路径
+* 根请求参数与实际使用的每个 `params.<字段名>`
 * 返回数据结构
+* 依赖数据集、调用 BF、执行 SQL 和副作用
+* 显式抛出异常时的异常类型与触发条件
+
+字段级参数使用标准 JSDoc `@param` 标签，写清类型、含义、必填性和默认值。没有字段级参数时只保留根 `params` 标签，不要虚构字段。代码出现显式 `throw` 时必须补充 `@throws`；依赖维护项必须与实际代码同步，便于发布后提取为 BFF 元数据。
 
 占位符必须替换为真实值，不能保留：
 
@@ -254,16 +258,24 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 
 ```javascript
 /**
- * 脚本功能描述
+ * 保存用户前校验手机号
  *
- * [接口路径] POST /api/{appCode}/{datasetCode}/{operation}
- * [平台配置] https://app.lovrabet.com/app/{appCode}/data/dataset/{datasetId}#api-list
+ * [脚本类型] HOOK
+ * [脚本名称] validateMobile
+ * [接口路径] POST /api/demoApp/userDataset/save
+ * [平台配置] https://app.lovrabet.com/app/demoApp/data/dataset/1001#api-list
+ * [本地路径] .rabetbase/bff/demoApp/HOOK/user/save/before/validateMobile.js
+ * [触发节点] before
+ * [依赖数据集] userDataset（校验手机号唯一性）
+ * [调用 BF] 无
+ * [执行 SQL] 无
+ * [副作用] 无
  *
- * [HTTP 请求体参数]
- * { "field1": "字段说明" }
- *
- * [返回数据结构]
- * HOOK: 返回修改后的 params
+ * @param {Object} params 当前请求参数
+ * @param {string} params.mobile 手机号，必填
+ * @param {Object} context 平台注入的执行上下文
+ * @returns {Promise<Object>} 修改后的请求参数
+ * @throws {Error} 手机号格式错误或已存在时抛出
  */
 ```
 
@@ -271,16 +283,46 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 
 ```javascript
 /**
- * 脚本功能描述
+ * 查询用户列表
  *
- * [接口路径] POST /api/endpoint/{appCode}/{scriptName}
- * [平台配置] https://app.lovrabet.com/app/{appCode}/data/backend-function
+ * [脚本类型] ENDPOINT
+ * [脚本名称] getUserList
+ * [接口路径] POST /api/endpoint/demoApp/getUserList
+ * [平台配置] https://app.lovrabet.com/app/demoApp/data/backend-function
+ * [本地路径] .rabetbase/bff/demoApp/ENDPOINT/getUserList.js
+ * [依赖数据集] userDataset（查询用户列表）
+ * [调用 BF] normalizeQuery（标准化查询条件）
+ * [执行 SQL] 无
+ * [副作用] 无
  *
- * [HTTP 请求体参数]
- * { "field1": "字段说明" }
+ * @param {Object} params HTTP 请求体参数
+ * @param {string} [params.keyword] 查询关键词，可选
+ * @param {number} [params.page=1] 页码，默认 1
+ * @param {Object} context 平台注入的执行上下文
+ * @returns {Promise<{tableData: Object[], total: number}>} 用户列表和总数
+ */
+```
+
+### COMMON 注释模板
+
+```javascript
+/**
+ * 标准化查询参数
  *
- * [返回数据结构]
- * ENDPOINT: 返回业务数据对象
+ * [脚本类型] COMMON
+ * [脚本名称] normalizeQuery
+ * [平台配置] https://app.lovrabet.com/app/demoApp/data/backend-function
+ * [本地路径] .rabetbase/bff/demoApp/COMMON/normalizeQuery.js
+ * [调用方式] context.client.bff.execute({ scriptName: "normalizeQuery", params })
+ * [依赖数据集] 无
+ * [调用 BF] 无
+ * [执行 SQL] 无
+ * [副作用] 无
+ *
+ * @param {Object} params 请求参数
+ * @param {string} [params.keyword] 原始查询关键词，可选
+ * @param {Object} context 平台注入的执行上下文
+ * @returns {Promise<{keyword: string}>} 标准化后的查询参数
  */
 ```
 
@@ -800,6 +842,7 @@ await context.client.db.transaction(async (tx) => {
 * 不要使用 `getList()` 代替 `filter()`
 * 不要手动设置系统字段
 * 不要保留顶部注释占位符
+* 不要让参数、返回值、依赖数据集、调用 BF、执行 SQL 或副作用说明与实际代码不一致
 * 不要把前端 SQL 返回值语义套到 BFF
 * 不要在 BFF 中使用前端 SDK 独有的方法，如 `createClient`、`registerModels`
 * 不要把示例里的字段名、表名、枚举值复制到真实脚本；字段事实必须来自当前数据集详情
@@ -815,6 +858,8 @@ await context.client.db.transaction(async (tx) => {
 * [ ] 若涉及数据集，字段名、类型、必填、枚举、关系已核对
 * [ ] 函数名正确（将作为 `scriptName` 参数传入）
 * [ ] 顶部注释完整且占位符已替换
+* [ ] JSDoc 已覆盖根请求参数、实际字段和返回值；显式抛出异常时已补充 `@throws`
+* [ ] 依赖数据集、调用 BF、执行 SQL 和副作用说明与实际代码一致
 * [ ] 数据集映射使用 `"dataset_" + 32 位编码`
 * [ ] 单条查询统一使用 `getOne`
 * [ ] 列表查询使用 `filter`，并从 `.tableData` 读取结果

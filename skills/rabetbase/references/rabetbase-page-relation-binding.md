@@ -1,6 +1,6 @@
 # page relation binding
 
-页面关系绑定用于校准 Smart List Page 中选择类字段的 options 来源。执行前先读取数据集关系事实，再审计页面 schema，最后通过本地 schema 工作流做可回滚修改。
+页面关系绑定用于校准 Data List Page 中选择类字段的 options 来源。执行前先读取数据集关系事实，再审计页面 schema，最后通过本地 schema 工作流做可回滚修改。
 
 ## 执行流程
 

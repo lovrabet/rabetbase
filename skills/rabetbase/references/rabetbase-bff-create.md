@@ -40,6 +40,8 @@ BFF 源码**仅**应在此目录树内创建与长期维护（与 `bff status` /
 - [`backend-function.md`](../guides/backend-function.md)：`context.client`、模型键、返回值、事务、消息通知扩展、禁止事项
 - [`data-api-guidelines.md`](../guides/data-api-guidelines.md)：字段、枚举、外键、性能规则
 
+脚手架会生成中文 JSDoc 契约，包含真实接口/配置地址、根请求参数、返回值，以及依赖数据集、调用 BF、执行 SQL、副作用等维护项。提交前必须按实际代码补充每个 `params.<字段名>` 的类型与含义，更新依赖维护项；显式抛出异常时还要补充 `@throws`。无依赖或无副作用的项目可以保留“无”，不能把模板提示当作已确认的业务事实。
+
 创建可由 CLI 调用的通知型 BFF 时使用 `ENDPOINT`，并先用 [`rabetbase notification config-list`](rabetbase-notification-config-list.md) 确认当前应用真实的通知 `configCode`。纯通知 ENDPOINT 不需要虚构数据集；脚本只通过 `context.client.extension.execute("notification", "send", ...)` 使用 `configCode`、`audiences`、`message`，不得写渠道地址或密钥。
 
 ## 提示

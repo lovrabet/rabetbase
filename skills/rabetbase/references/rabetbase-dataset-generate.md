@@ -185,7 +185,7 @@ Status 成功后的 `data` 包含：
 - `PENDING` / `PROCESSING` 都不是完成；始终继续查询同一个 taskId。
 - 超时、未知状态或 start 响应丢失时只做状态恢复，不得自动重提生成请求。
 - 成功后用 `rabetbase dataset detail --code <createdDataset.code> --format compress` 确认结构。
-- 如需生成智能列表页，再执行 `rabetbase page generate-start --datasetcode <createdDataset.code> --format compress`。
+- 如需生成数据列表页，再执行 `rabetbase page generate-start --datasetcode <createdDataset.code> --format compress`。
 - 真实业务行数据验证交接到 `lovrabet data filter|getOne`。
 
 ## 常见失败

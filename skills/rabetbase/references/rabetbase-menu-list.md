@@ -117,6 +117,7 @@ rabetbase menu list --verbose --format json
 - 查看菜单是否已配置 CDN 资源 URL。
 - 审计重复 path、根级 label 重复、孤儿父节点等菜单异常，并生成平台人工处理清单。
 - 修改菜单名称前确认 `id/label`；所有菜单类型统一使用 `menu rename`。
+- 显示或隐藏菜单前确认 `id/path/visible`；批量写入统一使用 `menu visibility-update`。
 - 修改 iframe/link 页面 URL 前确认 `id/url/parentId`；写入入口使用 `menu external-link-update`。
 - 修改微前端 JS/CSS 资源前确认当前 resources；写入入口使用 `menu asset-update`。
 - 提供稳定的菜单事实入口，避免使用底层数据源查询菜单配置。
@@ -124,10 +125,10 @@ rabetbase menu list --verbose --format json
 ## 不负责
 
 - 不做本地 `src/pages` 与线上菜单 diff；这类对比使用 `menu sync`。
-- 不做智能列表页菜单审计；dataset-scoped 页面事实使用 `page standard-page-status`。
+- 不做数据列表页菜单审计；dataset-scoped 页面事实使用 `page data-list-status`。
 - 不修改外链 URL；使用 `menu external-link-update`，并带旧 URL 与父级断言。
 - 不修改菜单资源；更新 JS / CSS 资源 URL 使用 `menu asset-update`，并先执行 dry-run。
-- 不修改菜单；改名使用 `menu rename`，空 folder 删除使用计划化的 `menu delete`，分组生命周期使用 `group-create/group-update/regroup-start`，写操作都必须先 dry-run。
+- 不修改菜单；显示隐藏使用 `menu visibility-update`，改名使用 `menu rename`，空 folder 删除使用计划化的 `menu delete`，分组生命周期使用 `group-create/group-update/regroup-start`，写操作都必须先 dry-run。
 
 ## 参考
 
@@ -135,6 +136,7 @@ rabetbase menu list --verbose --format json
 - [menu external-link-create](rabetbase-menu-external-link-create.md)
 - [menu external-link-update](rabetbase-menu-external-link-update.md)
 - [menu rename](rabetbase-menu-rename.md)
+- [menu visibility-update](rabetbase-menu-visibility-update.md)
 - [menu asset-update](rabetbase-menu-asset-update.md)
 - [menu delete](rabetbase-menu-delete.md)
 - [menu group-create](rabetbase-menu-group-create.md)

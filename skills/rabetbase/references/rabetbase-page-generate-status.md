@@ -1,6 +1,6 @@
 # page generate-status
 
-查询智能列表页（Smart List Page）生成任务状态。
+查询数据列表页（Data List Page）生成任务状态。
 
 ## 命令
 
@@ -20,13 +20,13 @@ rabetbase page generate-status --datasetcode 097b7361b76c42bcb12b923fa5a08861 --
 ## 行为说明
 
 - 命令查询的是**任务状态**，不是页面事实。
-- 当任务进入成功终态时，CLI 会补查 `standard-page-status`，把页面事实一并附在结果里，方便你直接判断是否形成完整智能列表页组。
+- 当任务进入成功终态时，CLI 会补查 `page data-list-status`，把页面事实一并附在结果里，方便你直接判断是否形成完整数据列表页组。
 - 若任务仍在 `PENDING/PROCESSING/RUNNING`，结果会保持机器可读的 `status / nextAction / query`。
 - 提交生成后保存 `taskId`、`operationId` 与 `clientOperationId`；超时、未知状态或网络失败时复用原标识查询，不重新执行 `generate-start --apply`，不得自动重提。
-- 成功终态时，页面组锚点位于 `data.standardPageStatus.pageSets[].versionTag`。存在多个完整组、残留页或冲突时交给用户确认，不猜测 `versionTag`。
+- 成功终态时，页面组锚点位于 `data.dataListPageStatus.pageSets[].versionTag`。存在多个完整组、残留页或冲突时交给用户确认，不猜测 `versionTag`。
 - 确认页面组后，使用 `page pull --datasetcode <code> --version-tag <tag>` 精确拉取。
 
 ## 参考
 
 - [rabetbase-page-generate-start.md](rabetbase-page-generate-start.md)
-- [rabetbase-standard-page-status.md](rabetbase-standard-page-status.md)
+- [rabetbase-data-list-status.md](rabetbase-data-list-status.md)

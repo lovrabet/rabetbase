@@ -1,12 +1,12 @@
-# React 自定义页面工作流
+# 自定义页面工作流
 
-本指南说明如何使用 `rabetbase` 创建、修改和发布 React 自定义页面。页面内容由完整 JSX、样式和多语言文件组成。
+本指南说明如何使用 `rabetbase` 创建、修改和发布自定义页面。页面内容由完整 JSX、样式和多语言文件组成。
 
 ## 适用范围
 
 适用于以下目标：
 
-- 新建或修改 React 自定义页面、看板、门户、落地页或复杂交互页面
+- 新建或修改 自定义页面、看板、门户、落地页或复杂交互页面
 - 使用 ECharts 实现图表、统计卡片和数据大屏
 
 ## 前置上下文
@@ -19,58 +19,58 @@
 
 ### 新建页面
 
-1. 先阅读 [`rabetbase-page-react-create.md`](../references/rabetbase-page-react-create.md)
-2. 可选传入完整 `--page-content`；省略时 CLI 生成默认文件。先执行 `page react-create --dry-run`，确认页面名称、父菜单和最终页面文件
+1. 先阅读 [`rabetbase-page-create.md`](../references/rabetbase-page-create.md)
+2. 使用基础模板时传 `--page-pattern BLANK`；已有完整源码时只传 `--page-content`。先执行 `page create --dry-run`，确认页面名称、父菜单和最终页面文件
 3. 经用户确认后创建页面，记录 `data.after.pageId`。新页面默认尚未发布
-4. 执行 `page react-detail --id <pageId>`，以 `data.codeContent` 中的完整页面文件为修改基线
+4. 执行 `page custom-detail --id <pageId>`，以 `data.codeContent` 中的完整页面文件为修改基线
 5. 需要定制初始文件时，再按“更新页面”流程保存完整页面文件
 
 创建页面会同时创建菜单入口。不得额外调用菜单创建命令重复创建入口。
 
 ### 查找或修改已有页面
 
-1. 未知页面 ID 时，先阅读 [`rabetbase-page-react-list.md`](../references/rabetbase-page-react-list.md)，执行 `page react-list --appcode <appCode>`
+1. 未知页面 ID 时，先阅读 [`rabetbase-page-custom-list.md`](../references/rabetbase-page-custom-list.md)，执行 `page custom-list --appcode <appCode>`
 2. 根据 `data.pages[].pageId` 与 `label` 与用户确认目标页面；`data.pages[].pageUrl` 用于查看最新保存内容，`data.pages[].editPageUrl` 用于打开页面编辑器
-3. 阅读 [`rabetbase-page-react-detail.md`](../references/rabetbase-page-react-detail.md)，执行 `page react-detail --id <pageId>`
+3. 阅读 [`rabetbase-page-custom-detail.md`](../references/rabetbase-page-custom-detail.md)，执行 `page custom-detail --id <pageId>`
 4. 只在返回的最新 `data.codeContent` 基础上编辑，不得根据旧缓存或猜测覆盖文件
 
 ### 更新页面
 
-1. 阅读 [`rabetbase-page-react-update.md`](../references/rabetbase-page-react-update.md)
+1. 阅读 [`rabetbase-page-custom-update.md`](../references/rabetbase-page-custom-update.md)
 2. 将新增、修改和保留的所有文件整理为完整 `page-content` JSON
-3. 先执行 `page react-update --dry-run` 审阅完整页面文件
+3. 先执行 `page custom-update --dry-run` 审阅完整页面文件
 4. 经用户确认后执行更新
-5. 再执行 `page react-detail --id <pageId>`，确认 `codeContent` 已包含预期文件和内容
+5. 再执行 `page custom-detail --id <pageId>`，确认 `codeContent` 已包含预期文件和内容
 6. 已发布页面更新后，最新保存内容需要再次发布，用户访问的已发布页面才能看到本次修改
 
-`page react-update` 会完整保存页面文件：未提交的文件会被删除。不得仅提交本次修改的单个文件，也不得为删除文件再调用不存在的独立删除命令。
+`page custom-update` 会完整保存页面文件：未提交的文件会被删除。不得仅提交本次修改的单个文件，也不得为删除文件再调用不存在的独立删除命令。
 
-当前 CLI 没有逐文件新增、编辑或删除命令。将本地文件操作整理为完整 `codeContent` 后再调用 `react-update`；每次更新都会创建一个新的保存版本，`react-detail` 默认读取最新页面内容。
+当前 CLI 没有逐文件新增、编辑或删除命令。将本地文件操作整理为完整 `codeContent` 后再调用 `custom-update`；每次更新都会创建一个新的保存版本，`custom-detail` 默认读取最新页面内容。
 
 ### 发布页面
 
-1. 先执行 `page react-detail --id <pageId>`，确认当前 `data.status`
-2. 当前状态为 `FORMAL` 时，表示当前保存内容已发布，不执行 `page react-publish`，直接查看已发布页面或继续后续流程
-3. 当前状态不是 `FORMAL` 时，读取 [`rabetbase-page-react-publish.md`](../references/rabetbase-page-react-publish.md)，再执行 `page react-publish --dry-run`
+1. 先执行 `page custom-detail --id <pageId>`，确认当前 `data.status`
+2. 当前状态为 `FORMAL` 时，表示当前保存内容已发布，不执行 `page custom-publish`，直接查看已发布页面或继续后续流程
+3. 当前状态不是 `FORMAL` 时，读取 [`rabetbase-page-custom-publish.md`](../references/rabetbase-page-custom-publish.md)，再执行 `page custom-publish --dry-run`
 4. 发布会影响用户实际访问的页面，必须取得用户明确确认后再执行
 5. 从 `data.after.status` 确认 `FORMAL`，表示内容已发布
 
-`data.pageUrl` 用于查看最新保存内容，包含尚未发布的修改；`data.editPageUrl` 用于打开页面编辑器；`page react-publish` 成功返回的 `data.runtimePageUrl` 用于查看已发布内容。不要将三者混用。
+`data.pageUrl` 用于查看最新保存内容，包含尚未发布的修改；`data.editPageUrl` 用于打开页面编辑器；`page custom-publish` 成功返回的 `data.runtimePageUrl` 用于查看已发布内容。不要将三者混用。
 
 ## 页面生命周期
 
-React 页面有“未发布”和“已发布”两种状态。未发布的修改可通过 `pageUrl` 或编辑器查看，已发布页面只展示最近一次发布的内容。
+自定义页面的 React JSX 实现有“未发布”和“已发布”两种状态。未发布的修改可通过 `pageUrl` 或编辑器查看，已发布页面只展示最近一次发布的内容。
 
 ```text
-page react-create
+page create --page-pattern BLANK
   → 未发布
   → 生成或更新完整页面文件
   → 未发布
-  → page react-publish
+  → page custom-publish
   → 已发布（FORMAL）→ 可通过 runtimePageUrl 查看已发布内容
-  → page react-update
+  → page custom-update
   → 未发布（已发布页面仍显示上一次发布内容）
-  → page react-publish
+  → page custom-publish
   → 已发布（FORMAL）→ 已发布页面展示最新发布内容
 ```
 
@@ -81,9 +81,9 @@ page react-create
 | 发布后 | 当前已发布版本，状态为 `FORMAL` | 本次已发布内容 | 通过 `runtimePageUrl` 查看或继续修改 |
 | 已发布后再次更新 | 最新保存内容，尚未发布 | 更新前的已发布内容 | 再次发布后才切换已发布页面内容 |
 
-`page react-detail` 用于确认最新保存内容，`page react-publish` 用于发布当前保存内容。不要仅因 `react-update` 成功就认为已发布页面已经更新。
+`page custom-detail` 用于确认最新保存内容，`page custom-publish` 用于发布当前保存内容。不要仅因 `custom-update` 成功就认为已发布页面已经更新。
 
-`react-detail` 返回 `FORMAL` 时，表示当前保存内容已经发布。没有新的修改时，跳过重复发布，继续查看已发布页面或后续流程。
+`custom-detail` 返回 `FORMAL` 时，表示当前保存内容已经发布。没有新的修改时，跳过重复发布，继续查看已发布页面或后续流程。
 
 ### 地址语义
 
@@ -95,7 +95,7 @@ page react-create
 
 ## 数据与服务契约
 
-图表与统计场景使用 `page react-create/update/publish` 管理的 React JSX 页面，呈现层直接使用白名单内的 `echarts@5`。
+图表与统计场景使用 `page create` 与 `page custom-update/publish` 管理的 React JSX 页面，呈现层直接使用白名单内的 `echarts@5`。
 
 ### 选型
 
@@ -130,16 +130,16 @@ page react-create
 
 ### ECharts 呈现层
 
-- 在 React 页面中直接使用白名单内的 `echarts@5` 构建图表；按组件生命周期初始化、更新和销毁实例。
+- 在自定义页面的 React JSX 实现中直接使用白名单内的 `echarts@5` 构建图表；按组件生命周期初始化、更新和销毁实例。
 - ECharts 只消费页面已经取得的业务数据，不负责访问数据库、执行 SQL 或做权限判断。
-- `page react-*` 页面与 `project create` 微前端模板是不同运行环境；前者不得因为模板示例使用了包装库，就引入白名单外依赖。
+- `page custom-*` 页面与 `project create` 微前端模板是不同运行环境；前者不得因为模板示例使用了包装库，就引入白名单外依赖。
 - 图表查询使用 Dataset、`client.sql.execute({ sqlCode, params })` 或受控 BFF，并完整处理加载、空态、失败和重试行为。
 
 ## 页面开发参考
 
-编写页面内容前，先阅读 [`generation-standards.md`](../knowledge/react-page/generation-standards.md)。
+编写页面内容前，先阅读 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md)。
 
-- 选择、组合或新增 UI 组件时，按需阅读 [`components.md`](../knowledge/react-page/components.md)
+- 选择、组合或新增 UI 组件时，按需阅读 [`components.md`](../knowledge/custom-page/components.md)
 - 调用页面上下文、国际化、路由或数据客户端时，按需阅读 `generation-standards.md` 中的“页面上下文内置能力”
 - 未登记的组件、方法、参数和返回结构不得猜测，先补充确认后的规范再复用
 
@@ -156,7 +156,7 @@ src/components/*.jsx
 
 代码遵循以下约束：
 
-- 仅导入 [`generation-standards.md`](../knowledge/react-page/generation-standards.md)“依赖白名单”中的包及其子路径
+- 仅导入 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md)“依赖白名单”中的包及其子路径
 - 使用页面上下文时，从 `@/context/app-context` 导入 `useSdkClient`、`useI18n`、`useNavigate`、`useLocation`
 - 数据读取或写入前，先确认数据集及 SDK 用法；接口或字段无法从现有事实确认时，不得猜测请求协议
 - 所有用户可见文案通过 `$i18n.t("key")` 获取，并在 `src/locales/index.js` 提供有效翻译
@@ -164,39 +164,39 @@ src/components/*.jsx
 - CSS 使用 Ant Design CSS 变量，不写死颜色或其他样式常量
 - 不新增白名单外依赖，不使用 `window.location`
 
-未传 `--page-content` 时，`react-create` 生成基础 JSX、样式和词包。首次自定义时，将初始文案和样式一并调整为上述约束后再发布，不把初始化模板视为最终页面实现。
+传 `--page-pattern BLANK` 时，`page create` 生成基础 JSX、样式和词包。首次自定义时，将初始文案和样式一并调整为上述约束后再发布，不把初始化模板视为最终页面实现。
 
 ## 页面内容自检
 
 在首次提交或每次更新完整 `codeContent` 前，按以下顺序自检：
 
-1. 先用 `page react-detail --id <pageId>` 读取最新页面文件，避免覆盖其他尚未发布的修改
+1. 先用 `page custom-detail --id <pageId>` 读取最新页面文件，避免覆盖其他尚未发布的修改
 2. 确认提交内容包含全部需要保留的文件，入口、样式、词包和组件之间的导入路径一致
-3. 对照 [`generation-standards.md`](../knowledge/react-page/generation-standards.md) 检查依赖白名单、国际化、路由、样式和数据契约
+3. 对照 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md) 检查依赖白名单、国际化、路由、样式和数据契约
 4. 使用组件或内置方法时，分别对照 `components.md` 和 `generation-standards.md` 中的“页面上下文内置能力”，确认不存在未登记的属性、方法或返回结构假设
-5. 先完成“页面生成规范”中的静态自检，再执行 `page react-update --dry-run`。CLI 会阻止缺少 React 源码或存在基础 JS/JSX/TS/TSX 语法错误的内容，但不推断变量引用、模块导出、数据契约或运行时行为
-6. 更新后再次执行 `page react-detail --id <pageId>`，确认最新保存的 `codeContent` 与提交内容一致
-7. 需要让用户查看已发布页面时，先检查最新 `data.status`。状态为 `FORMAL` 时跳过发布；否则执行 `page react-publish --dry-run`、取得确认后发布，并确认 `data.after.status` 为 `FORMAL` 和 `data.runtimePageUrl` 已返回
+5. 先完成“页面生成规范”中的静态自检，再执行 `page custom-update --dry-run`。CLI 会阻止缺少 React 源码或存在基础 JS/JSX/TS/TSX 语法错误的内容，但不推断变量引用、模块导出、数据契约或运行时行为
+6. 更新后再次执行 `page custom-detail --id <pageId>`，确认最新保存的 `codeContent` 与提交内容一致
+7. 需要让用户查看已发布页面时，先检查最新 `data.status`。状态为 `FORMAL` 时跳过发布；否则执行 `page custom-publish --dry-run`、取得确认后发布，并确认 `data.after.status` 为 `FORMAL` 和 `data.runtimePageUrl` 已返回
 
 当前 CLI 不提供已发布页面截图或自动浏览器预览。发布成功后，使用返回的 `data.runtimePageUrl` 打开已发布页面进行人工预览。
 
 ## 最小验证闭环
 
 ```text
-新建：react-create --dry-run → react-create → react-detail → [按需] react-update --dry-run → react-update → react-detail → [尚未发布（status 非 FORMAL）且经确认] react-publish --dry-run → react-publish
+新建：create --page-pattern BLANK --dry-run → create --page-pattern BLANK → custom-detail → [按需] custom-update --dry-run → custom-update → custom-detail → [尚未发布（status 非 FORMAL）且经确认] custom-publish --dry-run → custom-publish
 
-修改：react-list（按需）→ react-detail → react-update --dry-run → react-update → react-detail → [尚未发布（status 非 FORMAL）且经确认] react-publish --dry-run → react-publish
+修改：custom-list（按需）→ custom-detail → custom-update --dry-run → custom-update → custom-detail → [尚未发布（status 非 FORMAL）且经确认] custom-publish --dry-run → custom-publish
 ```
 
 CLI 当前不提供本地预览或独立删除命令。
 
 ## 参考
 
-- [`rabetbase-page-react-create.md`](../references/rabetbase-page-react-create.md)
-- [`rabetbase-page-react-list.md`](../references/rabetbase-page-react-list.md)
-- [`rabetbase-page-react-detail.md`](../references/rabetbase-page-react-detail.md)
-- [`rabetbase-page-react-update.md`](../references/rabetbase-page-react-update.md)
-- [`rabetbase-page-react-publish.md`](../references/rabetbase-page-react-publish.md)
-- [`generation-standards.md`](../knowledge/react-page/generation-standards.md)
-- [`components.md`](../knowledge/react-page/components.md)
+- [`rabetbase-page-create.md`](../references/rabetbase-page-create.md)
+- [`rabetbase-page-custom-list.md`](../references/rabetbase-page-custom-list.md)
+- [`rabetbase-page-custom-detail.md`](../references/rabetbase-page-custom-detail.md)
+- [`rabetbase-page-custom-update.md`](../references/rabetbase-page-custom-update.md)
+- [`rabetbase-page-custom-publish.md`](../references/rabetbase-page-custom-publish.md)
+- [`generation-standards.md`](../knowledge/custom-page/generation-standards.md)
+- [`components.md`](../knowledge/custom-page/components.md)
 - [`rabetbase-codegen-sdk.md`](../references/rabetbase-codegen-sdk.md)

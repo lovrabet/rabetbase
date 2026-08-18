@@ -69,6 +69,8 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 * BFF 中 `sql.execute` 返回数组，不是 `{ execSuccess, execResult }`
 * 没有在 BFF 中使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
 * 参数校验、错误处理、脱敏
+* 中文 JSDoc 已写清根请求参数、实际 `params.<字段名>`、返回值；显式抛出异常时包含 `@throws`
+* 依赖数据集、调用 BF、执行 SQL、副作用维护项与实际代码一致，无依赖时明确填写“无”
 * 通知型 BFF 只传 `configCode` / `audiences` / `message`，并且没有 `${...}` 模板表达式、旧 MANUAL 参数或渠道密钥
 * 通知型 ENDPOINT 限制调用者可传的字段、`configCode` 和接收对象范围，不形成任意通知转发器
 * 通知型 Before HOOK 使用“即将执行”或“准备执行”的消息语义，`await` 发送后返回原始 `params`；不直接返回通知扩展结果，并明确接受“通知已发送但后续业务仍可能失败”
