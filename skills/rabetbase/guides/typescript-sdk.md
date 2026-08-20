@@ -3,7 +3,7 @@
 > 目标：约束 AI 在前端与 Node 环境中生成 Lovrabet SDK 代码时的用法，杜绝凭借通用经验瞎猜 API 结构。
 >
 > 适用范围：前端 / Node 环境中通过 `@lovrabet/sdk` 初始化后的 `client` 调用。
-> BFF 脚本中的 `context.client` 由平台注入，API 子集与前端 SDK 有差异；编写 BFF 时以 `backend-function.md` 为准。
+> Backend Function 脚本中的 `context.client` 由平台注入，API 子集与前端 SDK 有差异；编写 Backend Function 时以 `backend-function.md` 为准。
 
 ## 何时使用
 
@@ -11,10 +11,10 @@
 * 初始化 Lovrabet Client
 * 编写模型/数据集的查询与写入代码
 * 在前端或中台服务中执行自定义 SQL
-* 在前端调用 Backend Function (BFF)
+* 在前端调用 Backend Function (BF)
 * 处理 API 返回的错误或业务异常
 
-不要把本指南里的 `createClient`、`registerModels` 等前端 / Node SDK 初始化能力套用到 BFF。BFF 内只使用平台注入的 `context.client`。
+不要把本指南里的 `createClient`、`registerModels` 等前端 / Node SDK 初始化能力套用到 Backend Function。Backend Function 内只使用平台注入的 `context.client`。
 
 ## 初始化规则
 
@@ -74,7 +74,7 @@ const result = await client.models.article.filter({
 
 ### 写入与删除操作（SDK >= 1.2.0）
 
-从 SDK v1.2.0 开始，update 和 delete 支持对象模式（推荐，与 BFF 一致）和兼容模式两种写法，单次最多 **1000 条**记录。
+从 SDK v1.2.0 开始，update 和 delete 支持对象模式（推荐，与 Backend Function 一致）和兼容模式两种写法，单次最多 **1000 条**记录。
 
 #### 更新（Update）
 
@@ -148,7 +148,7 @@ async function updateInBatches(ids: number[], batchSize = 1000) {
 
 ### 别名模式（Alias Pattern）
 
-如果在前端 / Node SDK 中使用 `registerModels` 定义了别名，批量操作同样支持。此能力不适用于 BFF 的 `context.client`。
+如果在前端 / Node SDK 中使用 `registerModels` 定义了别名，批量操作同样支持。此能力不适用于 Backend Function 的 `context.client`。
 
 ```typescript
 // 注册别名
@@ -166,7 +166,7 @@ await client.models.primary.update({ id: [1, 2, 3], status: 'active' });
 ### 强制返回值处理
 SDK 中的 SQL API 返回的是**业务数据层**，包含 `execSuccess` 和 `execResult`：
 * **必须**判断 `execSuccess`，不能直接读结果。
-* 这与 BFF 环境中直接返回数组（不带 execResult）有本质区别，**不要混用**。
+* 这与 Backend Function 环境中直接返回数组（不带 execResult）有本质区别，**不要混用**。
 
 ```typescript
 // ✅ 前端/Node SDK 调用 SQL：
@@ -182,14 +182,14 @@ if (data.execSuccess && data.execResult) {
 }
 ```
 
-## 3. 前端 / Node 调用 Backend Function (BFF API)
+## 3. 前端 / Node 调用 Backend Function (BF) API
 
 ### 强制返回值处理
-调用 BFF 返回的直接是你在脚本中 `return` 的业务数据对象。
+调用 Backend Function 返回的直接是你在脚本中 `return` 的业务数据对象。
 * 这里**没有** `execSuccess` 或 `execResult`。
 
 ```typescript
-// ✅ 调用 BFF
+// ✅ 调用 Backend Function
 const dashboard = await client.bff.execute<DashboardData>({
   scriptName: "getUserDashboard",
   params: { userId: "123" },
@@ -223,5 +223,5 @@ try {
 * [ ] 是否把 `orderBy` 写成了 `sort`？
 * [ ] `where` 对象里是否老老实实带了 `$eq` 等操作符？
 * [ ] 处理 SQL 的返回值时，判断了 `execSuccess` 吗？
-* [ ] 处理 BFF 的返回值时，是不是直接使用了业务数据？
+* [ ] 处理 Backend Function 的返回值时，是不是直接使用了业务数据？
 * [ ] 加入了 `try...catch` 块防止整个应用崩溃吗？

@@ -1,6 +1,6 @@
 # bff status
 
-检查本地 BFF 脚本与 `.rabetbase/bff.lock.json` 的同步状态。
+检查本地 Backend Function 脚本与 `.rabetbase/bff.lock.json` 的同步状态。
 
 ## 命令
 

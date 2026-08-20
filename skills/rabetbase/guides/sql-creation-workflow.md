@@ -6,7 +6,7 @@
 
 平台是唯一 source of truth。团队长期维护 SQL 时，优先使用 **本地同步工作流**：`sql create / pull / status / push / delete` + `.rabetbase/sql.lock.json`。
 
-SQL 内容编写、参数绑定与 MyBatis 语法以 [`sql-mybatis.md`](sql-mybatis.md) 为准。页面和 BFF 执行已发布的 Custom SQL 时使用 `sqlCode` + `params`。
+SQL 内容编写、参数绑定与 MyBatis 语法以 [`sql-mybatis.md`](sql-mybatis.md) 为准。页面和 Backend Function 执行已发布的 Custom SQL 时使用 `sqlCode` + `params`。
 
 ## 工作流
 
@@ -169,7 +169,7 @@ DELETE / DDL（DROP / ALTER / CREATE / TRUNCATE）属高风险，不建议进入
 
 ## SQL 调用差异
 
-| 场景 | 前端 SDK | BFF (context.client) |
+| 场景 | 前端 SDK | Backend Function (context.client) |
 |------|---------|---------------------|
 | 返回值 | `{ execSuccess, execResult }` | 直接返回数组 |
 | 调用 | `client.sql.execute({ sqlCode, params })` | `context.client.sql.execute({ sqlCode, params })` |

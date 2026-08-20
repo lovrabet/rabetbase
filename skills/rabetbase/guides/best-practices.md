@@ -1,12 +1,12 @@
 # Lovrabet 开发质量规范与最佳实践
 
-> 目标：约束 AI 在编写代码、SQL 和 BFF 时的安全边界、命名风格和防御性编程习惯，避免生成高风险或难以维护的产物。
+> 目标：约束 AI 在编写代码、SQL 和 Backend Function 时的安全边界、命名风格和防御性编程习惯，避免生成高风险或难以维护的产物。
 >
-> 适用场景：编写或审查代码生成逻辑、SQL 和 BFF 脚本时。
+> 适用场景：编写或审查代码生成逻辑、SQL 和 Backend Function 脚本时。
 
 ## 需求落地标准工作流
 
-当遇到一个新业务需求时，AI **必须**按以下漏斗模型进行思考与技术选型，严禁一上来就直接写页面或堆砌复杂的自定义 SQL/BFF：
+当遇到一个新业务需求时，AI **必须**按以下漏斗模型进行思考与技术选型，严禁一上来就直接写页面或堆砌复杂的自定义 SQL/Backend Function：
 
 ### Step 1：模型与关系推演
 - **强制动作**：使用 CLI 命令（`rabetbase dataset list --format json`、`rabetbase dataset list --name "xxx" --format json`、`rabetbase dataset detail --code <数据集编码> --format json`）找出所有相关的业务模型。
@@ -21,7 +21,7 @@
 本文件仅补充执行习惯：
 
 - **SQL**：写前先 `sql list` 查复用；统计类 SQL 主动对齐历史口径，**不一致时告知开发者**。长期维护的源文件落在 **`.rabetbase/sql/<appCode>/<dbName|db-<id>>/`**（与 `sql create` / `sql pull` / `sql push` / `sql status` 约定一致）。
-- **BFF**：写前先 `bff list` 防重复；若逻辑可复用，**建议**抽公共函数或 service 层。脚本**仅**在 **`.rabetbase/bff/<appCode>/...`** 下维护（见 `bff create`）。
+- **Backend Function**：写前先 `bff list` 防重复；若逻辑可复用，**建议**抽公共函数或 service 层。脚本**仅**在 **`.rabetbase/bff/<appCode>/...`** 下维护（见 `bff create`）。
 
 ### Step 3：前端页面呈现
 - 只有在后端的模型和接口选型彻底理清、确认可用之后，**最后一步**才是编写前端 React 页面。
@@ -54,7 +54,7 @@ AI 必须使用有业务语义的规范命名，严禁使用诸如 `test`、`tem
 - 数据查询                   # 不要使用中文作为 code/name 标识
 ```
 
-### BFF 脚本命名
+### Backend Function 脚本命名
 **推荐格式**: `[动词]-[模块]-[功能]`（小写或驼峰视环境而定，通常连字符风格为佳）
 
 ```markdown
@@ -84,14 +84,14 @@ AI 必须使用有业务语义的规范命名，严禁使用诸如 `test`、`tem
 * 如果用户给出了不带 `LIMIT` 或全局匹配的 `UPDATE`，AI 必须主动补充约束条件或提示风险。
 * 高危 DDL/DML 不应通过 CLI 自动保存到平台，必须建议用户保存在本地 `.rabetbase/sql/` 同步目录或 `.draft.sql` 草稿中进行 review。
 
-### BFF 高危操作识别
+### Backend Function 高危操作识别
 
 🔴 **高危特征**：
 * 参数未加任何验证直接传入 `delete` 或 `update` 方法
 * 未做权限校验直接暴露数据
 
 ✅ **防御动作**：
-AI 编写 BFF 代码时，必须养成防御性编程习惯，默认加上参数校验和错误捕获：
+AI 编写 Backend Function 代码时，必须养成防御性编程习惯，默认加上参数校验和错误捕获：
 
 ```javascript
 // ❌ 高危：无验证，直接透传
@@ -116,7 +116,7 @@ export default async function(params: any, context: any) {
 
 ## 描述与版本标记
 
-在通过 CLI 命令保存资源（如 SQL、BFF）时，应善用 `description` 字段。AI 应在描述中主动加入语义化的标签和版本说明。
+在通过 CLI 命令保存资源（如 SQL、Backend Function）时，应善用 `description` 字段。AI 应在描述中主动加入语义化的标签和版本说明。
 
 **可用标记**：
 * `#生产使用` - 生产环境关键资源

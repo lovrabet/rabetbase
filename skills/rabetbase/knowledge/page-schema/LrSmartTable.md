@@ -611,7 +611,7 @@ context 对象在 **JSFunction** 中通过 `config._context` 访问，用于状�
 }
 ```
 
-**注意**：脱敏仅影响前端显示，不影响数据源和导出。后续 BFF 成熟后将下沉到 filter 接口。脱敏字段仍需 `isFetched: true`。
+**注意**：脱敏仅影响前端显示，不影响数据源和导出。后续 Backend Function 成熟后将下沉到 filter 接口。脱敏字段仍需 `isFetched: true`。
 
 ---
 

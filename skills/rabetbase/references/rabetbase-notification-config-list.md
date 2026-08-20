@@ -1,6 +1,6 @@
 # rabetbase notification config-list
 
-只读查询当前应用的应用级通知渠道配置，主要用于获取 BFF 消息通知扩展需要的应用级 `configCode`。
+只读查询当前应用的应用级通知渠道配置，主要用于获取 Backend Function 消息通知扩展需要的应用级 `configCode`。
 
 ## 命令
 
@@ -54,7 +54,7 @@ CLI 只输出用于选择配置的安全字段，不输出：
 
 若服务端返回的任一记录缺少非空的 `configCode`、`configName` 或 `channelType`，CLI 会返回 `api_error`，不会用空字符串伪造可用配置，也不会输出可能不完整的成功列表。
 
-## BFF 使用
+## Backend Function 使用
 
 先根据 `configName` 和 `description` 选择目标配置，再把同一项的 `configCode` 传给：
 
@@ -76,5 +76,5 @@ await context.client.extension.execute("notification", "send", {
 
 ## 参考
 
-* [BFF 创建工作流](../guides/bff-creation-workflow.md)
+* [Backend Function 创建工作流](../guides/bff-creation-workflow.md)
 * [Backend Function 消息通知扩展](../guides/backend-function.md#消息通知扩展)

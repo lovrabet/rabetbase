@@ -1,4 +1,4 @@
-# BFF 工作流规则
+# Backend Function 工作流规则
 
 前置知识：`backend-function.md`、`data-api-guidelines.md`
 
@@ -16,10 +16,10 @@
 执行 `rabetbase bff list --type COMMON --format json` 查看已有公共函数。如有可复用的工具函数，先用 `rabetbase bff detail --id <id> --format json` 确认入参、返回值和副作用，避免按名称猜测。
 
 ### 1. 确认需求
-写码前必须明确：类型（ENDPOINT/HOOK/COMMON）、函数名、入参、返回结构，以及是否涉及数据集或消息通知。缺失则先问用户。通知型 BFF 还必须确认当前应用已有的 `configCode`、接收对象、标题/摘要和是否允许执行真实发送；不能用示例编码代替真实配置。
+写码前必须明确：类型（ENDPOINT/HOOK/COMMON）、函数名、入参、返回结构，以及是否涉及数据集或消息通知。缺失则先问用户。通知型 Backend Function 还必须确认当前应用已有的 `configCode`、接收对象、标题/摘要和是否允许执行真实发送；不能用示例编码代替真实配置。
 
 ### 2. 校验依赖事实
-BFF 涉及数据集时，执行 `rabetbase dataset detail --code <数据集编码> --format json`（或 `compress`）确认字段名、类型、必填字段、枚举值、关联关系。禁止凭经验猜字段名，禁止把 Demo 或历史案例里的字段、表名、枚举值复制到当前脚本。
+Backend Function 涉及数据集时，执行 `rabetbase dataset detail --code <数据集编码> --format json`（或 `compress`）确认字段名、类型、必填字段、枚举值、关联关系。禁止凭经验猜字段名，禁止把 Demo 或历史案例里的字段、表名、枚举值复制到当前脚本。
 
 不读写数据集的纯消息通知 ENDPOINT 可以不依赖数据集；业务明确要求在数据集操作执行前发送预通知或告警时使用 Before HOOK；作为数据集操作成功后副作用的通知，只有响应结果已包含通知所需字段时才使用 After HOOK。三者都必须按 [`backend-function.md`](backend-function.md) 的“消息通知扩展”核对 `configCode`、`audiences` 和 `message`。先执行以下只读命令获取当前应用的 EMAIL 配置：
 
@@ -27,9 +27,9 @@ BFF 涉及数据集时，执行 `rabetbase dataset detail --code <数据集编�
 rabetbase notification config-list --type EMAIL --format compress
 ```
 
-从 `data.configs[]` 按 `configName` / `description` 选择配置，并使用同一项的 `configCode`。命令不会输出 `channelConfig`、`endpointUrl` 或通知凭据。没有结果或存在多个候选且业务目标不明确时，停下向用户确认；不得猜测。不要把 dataset 级通知通道的 `channelCode` 当成 BFF 所需的应用级 `configCode`。
+从 `data.configs[]` 按 `configName` / `description` 选择配置，并使用同一项的 `configCode`。命令不会输出 `channelConfig`、`endpointUrl` 或通知凭据。没有结果或存在多个候选且业务目标不明确时，停下向用户确认；不得猜测。不要把 dataset 级通知通道的 `channelCode` 当成 Backend Function 所需的应用级 `configCode`。
 
-BFF HOOK 可挂载 `DB_TABLE` 或 `METADATA` 数据集，具体 operation 以平台返回为准。`METADATA` 数据集不支持 SQL / aggregate 路径；脚本中应使用 `` context.client.models[`dataset_${datasetCode}`] `` 的标准操作能力。
+Backend Function HOOK 可挂载 `DB_TABLE` 或 `METADATA` 数据集，具体 operation 以平台返回为准。`METADATA` 数据集不支持 SQL / aggregate 路径；脚本中应使用 `` context.client.models[`dataset_${datasetCode}`] `` 的标准操作能力。
 
 常用字段投影：
 
@@ -51,27 +51,27 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 命中同名脚本时，停下问用户：修改还是另起新名。
 
 ### 4. 编写脚本（规范路径）
-新建脚本应使用 **`rabetbase bff create`**，在 **`.rabetbase/bff/<appCode>/...`** 下生成脚手架后再编辑（路径与 `bff status` / `bff push` 一致）。**不要**在 `src/` 或仓库任意目录手写 BFF 再期望被 CLI 识别。
-已有脚本仅在上述 BFF 树内修改；与 `backend-function.md` 中的目录约定一致。
+新建脚本应使用 **`rabetbase bff create`**，在 **`.rabetbase/bff/<appCode>/...`** 下生成脚手架后再编辑（路径与 `bff status` / `bff push` 一致）。**不要**在 `src/` 或仓库任意目录手写 Backend Function 再期望被 CLI 识别。
+已有脚本仅在上述 Backend Function 树内修改；与 `backend-function.md` 中的目录约定一致。
 
 通知需要在数据集 `create` / `update` / `delete` 执行前明确预告，并且通知失败应阻止本次操作时，选择 Before HOOK；通知由数据集操作成功触发，且响应结果已包含通知所需字段时，选择 After HOOK；响应结果不包含通知所需字段时，选择能在写入前读取并暂存必要字段、在成功后发送通知的受控 `ENDPOINT`。三者都使用 `await context.client.extension.execute("notification", "send", ...)`，并由 runtime 注入可信 `appCode` 和当前用户；不要把 `appCode`、渠道地址或密钥作为外部参数透传。
 
 ### 5. 自检
 * 方法名正确
 * 单条查询用 `getOne`
-* BFF 模型键使用 `"dataset_" + 32 位数据集 code`
-* METADATA 数据集的 BFF / HOOK 不走 SQL 或 aggregate；只使用平台返回的标准数据操作
+* Backend Function 模型键使用 `"dataset_" + 32 位数据集 code`
+* METADATA 数据集的 Backend Function / HOOK 不走 SQL 或 aggregate；只使用平台返回的标准数据操作
 * `filter()` 结果从 `.tableData` 读取，不是 `.list`
 * `create()` 返回新记录 ID，不是完整对象；不要访问 `created.id`
 * `batchCreate()` 返回新记录 ID 数组；入参直接使用非空对象数组，不使用 `{"items":[...]}` 包装
 * 批量更新使用 `update({ id: [...] })`；不存在 `batchUpdate()`，也不传记录数组
 * 枚举/选择字段写入 `options[].value`，不是展示 `label`
-* BFF 中 `sql.execute` 返回数组，不是 `{ execSuccess, execResult }`
-* 没有在 BFF 中使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
+* Backend Function 中 `sql.execute` 返回数组，不是 `{ execSuccess, execResult }`
+* 没有在 Backend Function 中使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
 * 参数校验、错误处理、脱敏
 * 中文 JSDoc 已写清根请求参数、实际 `params.<字段名>`、返回值；显式抛出异常时包含 `@throws`
 * 依赖数据集、调用 BF、执行 SQL、副作用维护项与实际代码一致，无依赖时明确填写“无”
-* 通知型 BFF 只传 `configCode` / `audiences` / `message`，并且没有 `${...}` 模板表达式、旧 MANUAL 参数或渠道密钥
+* 通知型 Backend Function 只传 `configCode` / `audiences` / `message`，并且没有 `${...}` 模板表达式、旧 MANUAL 参数或渠道密钥
 * 通知型 ENDPOINT 限制调用者可传的字段、`configCode` 和接收对象范围，不形成任意通知转发器
 * 通知型 Before HOOK 使用“即将执行”或“准备执行”的消息语义，`await` 发送后返回原始 `params`；不直接返回通知扩展结果，并明确接受“通知已发送但后续业务仍可能失败”
 * 通知型 After HOOK 只使用业务接口响应结果或固定可信规则派生接收对象与消息；若通知失败或超时，按业务操作可能已完成、通知状态未知处理，不得自动重试原业务请求
@@ -102,7 +102,7 @@ lovrabet bff exec --appcode <appCode> --name <functionName> --params '<json>' --
 ```
 
 边界：
-* 通知型 BFF 的 smoke 会真实发送外部消息；必须通过已确认上下文或显式 `--appcode` 锁定同一 app，执行前向用户展示 app、函数名、`configCode`、接收对象和消息摘要并取得明确确认
+* 通知型 Backend Function 的 smoke 会真实发送外部消息；必须通过已确认上下文或显式 `--appcode` 锁定同一 app，执行前向用户展示 app、函数名、`configCode`、接收对象和消息摘要并取得明确确认
 * `lovrabet bff detail` 只确认运行契约和版本，不返回脚本源码；通知参数必须来自本地已审查脚本或明确业务契约，不能按函数名猜
 * 通知执行超时或客户端未拿到结果时，先按“状态未知”处理；不得自动重试，避免重复发送
 * `lovrabet` CLI 不可用、未配置或无权限时，明确记录“运行态 smoke 未执行”，不要把它写成 `rabetbase` 验证已通过
@@ -135,9 +135,9 @@ lovrabet bff exec --appcode <appCode> --name <functionName> --params '<json>' --
 
 `rabetbase bff list --format json` → `rabetbase bff detail --id <id> --format json` 拉最新内容 → 如需覆盖本地则 `bff pull` → 修改本地文件 → `bff status` → `bff push`
 
-## BFF 语义差异
+## Backend Function 语义差异
 
-| 场景 | 前端 SDK | BFF (context.client) |
+| 场景 | 前端 SDK | Backend Function (context.client) |
 |------|---------|---------------------|
 | SQL 返回值 | `{ execSuccess, execResult }` | 直接返回数组 |
 | 模型键 | 可通过初始化/生成代码使用 alias | 使用 `"dataset_" + 32 位数据集 code` |
@@ -146,5 +146,5 @@ lovrabet bff exec --appcode <appCode> --name <functionName> --params '<json>' --
 | `batchCreate()` 返回 | 以 SDK 文档/类型为准 | 新记录 ID 数组；直接传非空对象数组 |
 | 批量更新 | 以 SDK 文档/类型为准 | `update({ id: [...] })`；不存在 `batchUpdate()` |
 | SDK 初始化能力 | `createClient` / `registerModels` | 不可用；`context.client` 由平台注入 |
-| 前端调 BFF | `client.bff.execute({ scriptName, params })` 返回业务数据 | — |
+| 前端调 Backend Function | `client.bff.execute({ scriptName, params })` 返回业务数据 | — |
 | 发送应用级通知 | — | `context.client.extension.execute("notification", "send", { configCode, audiences, message })` |

@@ -1,6 +1,6 @@
 # bff delete
 
-删除远端 BFF 脚本，并把本地文件移到 `.rabetbase/bff-trash/`。
+删除远端 Backend Function 脚本，并把本地文件移到 `.rabetbase/bff-trash/`。
 
 > **风险等级：high-risk-write** — 必须显式 `--yes`。
 

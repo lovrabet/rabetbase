@@ -1,8 +1,8 @@
 # rabetbase kb
 
-管理开发者侧当前解析应用下的 `company` 知识库。所有命令都通过标准工作区、`--app <name>` 或 `--appcode <code>` 解析目标应用，并在读写前后精确校验 `scope=company`、appCode 和 ID。
+管理开发者侧当前解析应用下的 `company` 知识库，并检索当前应用可访问的公司与公共知识。所有命令都通过标准工作区、`--app <name>` 或 `--appcode <code>` 解析目标应用。
 
-> 边界：`lovrabet kb` 使用运行态 AK/当前应用/当前用户，面向个人知识库和可见知识搜索；`rabetbase kb` 使用开发者登录态，面向公司知识库管理。不要用其中一个替代另一个。
+> 边界：`lovrabet kb` 使用运行态 AK/当前应用/当前用户，面向个人知识库和可见知识搜索；`rabetbase kb` 使用开发者登录态，面向公司知识库管理以及公司/公共知识检索。不要用其中一个替代另一个。
 
 ## 命令
 
@@ -10,6 +10,8 @@
 rabetbase kb list --format compress
 rabetbase kb list --appcode app-xxxxx --title "业务规则" --format compress
 rabetbase kb detail --id 60 --format compress
+rabetbase kb search --query "怎么查订单？" --format compress
+rabetbase kb search --query "体育特长生的录取条件是什么？" --topk 5 --format compress
 rabetbase kb create --title "业务规则" --file ./knowledge.md --dry-run
 rabetbase kb create --title "业务规则" --file ./knowledge.md
 rabetbase kb update --id 60 --file ./knowledge.md --expected-version 2 --dry-run
@@ -23,13 +25,21 @@ rabetbase kb delete --id 60 --yes
 - `create --file` 必填，`update --file` 可选；输入必须是可读的普通 UTF-8 文本或 Markdown 文件。
 - CLI 保留解码后的文本，不解析 JSON、不重排段落，也不把路径映射转换成其他格式。
 - 空白文件、目录、无效 UTF-8、缺失或不可读文件都会在网络请求前拒绝。
-- 结构化输出不包含正文，只展示 `contentByteSize`、`contentHash`、`snapshotHash` 等安全元数据。
+- 管理命令的结构化输出不包含知识库全文，只展示 `contentByteSize`、`contentHash`、`snapshotHash` 等安全元数据；`search` 会按检索用途返回命中的正文片段。
 
 ## list / detail
 
 - `list` 自动读取全部分页，并强制过滤为精确 company scope 与当前 appCode；服务端的 appCode/title LIKE 结果不能扩大客户端作用域。
 - `detail` 使用正安全整数 ID 精确读取，并验证返回 ID、scope 和 appCode。
 - 服务端 Long 字段即使序列化为十进制字符串，CLI 也只接受能安全转换的整数；超出 JavaScript 安全整数范围时失败关闭。
+
+## search
+
+- 调用 `POST /smartapi/knowledge/company-public/search`，请求仅包含 `query`、解析后的 `appCode` 和可选 `topK`。
+- 不传 `userId`，不查询个人知识库；命中 `scope` 只可能为 `COMPANY` 或 `PUBLIC`。
+- `--query` 必填且不能是纯空白；`--topk` 可选，必须是正整数。不传时沿用服务端缺省规则。
+- 输出 `total` 与 `hits`，命中字段为 `scope/title/docId/score/weightedScore/content/jsonPath/jsonData`；无命中时返回空数组。
+- 同时判断 HTTP 状态和平台业务结果；未登录、无权限、参数错误、检索异常或响应字段漂移都会以结构化错误失败。
 
 ## create
 

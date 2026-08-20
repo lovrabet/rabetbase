@@ -1,7 +1,7 @@
 # 冲突检测与未完成写入处理
 
 **文档版本**: v4.0
-**适用于**: SQL / BFF 资源的远端写入与同步
+**适用于**: SQL / Backend Function 资源的远端写入与同步
 
 > **与 SKILL.md 的关系**：[SKILL.md](../SKILL.md) 只保留硬性规则；本文件负责解释什么叫“远端未写入成功”，以及 AI 应该如何沟通。
 
@@ -15,7 +15,7 @@
   - 新建：`rabetbase sql create`
   - 修改：编辑 `.rabetbase/sql/...` 下的同步文件后执行 `rabetbase sql push`
   - 删除：`rabetbase sql delete`
-- **BFF**
+- **Backend Function**
   - 新建本地脚手架：`rabetbase bff create`
   - 推送远端：`rabetbase bff push`
   - 删除远端：`rabetbase bff delete`
@@ -115,5 +115,5 @@
 ## 相关文档
 
 - **SQL 工作流**: `sql-creation-workflow.md`
-- **BFF 工作流**: `bff-creation-workflow.md`
+- **Backend Function 工作流**: `bff-creation-workflow.md`
 - **最佳实践**: `best-practices.md`

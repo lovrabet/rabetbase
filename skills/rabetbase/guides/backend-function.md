@@ -10,7 +10,7 @@
 |------|------|
 | CLI 信封、`datasetId`、`dbtableConfig` ↔ `data.dbtable`、OpenAPI 对照 | [`references/rabetbase-dataset-detail.md`](../references/rabetbase-dataset-detail.md) |
 | 前后端数据访问、外键、性能 | [`data-api-guidelines.md`](data-api-guidelines.md) |
-| 在 BFF 中发送应用级消息通知 | 下文“消息通知扩展” |
+| 在 Backend Function 中发送应用级消息通知 | 下文“消息通知扩展” |
 | HOOK/ENDPOINT 目录、注释模板、`context.client`、事务 | 下文 |
 
 ## 何时使用
@@ -19,22 +19,22 @@
 
 * 编写 HOOK 脚本
 * 编写 ENDPOINT 脚本
-* 在 BFF 中调用数据集 API
-* 在 BFF 中调用自定义 SQL
-* 在 BFF 中调用应用级消息通知
-* 在 BFF 中处理事务、权限、脱敏、聚合或多表逻辑
+* 在 Backend Function 中调用数据集 API
+* 在 Backend Function 中调用自定义 SQL
+* 在 Backend Function 中调用应用级消息通知
+* 在 Backend Function 中处理事务、权限、脱敏、聚合或多表逻辑
 
 ## 核心原则
 
 * 先校验数据集和字段，再写脚本
 * 所有脚本统一使用 `export default async function`
 * 前后端单条查询统一使用 `getOne({ id })`
-* BFF 中的 SQL 返回值与前端 SDK 不同，不能混用
+* Backend Function 中的 SQL 返回值与前端 SDK 不同，不能混用
 * 消息通知只引用当前应用中存在且未删除的 `configCode`，不接收 `appCode`、渠道地址或密钥
 * 平台自动维护字段不得手动设置
 * 发现明显性能问题时，必须先改写再继续
-* 新建与长期维护的 BFF 源文件**仅**在 **`.rabetbase/bff/<appCode>/...`**（`bff create` / `bff pull` 与 `bff status` 扫描范围）；不要写在 `src/` 等目录，详见 [`bff-creation-workflow.md`](bff-creation-workflow.md)
-* BFF 脚本只写**纯 JavaScript（ESM）**，支持到 **ES2023** 特性，不支持 TypeScript
+* 新建与长期维护的 Backend Function 源文件**仅**在 **`.rabetbase/bff/<appCode>/...`**（`bff create` / `bff pull` 与 `bff status` 扫描范围）；不要写在 `src/` 等目录，详见 [`bff-creation-workflow.md`](bff-creation-workflow.md)
+* Backend Function 脚本只写**纯 JavaScript（ESM）**，支持到 **ES2023** 特性，不支持 TypeScript
 
 ## 脚本类型
 
@@ -42,9 +42,9 @@
 |------|------|----------------|----------|
 | HOOK | 挂在标准数据接口前后执行 | Before / After | 通过数据集详情 |
 | ENDPOINT | 独立业务端点 | `POST /api/endpoint/{appCode}/{scriptName}` | `rabetbase bff list --format json`（默认） |
-| COMMON | 公共函数，供其他脚本 import 复用 | 被其他 BFF 引用 | `rabetbase bff list --format json`（type=COMMON） |
+| COMMON | 公共函数，供其他脚本 import 复用 | 被其他 Backend Function 引用 | `rabetbase bff list --format json`（type=COMMON） |
 
-写 BFF 前，先查一下公共函数列表（`rabetbase bff list --format json`），看是否有可复用的工具函数。
+写 Backend Function 前，先查一下公共函数列表（`rabetbase bff list --format json`），看是否有可复用的工具函数。
 
 ## 平台配置地址
 
@@ -59,7 +59,7 @@
 
 ## 本地目录约定
 
-BFF 脚本统一存放在 `.rabetbase/bff/<appCode>/` 目录下，由 CLI 同步体系管理：
+Backend Function 脚本统一存放在 `.rabetbase/bff/<appCode>/` 目录下，由 CLI 同步体系管理：
 
 ```text
 .rabetbase/bff/<appCode>/
@@ -110,7 +110,7 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 
 使用 `aggregate` 时，聚合列名写在 `aggregate[].column`；`field` 只是历史兼容别名，新脚本不要使用。
 
-BFF HOOK 可以挂在 `DB_TABLE` 或 `METADATA` 数据集上；是否可挂某个 operation，以平台返回的 operation types 为准。
+Backend Function HOOK 可以挂在 `DB_TABLE` 或 `METADATA` 数据集上；是否可挂某个 operation，以平台返回的 operation types 为准。
 
 ### METADATA HOOK 脚本内部限制
 
@@ -142,7 +142,7 @@ METADATA 数据集没有 DB_TABLE 数据源上下文，脚本中优先使用标�
 
 ### Step 2：校验数据集、字段与关系
 
-BFF 涉及数据集读写时，必须执行 `rabetbase dataset detail --code xxx --format json`（或 `--format compress`），必要时先用 `rabetbase dataset list --format json` 定位数据集。纯消息通知 ENDPOINT 不需要为满足流程而虚构 `datasetCode`，但必须先确认当前应用、通知 `configCode`、接收对象和消息内容契约。
+Backend Function 涉及数据集读写时，必须执行 `rabetbase dataset detail --code xxx --format json`（或 `--format compress`），必要时先用 `rabetbase dataset list --format json` 定位数据集。纯消息通知 ENDPOINT 不需要为满足流程而虚构 `datasetCode`，但必须先确认当前应用、通知 `configCode`、接收对象和消息内容契约。
 
 必须确认：
 
@@ -163,7 +163,7 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 
 * 未读取数据集详情就直接写字段名
 * 凭经验猜 `user_id`、`status`、`deleted` 等通用字段
-* 把前端代码里的字段名照搬到当前 BFF
+* 把前端代码里的字段名照搬到当前 Backend Function
 * 把某个 Demo 或历史案例中的字段、枚举、表名当作当前任务的通用规则
 
 ### Step 3：选择脚本类型
@@ -192,7 +192,7 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 * 修改时直接编辑 `.rabetbase/bff/<appCode>/...`
 * 需要远端最新内容时先 `rabetbase bff pull`
 
-如果 BFF 行为与预期不符，或 `push` 显示 `unchanged` 但效果没变，先确认远端实际运行的是哪份代码：
+如果 Backend Function 行为与预期不符，或 `push` 显示 `unchanged` 但效果没变，先确认远端实际运行的是哪份代码：
 
 * `rabetbase bff detail --id <id> --format json`
 * 必要时再 `rabetbase bff pull --format json` 同步远端到本地
@@ -206,7 +206,7 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 * 函数名匹配（用于 `scriptName` 参数）
 * 顶部注释占位符已替换
 * 单条查询是否统一使用 `getOne({ id })`
-* SQL 返回值是否按 BFF 语义处理
+* SQL 返回值是否按 Backend Function 语义处理
 * 是否误设置系统字段
 * 是否存在明显性能问题
 
@@ -244,7 +244,7 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 * 依赖数据集、调用 BF、执行 SQL 和副作用
 * 显式抛出异常时的异常类型与触发条件
 
-字段级参数使用标准 JSDoc `@param` 标签，写清类型、含义、必填性和默认值。没有字段级参数时只保留根 `params` 标签，不要虚构字段。代码出现显式 `throw` 时必须补充 `@throws`；依赖维护项必须与实际代码同步，便于发布后提取为 BFF 元数据。
+字段级参数使用标准 JSDoc `@param` 标签，写清类型、含义、必填性和默认值。没有字段级参数时只保留根 `params` 标签，不要虚构字段。代码出现显式 `throw` 时必须补充 `@throws`；依赖维护项必须与实际代码同步，便于发布后提取为 Backend Function 元数据。
 
 占位符必须替换为真实值，不能保留：
 
@@ -395,7 +395,7 @@ await models[TABLES.primary].update({
 
 ### aggregate 调用与选型
 
-`` context.client.models[`dataset_${datasetCode}`].aggregate(params) `` 是 BFF 的数据集 Instant API。实际脚本仍按上文的数据集映射，通过 `models[TABLES.xxx]` 访问；示例字段只用于展示参数契约，编写业务脚本前必须用 `dataset detail` 替换为真实字段：
+`` context.client.models[`dataset_${datasetCode}`].aggregate(params) `` 是 Backend Function 的数据集 Instant API。实际脚本仍按上文的数据集映射，通过 `models[TABLES.xxx]` 访问；示例字段只用于展示参数契约，编写业务脚本前必须用 `dataset detail` 替换为真实字段：
 
 ```javascript
 const aggregateResult = await models[TABLES.primary].aggregate({
@@ -550,7 +550,7 @@ export default async function afterFilter(params) {
 
 公共函数建议统一加 `common` 前缀（如 `commonGetUserInfo`），便于与普通 ENDPOINT 区分，也方便人和 AI 识别。
 
-### 在其他 BFF 中调用公共函数
+### 在其他 Backend Function 中调用公共函数
 
 通过 `context.client.bff.execute` 调用：
 
@@ -597,9 +597,9 @@ export default async function runBusinessFlow(params, context) {
 
 ## SQL 调用规则
 
-BFF 入参使用业务参数；需要执行 SQL 时，通过已发布 Custom SQL 的 `sqlCode` + `params` 调用。执行失败时保留并报告原始错误，根据 SQL 资源状态、参数与权限定位问题。
+Backend Function 入参使用业务参数；需要执行 SQL 时，通过已发布 Custom SQL 的 `sqlCode` + `params` 调用。执行失败时保留并报告原始错误，根据 SQL 资源状态、参数与权限定位问题。
 
-在 BFF 中使用：
+在 Backend Function 中使用：
 
 ```javascript
 const rows = await context.client.sql.execute({
@@ -709,7 +709,7 @@ After HOOK 通知失败或超时时，原业务操作可能已经完成，通知
 
 ### 获取 configCode
 
-创建或修改通知型 BFF 前，先查询当前应用的应用级通知配置：
+创建或修改通知型 Backend Function 前，先查询当前应用的应用级通知配置：
 
 ```bash
 rabetbase notification config-list --type EMAIL --format compress
@@ -719,7 +719,7 @@ rabetbase notification config-list --type EMAIL --format compress
 
 `configCode` 与 `channelCode` 不是同一概念：
 
-* `configCode`：应用级通知渠道配置编码，供 BFF `notification.send` 使用
+* `configCode`：应用级通知渠道配置编码，供 Backend Function `notification.send` 使用
 * `channelCode`：dataset 级通知通道编码，不是本扩展的入参
 
 查询为空时说明当前应用没有该类型的可用配置；查询出多个候选且无法从名称和描述判断业务目标时，向用户确认，不得自动取第一条。
@@ -765,7 +765,7 @@ rabetbase notification config-list --type EMAIL --format compress
 | `facts` | 否 | 最多 8 项，每项严格为 `{ label, value }`，两个字段都是非空字符串 |
 | `actions` | 否 | 最多 2 项，每项严格为 `{ text, url }`，两个字段都是非空字符串 |
 
-消息对象不允许额外字段，也不支持 `${...}` 模板表达式。运行时值应由 BFF 根据已校验的 `params` 直接组装，不要把模板语法交给通知扩展解析。
+消息对象不允许额外字段，也不支持 `${...}` 模板表达式。运行时值应由 Backend Function 根据已校验的 `params` 直接组装，不要把模板语法交给通知扩展解析。
 
 ### 返回值与副作用
 
@@ -784,7 +784,7 @@ rabetbase notification config-list --type EMAIL --format compress
 
 通知发送是外部可见副作用：
 
-* 创建/推送脚本的 dry-run 不会发送通知；只有执行 BFF 才会发送
+* 创建/推送脚本的 dry-run 不会发送通知；只有执行 Backend Function 才会发送
 * 运行 smoke 前必须向用户展示当前应用、函数名、`configCode`、接收对象和消息摘要并取得确认
 * 面向多人调用的正式 ENDPOINT 必须在调用扩展前校验 `params` 的字段、类型和接收对象范围；固定业务通知优先在脚本内固定 `configCode` 和允许的接收范围，不要把任意渠道或任意收件人转发能力暴露给调用者
 * 超时或客户端未拿到结果时，发送状态可能未知；不得自动重试，避免重复通知
@@ -821,7 +821,7 @@ await context.client.db.transaction(async (tx) => {
 
 ## 性能约束
 
-编写 BFF 前，必须阅读 `data-api-guidelines.md` 中的性能优化部分。
+编写 Backend Function 前，必须阅读 `data-api-guidelines.md` 中的性能优化部分。
 
 重点避免：
 
@@ -843,12 +843,12 @@ await context.client.db.transaction(async (tx) => {
 * 不要手动设置系统字段
 * 不要保留顶部注释占位符
 * 不要让参数、返回值、依赖数据集、调用 BF、执行 SQL 或副作用说明与实际代码不一致
-* 不要把前端 SQL 返回值语义套到 BFF
-* 不要在 BFF 中使用前端 SDK 独有的方法，如 `createClient`、`registerModels`
+* 不要把前端 SQL 返回值语义套到 Backend Function
+* 不要在 Backend Function 中使用前端 SDK 独有的方法，如 `createClient`、`registerModels`
 * 不要把示例里的字段名、表名、枚举值复制到真实脚本；字段事实必须来自当前数据集详情
 * 不要忽略权限、脱敏和错误处理
 * 不要在事务里做高延迟外部调用
-* 不要在未确认 `configCode`、接收对象和消息内容时执行通知型 BFF
+* 不要在未确认 `configCode`、接收对象和消息内容时执行通知型 Backend Function
 * 不要把通知执行超时当作“肯定未发送”并自动重试
 
 ## 自检清单
@@ -868,7 +868,7 @@ await context.client.db.transaction(async (tx) => {
 * [ ] `batchCreate()` 直接接收非空对象数组，并按新记录 ID 数组处理返回值
 * [ ] 批量更新使用 `update({ id: [...] })`，没有使用不存在的 `batchUpdate()` 或记录数组参数
 * [ ] 枚举/选择字段写入 `options[].value`，不是展示 `label`
-* [ ] SQL 返回值按 BFF 语义处理
+* [ ] SQL 返回值按 Backend Function 语义处理
 * [ ] 未设置系统自动维护字段
 * [ ] 无明显 N+1 或循环写入问题
 * [ ] HOOK 返回 `params`，ENDPOINT 返回业务对象

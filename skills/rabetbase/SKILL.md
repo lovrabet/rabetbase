@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.4.6
-description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、数据列表页（Data List Page）、自定义页面（Custom Page）、SQL 查询、BFF 脚本、通知配置、菜单事实读取与同步、开发角色与协作者、应用文件、面向票证类业务材料文字与结构化字段提取的 OCR、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset relation-audit、dataset delete、dataset restore、废弃数据集、恢复数据集、dataset rename、dataset field-update、dataset extend-update、dataset business-groups、dataset business-group-update、businessGroup、字段对象更新、doType、options、数据列表页、Data List Page、自定义页面、Custom Page、page create、page custom-list、page custom-detail、page custom-update、page custom-publish、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、page restore、恢复已删除页面、dblink、数据库连接、schema 分析、db list、db detail、db create、db update、db delete、db test、db tables、db diff、db diff --view all、db diff-refresh-start、db diff-refresh-status、db analyze-batch-plan、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、BF 消息通知、BFF 消息通知、Backend Function 消息通知、notification config-list、EMAIL configCode、通知配置、notification.send、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、appcode、app list、app members-list、tenant members-list、应用人员列表、租户人员列表、workspace、workspace init、workspace use、workspace add、workspace remove、多应用、默认应用、menu list、menu visibility-update、菜单显示、菜单隐藏、visible、menu external-link-create、menu external-link-update、menu rename、菜单改名、外链菜单创建、外链 URL 更新、菜单异常审计、菜单手动删除清单、menu sync、menu asset-update、菜单资源更新、menu move、菜单移动、开发角色、开发协作者、role、role list、role user-add、role user-remove、user-resolve、加入开发者、ADMIN、DEV、OWNER、CUSTOM、project create、project upgrade、schema、jq、compress、file upload、file query-url、ocr recognize、文件上传、OCR 识别、票证文字提取、票证字段提取、发票识别、票据识别、证照识别、长期链接、issue report、平台问题、platform issue、问题上报、user-account dingding-sandbox-bind、钉钉沙箱账号绑定。"
+version: 2.4.7
+description: "Lovrabet 开发工作流 CLI — 通过 rabetbase 命令管理数据集、数据库连接（dblink）、数据列表页（Data List Page）、自定义页面（Custom Page）、SQL 查询、Backend Function 脚本、通知配置、企业知识库、菜单事实读取与同步、开发角色与协作者、应用文件、面向票证类业务材料文字与结构化字段提取的 OCR、代码生成，以及平台问题上报。触发词：数据集、数据表、dataset relation-audit、dataset delete、dataset restore、废弃数据集、恢复数据集、dataset rename、dataset field-update、dataset extend-update、dataset business-groups、dataset business-group-update、businessGroup、字段对象更新、doType、options、数据列表页、Data List Page、自定义页面、Custom Page、page create、page custom-list、page custom-detail、page custom-update、page custom-publish、page generate-start、page generate-status、page relation-audit、page sync、page pull、page push、page restore、恢复已删除页面、dblink、数据库连接、schema 分析、db list、db detail、db create、db update、db delete、db test、db tables、db diff、db diff --view all、db diff-refresh-start、db diff-refresh-status、db analyze-batch-plan、db analyze-start、analyze-cancel、analyze-status、traceId、自定义 SQL、sql.execute、bff.execute、BF 消息通知、Backend Function 消息通知、notification config-list、EMAIL configCode、通知配置、notification.send、企业知识库、公司知识、公共知识、kb search、get_dataset_detail、validate_sql_content、save_or_update_custom_sql、@lovrabet/sdk、lovrabet 开发、rabetbase、filter、codegen、init、appcode、app list、app members-list、tenant members-list、应用人员列表、租户人员列表、workspace、workspace init、workspace use、workspace add、workspace remove、多应用、默认应用、menu list、menu visibility-update、菜单显示、菜单隐藏、visible、menu external-link-create、menu external-link-update、menu rename、菜单改名、外链菜单创建、外链 URL 更新、菜单异常审计、菜单手动删除清单、menu sync、menu asset-update、菜单资源更新、menu move、菜单移动、开发角色、开发协作者、role、role list、role user-add、role user-remove、user-resolve、加入开发者、ADMIN、DEV、OWNER、CUSTOM、project create、project upgrade、schema、jq、compress、file upload、file query-url、ocr recognize、文件上传、OCR 识别、票证文字提取、票证字段提取、发票识别、票据识别、证照识别、长期链接、issue report、平台问题、platform issue、问题上报、user-account dingding-sandbox-bind、钉钉沙箱账号绑定。"
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -26,9 +26,9 @@ metadata:
 6. **平台发现**：当你不知道当前登录账号能访问哪些应用时，先 `rabetbase app list --remote`；它查询平台目录，不修改本地配置
 7. **本地配置视图**：当你要确认当前项目或全局已经登记了哪些应用、默认应用是谁时，用 `rabetbase app list`。`rabetbase app` 本身只显示帮助，不等价于 `app list`
 8. **人员目录查询**：查询某租户的人员用 `rabetbase tenant members-list --tenant-code <code>`；查询某应用的人员及其角色归属用 `rabetbase app members-list --appcode <code>`。两者均为只读全量查询，不提供分页、模糊搜索或写入能力。
-9. **本地 SQL / BFF 目录**：新建或长期维护的源文件应落在 CLI 与 `bff status` / `sql pull` 一致的路径，避免写在 `src/`、`queries/` 等随意目录后再迁移。
+9. **本地 SQL / Backend Function 目录**：新建或长期维护的源文件应落在 CLI 与 `bff status` / `sql pull` 一致的路径，避免写在 `src/`、`queries/` 等随意目录后再迁移。
    - **SQL**：项目根 **`.rabetbase/sql/<appCode>/<dbName|db-<id>>/<sqlCode>_<sqlName>.sql|xml`**；草稿或人工兜底可放 `.draft.sql`。`sql create` / `sql pull` / `sql push` / `sql status` 默认围绕这套目录与 `.rabetbase/sql.lock.json` 工作。
-   - **BFF**：**`.rabetbase/bff/<appCode>/...`**（由 `bff create` 创建或 `bff pull` 同步；与 `bff status` / `bff push` 扫描范围一致）。详见 [`guides/sql-creation-workflow.md`](guides/sql-creation-workflow.md)、[`guides/bff-creation-workflow.md`](guides/bff-creation-workflow.md)。
+   - **Backend Function**：**`.rabetbase/bff/<appCode>/...`**（由 `bff create` 创建或 `bff pull` 同步；与 `bff status` / `bff push` 扫描范围一致）。详见 [`guides/sql-creation-workflow.md`](guides/sql-creation-workflow.md)、[`guides/bff-creation-workflow.md`](guides/bff-creation-workflow.md)。
 10. **可选：`lovrabet` CLI 查数** — 若本机已安装 **`@lovrabet/lovrabet-cli`**（命令 **`lovrabet`**）且 **版本 ≥ 2.0**（`lovrabet --version`），可用 **`lovrabet data filter` / `lovrabet data getOne`** 按 SDK 语义在终端查看真实行数据与 JSON，便于调试；**非人人安装**，未安装或版本低于 2.0 时仅用 `rabetbase` 即可。详见 [`guides/data-api-guidelines.md`](guides/data-api-guidelines.md) 中「可选：`lovrabet` CLI 查数」。
 
 ## Skill Freshness
@@ -45,7 +45,7 @@ metadata:
    - 简单聚合且数据集是 DB_TABLE → SDK aggregate；聚合列用 `aggregate[].column`，不要用旧别名 `field`
    - 复杂 JOIN / 数据库函数且数据集是 DB_TABLE → Custom SQL
    - 图表、统计卡片或数据大屏 → 自定义页面 + ECharts；数据层根据查询复杂度选择 Dataset 或 Custom SQL
-   - 当前用户、角色、数据范围、外部系统、跨表事务或复杂业务编排 → BFF；BFF HOOK 可挂 DB_TABLE 或 METADATA，具体 operation 以后端返回为准
+   - 当前用户、角色、数据范围、外部系统、跨表事务或复杂业务编排 → Backend Function；Backend Function HOOK 可挂 DB_TABLE 或 METADATA，具体 operation 以后端返回为准
 2. **先拿元数据，再写代码**
    - 至少先查 `rabetbase dataset detail --code xxx --format compress`（或 `json`）获取表结构
    - 跨表场景还需查目标表的结构
@@ -62,10 +62,10 @@ metadata:
 3. **SQL 工作流严格分步**
    - 推荐路径：查现有(`sql list/detail`) 或新建(`sql create`) → 拉/落本地(`sql pull` / `sql create`) → 编辑同步目录文件 → 可选校验(`sql validate`) → 检查状态(`sql status`) → 先预览(`sql push --dry-run` / `sql delete --dry-run`) → 再 `sql push` / `sql delete` → `sql detail` / `sql exec` 验证
    - 先使用 `sql list/detail` 查找可复用的 Custom SQL；没有满足需求的资源时，按照 [`sql-creation-workflow.md`](guides/sql-creation-workflow.md) 与 [`sql-mybatis.md`](guides/sql-mybatis.md) 创建、校验、发布并验证
-   - 页面和 BFF 执行已发布的 Custom SQL 时使用 `sqlCode` + `params`
-4. **BFF 工作流严格分步**
+   - 页面和 Backend Function 执行已发布的 Custom SQL 时使用 `sqlCode` + `params`
+4. **Backend Function 工作流严格分步**
    - 查现有 → 确认字段或通知配置 → 查公共函数 → 本地创建(`bff create`) → 检查状态(`bff status`) → 先预览(`--dry-run`) → 再拉取/推送/删除
-   - 创建会发送消息通知的 BFF 时，先读取 [`backend-function.md`](guides/backend-function.md) 的“消息通知扩展”契约，再执行 [`rabetbase notification config-list --type EMAIL`](references/rabetbase-notification-config-list.md) 获取当前应用的 `configCode`；不得猜测渠道、收件人或把密钥写进脚本
+   - 创建会发送消息通知的 Backend Function 时，先读取 [`backend-function.md`](guides/backend-function.md) 的“消息通知扩展”契约，再执行 [`rabetbase notification config-list --type EMAIL`](references/rabetbase-notification-config-list.md) 获取当前应用的 `configCode`；不得猜测渠道、收件人或把密钥写进脚本
    - 推送完成只代表脚本配置已同步到平台；若用户要确认最终运行效果，显式交接到运行验证（如可用的 `lovrabet bff exec`），不要把运行验证伪装成 `rabetbase` 已完成
 5. **页面体系选择**
    - 数据列表页（Data List Page）是数据集驱动的结构化页面组，用于数据查看、维护和模型验证，不等同于最终业务工作台
@@ -88,8 +88,8 @@ metadata:
    - 编写 JSX、CSS 或词包前，必须阅读 [`generation-standards.md`](knowledge/custom-page/generation-standards.md)；选择 UI 组件时阅读 [`components.md`](knowledge/custom-page/components.md)
 8. **Legacy modernization / Application Blueprint 工作流**
    - 当用户要把无人交接老项目、外包接手项目或遗留系统翻新到 Lovrabet 体系时，先阅读 [`guides/legacy-application-blueprint-workflow.md`](guides/legacy-application-blueprint-workflow.md)
-   - 主产物是 `.rabetbase/blueprint/<appCode>/application-blueprint.md`，不是直接生成或推送 SQL/BFF
-   - 必须把老代码 Logic Graph 与 dbagent 已生成的 Dataset / Relations 绑定，再判断 Instant API、Custom SQL、BFF、Hook、COMMON 或 Java Service 落点
+   - 主产物是 `.rabetbase/blueprint/<appCode>/application-blueprint.md`，不是直接生成或推送 SQL/Backend Function
+   - 必须把老代码 Logic Graph 与 dbagent 已生成的 Dataset / Relations 绑定，再判断 Instant API、Custom SQL、Backend Function、Hook、COMMON 或 Java Service 落点
 
 ## 应用决议指引
 
@@ -213,7 +213,7 @@ metadata:
 1. **标准 SDK 接口**（filter/getOne/create 等）— 能用就不写 SQL
 2. **aggregate 聚合接口** — DB_TABLE 的简单分组汇总；METADATA 不默认支持 aggregate；聚合定义使用 `column` 指定列，`field` 仅作为历史兼容别名
 3. **自定义 SQL** — DB_TABLE 的复杂 JOIN、数据库函数、跨表统计；METADATA 不支持 SQL 路径
-4. **BFF** — 外部系统调用、跨表事务、复杂业务编排
+4. **Backend Function** — 外部系统调用、跨表事务、复杂业务编排
 
 ## SDK 核心规则
 
@@ -246,7 +246,7 @@ where 条件强制使用操作符：`$eq` `$ne` `$gte` `$lte` `$gt` `$lt` `$in` 
 
 ### SQL 调用
 
-页面和 BFF 通过已发布 Custom SQL 的 `sqlCode` + `params` 执行查询。
+页面和 Backend Function 通过已发布 Custom SQL 的 `sqlCode` + `params` 执行查询。
 
 ```typescript
 const data = await client.sql.execute<MyRow>({
@@ -258,9 +258,9 @@ if (data.execSuccess && data.execResult) {
 }
 ```
 
-自定义页面需要图表时，在其 React JSX 实现中使用 ECharts 呈现；只读查询且平台 `sqlCode` 权限已经满足时可以直接调用上面已发布的 Custom SQL。需要基于当前用户、角色、数据范围或业务规则做额外控制时，页面改调 BFF，由 BFF 完成校验后再执行该 Custom SQL。执行失败时保留并报告原始错误，根据 SQL 资源状态、参数与权限定位问题。
+自定义页面需要图表时，在其 React JSX 实现中使用 ECharts 呈现；只读查询且平台 `sqlCode` 权限已经满足时可以直接调用上面已发布的 Custom SQL。需要基于当前用户、角色、数据范围或业务规则做额外控制时，页面改调 Backend Function，由 Backend Function 完成校验后再执行该 Custom SQL。执行失败时保留并报告原始错误，根据 SQL 资源状态、参数与权限定位问题。
 
-### BFF 调用
+### Backend Function 调用
 
 ```typescript
 const result = await client.bff.execute<DashboardData>({
@@ -269,9 +269,9 @@ const result = await client.bff.execute<DashboardData>({
 });
 ```
 
-### 前端 vs BFF 关键差异
+### 前端 vs Backend Function 关键差异
 
-|                 | 前端 SDK                                     | BFF (context.client)                 |
+|                 | 前端 SDK                                     | Backend Function (context.client)                 |
 | --------------- | -------------------------------------------- | ------------------------------------ |
 | SQL 返回值      | `{ execSuccess, execResult }`                | 直接返回数组 `T[]`                   |
 | 单条查询        | `getOne({ id })`                             | `getOne({ id })`                     |
@@ -279,7 +279,7 @@ const result = await client.bff.execute<DashboardData>({
 | `filter()` 返回 | `tableData` 为列表数据                       | `tableData` 为列表数据，不是 `list`  |
 | `create()` 返回 | 以 SDK 文档/类型为准                         | 新记录 ID，不是完整对象              |
 | SDK 初始化能力  | `createClient` / `registerModels`            | 不可用；`context.client` 由平台注入  |
-| 调 BFF          | `client.bff.execute({ scriptName, params })` | —                                    |
+| 调 Backend Function          | `client.bff.execute({ scriptName, params })` | —                                    |
 
 ## 意图 → 命令索引
 
@@ -304,8 +304,8 @@ const result = await client.bff.execute<DashboardData>({
 | 修改配置文件 | [`rabetbase config set <key> <value>`](references/rabetbase-config.md) | 默认写项目；无项目配置且未 `--global` 会拒绝；`--global` 写 `~/.rabetbase.json` |
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
 | 管理运行态 app-config | [`rabetbase app-config list/get/set/delete`](references/rabetbase-app-config.md) | 运行态 app-config 管理面；默认不输出明文 value；`set` 为 `write`，`delete` 保持 `high-risk-write` |
-| 管理当前研发应用的企业知识库 | [`rabetbase kb list/detail/create/update/delete`](references/rabetbase-kb.md) | 标准解析 `--app/--appcode`；仅 company scope；`create/update` 为 `write`，`delete` 保持 `high-risk-write` |
-| 查询或管理应用级通知配置 | [`rabetbase notification config-list`](references/rabetbase-notification-config-list.md) / [`rabetbase notification config-create`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-update`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-delete`](references/rabetbase-notification-config-mutations.md) | list 获取 BFF 所需 `configCode`；写入只接收单一敏感 JSON 源，先 dry-run；update/delete 必须 `--yes` |
+| 管理和检索当前研发应用的企业知识库 | [`rabetbase kb list/detail/search/create/update/delete`](references/rabetbase-kb.md) | 管理仅 company scope；search 仅 COMPANY/PUBLIC；`create/update` 为 `write`，`delete` 保持 `high-risk-write` |
+| 查询或管理应用级通知配置 | [`rabetbase notification config-list`](references/rabetbase-notification-config-list.md) / [`rabetbase notification config-create`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-update`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-delete`](references/rabetbase-notification-config-mutations.md) | list 获取 Backend Function 所需 `configCode`；写入只接收单一敏感 JSON 源，先 dry-run；update/delete 必须 `--yes` |
 | 查看线上菜单事实 / 菜单异常审计 | [`rabetbase menu list`](references/rabetbase-menu-list.md) | 返回 DFS 事实、children/page、URL、最近更新人/时间和 snapshotHash；异常治理先读 [`menu-anomaly-manual-cleanup`](guides/menu-anomaly-manual-cleanup.md) |
 | 批量显示或隐藏菜单 | [`rabetbase menu visibility-update`](references/rabetbase-menu-visibility-update.md) | 用精确 ID/path 选择目标；先 dry-run，使用 `--expect-visible` / `--expected-count` 防漂移，正式执行必须 `--yes` |
 | 创建外部网站链接菜单 | [`rabetbase menu external-link-create`](references/rabetbase-menu-external-link-create.md) | `write`；显式选择 `embedded` 或 `new-window`，仅接受 HTTPS；建议先 dry-run，正式执行不要求 `--yes` |
@@ -364,13 +364,13 @@ const result = await client.bff.execute<DashboardData>({
 | 删除 SQL | [`rabetbase sql delete --sqlcode xxx --yes`](references/rabetbase-sql-delete.md) | 删除远端并将本地文件移入 `.rabetbase/sql-trash/` |
 | 校验 SQL 内容 | [`rabetbase sql validate --file xxx`](references/rabetbase-sql-validate.md) | 类型检测、危险语句检查、参数提取 |
 | 执行 SQL 查询 | [`rabetbase sql exec --sqlcode xxx`](references/rabetbase-sql-exec.md) | 支持 `--params` JSON 参数 |
-| 查看现有 BFF | [`rabetbase bff list`](references/rabetbase-bff-list.md) | 按类型和名称过滤，支持 `--app` 限定应用 |
-| 查看 BFF 详情 | [`rabetbase bff detail --id n`](references/rabetbase-bff-detail.md) | 含完整脚本内容 |
-| 创建本地 BFF | [`rabetbase bff create --type ENDPOINT --name xxx`](references/rabetbase-bff-create.md) | 在 `.rabetbase/bff/<appCode>/...` 下创建脚手架 |
-| 查看 BFF 本地状态 | [`rabetbase bff status`](references/rabetbase-bff-status.md) | 检查 added / modified / unchanged / remoteOnly |
-| 拉取远端 BFF | [`rabetbase bff pull`](references/rabetbase-bff-pull.md) | 从远端同步到本地 |
-| 推送本地 BFF | [`rabetbase bff push`](references/rabetbase-bff-push.md) | `write`；建议先 dry-run，正式执行不要求 `--yes` |
-| 删除 BFF | [`rabetbase bff delete --yes --target xxx`](references/rabetbase-bff-delete.md) | high-risk-write，删远端并清理本地 |
+| 查看现有 Backend Function | [`rabetbase bff list`](references/rabetbase-bff-list.md) | 按类型和名称过滤，支持 `--app` 限定应用 |
+| 查看 Backend Function 详情 | [`rabetbase bff detail --id n`](references/rabetbase-bff-detail.md) | 含完整脚本内容 |
+| 创建本地 Backend Function | [`rabetbase bff create --type ENDPOINT --name xxx`](references/rabetbase-bff-create.md) | 在 `.rabetbase/bff/<appCode>/...` 下创建脚手架 |
+| 查看 Backend Function 本地状态 | [`rabetbase bff status`](references/rabetbase-bff-status.md) | 检查 added / modified / unchanged / remoteOnly |
+| 拉取远端 Backend Function | [`rabetbase bff pull`](references/rabetbase-bff-pull.md) | 从远端同步到本地 |
+| 推送本地 Backend Function | [`rabetbase bff push`](references/rabetbase-bff-push.md) | `write`；建议先 dry-run，正式执行不要求 `--yes` |
+| 删除 Backend Function | [`rabetbase bff delete --yes --target xxx`](references/rabetbase-bff-delete.md) | high-risk-write，删远端并清理本地 |
 | 生成 SDK 代码 | [`rabetbase codegen sdk --code xxx`](references/rabetbase-codegen-sdk.md) | 按操作生成 TypeScript |
 | 生成 SQL 调用代码 | [`rabetbase codegen sql --sqlcode xxx`](references/rabetbase-codegen-sql.md) | sdk/bff 两种 target |
 | 列出已配置应用 | [`rabetbase app list`](references/rabetbase-app-list.md) | 默认合并视图；`--global` / `--project` 限定单层；`items[].named`、`meta` 见 reference |
@@ -404,7 +404,7 @@ const result = await client.bff.execute<DashboardData>({
 | File | [`upload` / `query-url`](references/rabetbase-file.md) |
 | Configuration | [`config set`](references/rabetbase-config.md) / [`config get`](references/rabetbase-config.md) / [`config list`](references/rabetbase-config.md) |
 | Runtime App Config Management | [`app-config list/get/set/delete`](references/rabetbase-app-config.md) |
-| Company Knowledge Base | [`kb list/detail/create/update/delete`](references/rabetbase-kb.md) |
+| Company Knowledge Base | [`kb list/detail/search/create/update/delete`](references/rabetbase-kb.md) |
 | Menu | [`list`](references/rabetbase-menu-list.md) / [`external-link-create`](references/rabetbase-menu-external-link-create.md) / [`external-link-update`](references/rabetbase-menu-external-link-update.md) / [`rename`](references/rabetbase-menu-rename.md) / [`sync`](references/rabetbase-menu-sync.md) / [`asset-update`](references/rabetbase-menu-asset-update.md) / [`delete`](references/rabetbase-menu-delete.md) / [`group-create`](references/rabetbase-menu-group-create.md) / [`group-update`](references/rabetbase-menu-group-update.md) / [`move`](references/rabetbase-menu-move.md) / [`regroup-start`](references/rabetbase-menu-regroup-start.md) |
 | Async Tasks | [`task status`](references/rabetbase-task-status.md) |
 | Notification Configuration | [`notification config-list`](references/rabetbase-notification-config-list.md) / [`notification config-create`](references/rabetbase-notification-config-mutations.md) / [`notification config-update`](references/rabetbase-notification-config-mutations.md) / [`notification config-delete`](references/rabetbase-notification-config-mutations.md) |
@@ -489,11 +489,11 @@ const result = await client.bff.execute<DashboardData>({
 | SQL MyBatis 与动态 SQL | 写自定义 SQL、`<if>`/`<foreach>`、参数绑定                                                                            | [`sql-mybatis.md`](guides/sql-mybatis.md)                                   |
 | 前端页面开发约束       | React 页、表单、列表、与数据集绑定                                                                                    | [`frontend-development.md`](guides/frontend-development.md)                 |
 | 故障诊断               | CLI/登录/数据集/保存失败排障                                                                                          | [`troubleshooting.md`](guides/troubleshooting.md)                           |
-| BFF 脚本规范           | HOOK/ENDPOINT/COMMON、`context.client`、消息通知扩展、目录与注释模板                                                   | [`backend-function.md`](guides/backend-function.md)                         |
+| Backend Function 脚本规范           | HOOK/ENDPOINT/COMMON、`context.client`、消息通知扩展、目录与注释模板                                                   | [`backend-function.md`](guides/backend-function.md)                         |
 | 数据接口访问           | 先 detail 再编码、外键/枚举、禁止 N+1、批量与关联查询；可选 `lovrabet data` 查数（**`lovrabet` CLI ≥ 2.0** 且已安装） | [`data-api-guidelines.md`](guides/data-api-guidelines.md)                   |
 | SQL 创建工作流         | list/detail → pull/create → edit → validate → status → push/delete → exec 全链路                                      | [`sql-creation-workflow.md`](guides/sql-creation-workflow.md)               |
-| BFF 创建工作流         | new → status → dry-run → pull/push                                                                                    | [`bff-creation-workflow.md`](guides/bff-creation-workflow.md)               |
+| Backend Function 创建工作流         | new → status → dry-run → pull/push                                                                                    | [`bff-creation-workflow.md`](guides/bff-creation-workflow.md)               |
 | 冲突检测与保存         | `blocked`、未保存时的用户沟通、响应结构                                                                               | [`conflict-detection.md`](guides/conflict-detection.md)                     |
-| 质量与最佳实践         | 审查 SQL/BFF、命名、高危边界、描述字段                                                                                | [`best-practices.md`](guides/best-practices.md)                             |
+| 质量与最佳实践         | 审查 SQL/Backend Function、命名、高危边界、描述字段                                                                                | [`best-practices.md`](guides/best-practices.md)                             |
 | 数据库连接与分析       | 接入/改连/测连、`traceId` 来源、`db analyze-*` 与 dataset 分工；子命令速查见上文 **「数据库连接（db）」**             | [`database-connection-workflow.md`](guides/database-connection-workflow.md) |
 | 菜单异常审计与安全修复 | 重复 path、根级菜单重名、空 folder 删除计划和平台处理后回查                                                          | [`menu-anomaly-manual-cleanup.md`](guides/menu-anomaly-manual-cleanup.md)   |

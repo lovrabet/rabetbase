@@ -1,6 +1,6 @@
 # bff list
 
-列出当前 App 下的 BFF 脚本。
+列出当前 App 下的 Backend Function 脚本。
 
 ## 命令
 
@@ -24,12 +24,12 @@ rabetbase bff list --name getUserInfo --format json
 ## 多应用过滤
 
 多应用模式下：
-- 不加 `--app` / `--appcode`：遍历所有已配置应用，依次列出各应用的 BFF
-- 加 `--app <name>`：仅列出指定应用的 BFF
+- 不加 `--app` / `--appcode`：遍历所有已配置应用，依次列出各应用的 Backend Function
+- 加 `--app <name>`：仅列出指定应用的 Backend Function
 - 加 `--appcode <code>`：反查到对应 app profile，使用其 cookie/env
 
 ```bash
-# 仅列出 order 应用的 BFF
+# 仅列出 order 应用的 Backend Function
 rabetbase bff list --app order
 
 # 指定 appcode
@@ -40,19 +40,19 @@ rabetbase bff list --appcode app-xxxxxxxx
 
 默认返回精简列表（id, functionName, description, scriptType）。`--verbose` 返回完整对象。
 
-## BFF 脚本类型
+## Backend Function 脚本类型
 
 | 类型 | 用途 | 说明 |
 |------|------|------|
 | ENDPOINT | 独立业务端点，前端通过 `client.bff.execute()` 调用 | 默认类型 |
-| COMMON | 公共函数，供其他 BFF 脚本 import 复用 | 需 `--type COMMON` 查询 |
+| COMMON | 公共函数，供其他 Backend Function 脚本 import 复用 | 需 `--type COMMON` 查询 |
 | HOOK | 挂在标准数据接口前后执行 | 通过数据集详情查看 |
 
 ## 提示
 
-- 写 BFF 前先查公共函数列表（`--type COMMON`），看是否有可复用函数
+- 写 Backend Function 前先查公共函数列表（`--type COMMON`），看是否有可复用函数
 - 复用 COMMON 前用 `bff detail --id <id>` 确认入参、返回值和副作用，不要按函数名猜契约
-- 修改已有 BFF 前必须先用此命令找到脚本 ID
+- 修改已有 Backend Function 前必须先用此命令找到脚本 ID
 
 ## 参考
 

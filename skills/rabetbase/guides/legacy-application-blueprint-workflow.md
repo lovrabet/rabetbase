@@ -152,7 +152,7 @@ Optional implementation sketches after blueprint review:
 - Validation commands
 - Runtime smoke checklist
 
-Do not treat drafts as finished code. Do not push SQL or BFF until the relevant reference docs have been read and dry-run validation has passed.
+Do not treat drafts as finished code. Do not push SQL or Backend Function until the relevant reference docs have been read and dry-run validation has passed.
 
 ## Evidence Collection
 
@@ -178,7 +178,7 @@ Use Lovrabet platform facts to calibrate code inference:
 - `dataset relations`: relationship facts, join candidates, parent-child or reference relationships
 - `db tables` and `db diff`: physical table facts and Dataset mismatch checks
 - `sql list/detail`: existing Custom SQL that should not be duplicated
-- `bff list/detail`: existing BFF, Hook, and Common scripts that should not be overwritten
+- `bff list/detail`: existing Backend Function, Hook, and Common scripts that should not be overwritten
 
 ### Evidence Record Format
 
@@ -354,7 +354,7 @@ Recommended subsections:
 | Does it contain state transitions? | Yes | Backend Function or Hook |
 | Is it automatically triggered by Dataset create/update/delete? | Yes | Hooks Function |
 | Does it call third-party systems or use server-side secrets? | Yes | Backend Function or external worker |
-| Is the logic reused by multiple BFF/Hook scripts? | Yes | Common Function |
+| Is the logic reused by multiple Backend Function/Hook scripts? | Yes | Common Function |
 | Is it heavy domain logic or existing Java service logic? | Yes | Enterprise Java Service |
 | Can it only run in a retained legacy system? | Yes | External Retained System |
 
@@ -410,10 +410,10 @@ Lovrabet capabilities:
 
 Rules:
 - Every important conclusion must include code evidence.
-- Every Dataset-related conclusion must include platform evidence from dataset detail, dataset relations, db tables/diff, or existing SQL/BFF facts when available.
+- Every Dataset-related conclusion must include platform evidence from dataset detail, dataset relations, db tables/diff, or existing SQL/Backend Function facts when available.
 - Mark confidence as high, medium, or low.
 - Ask humans only for high-impact uncertainties that cannot be resolved from evidence.
-- Do not map all legacy APIs to Instant API. Upgrade to SQL, BFF, Hook, Common Function, or Java Service when transaction, state machine, permission, side effect, or external integration complexity requires it.
+- Do not map all legacy APIs to Instant API. Upgrade to SQL, Backend Function, Hook, Common Function, or Java Service when transaction, state machine, permission, side effect, or external integration complexity requires it.
 - Write the primary output to `.rabetbase/blueprint/<appCode>/application-blueprint.md`.
 ```
 
@@ -483,7 +483,7 @@ Before claiming the blueprint is complete, verify:
 - Capability Mapping does not blindly map all endpoints to Instant API.
 - Manual Confirmation Items are evidence-based and option-based.
 - Implementation drafts, if included, are clearly marked as drafts.
-- No SQL or BFF was pushed as part of blueprint generation.
+- No SQL or Backend Function was pushed as part of blueprint generation.
 
 ## Common Mistakes
 
@@ -491,5 +491,5 @@ Before claiming the blueprint is complete, verify:
 - Treating the blueprint as complete without Dataset Binding.
 - Mapping every legacy CRUD-like endpoint to Instant API without checking state machines and side effects.
 - Guessing Dataset field names or enum values from legacy names.
-- Writing BFF or SQL directly into arbitrary project folders instead of `.rabetbase/bff` or `.rabetbase/sql`.
-- Mixing blueprint artifacts with pushable implementation assets. Blueprint files belong under `.rabetbase/blueprint`, while SQL and BFF sources belong under their existing `.rabetbase/sql` and `.rabetbase/bff` directories.
+- Writing Backend Function or SQL directly into arbitrary project folders instead of `.rabetbase/bff` or `.rabetbase/sql`.
+- Mixing blueprint artifacts with pushable implementation assets. Blueprint files belong under `.rabetbase/blueprint`, while SQL and Backend Function sources belong under their existing `.rabetbase/sql` and `.rabetbase/bff` directories.

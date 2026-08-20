@@ -9,7 +9,7 @@
 当遇到以下情况时，AI 必须进入本指南定义的诊断模式：
 * 用户说"查询没有结果"、"空数组"
 * 控制台报错"参数格式不正确"、"字段不存在"、"表不存在"
-* 用户说"BFF 返回结构不对"、"SQL 报错"
+* 用户说"Backend Function 返回结构不对"、"SQL 报错"
 * CLI 命令执行失败，提示"Dataset not found"
 
 ---
@@ -41,13 +41,13 @@
   3. 逐一核查报错字段是否存在于 `fields` 列表中，注意大小写
   4. 确认无误后再重新生成 SQL 并通过 `rabetbase sql validate --file xxx --format json` 验证
 
-### 4. 听到"BFF 查不到数据 / 字段是 undefined"
-**AI 的第一反应**：检查 BFF 中的 API 调用方式和 SQL 结果提取。
+### 4. 听到"Backend Function 查不到数据 / 字段是 undefined"
+**AI 的第一反应**：检查 Backend Function 中的 API 调用方式和 SQL 结果提取。
 
-* ❌ 错误排查方向：给 BFF 增加前端 SDK 包装结构
+* ❌ 错误排查方向：给 Backend Function 增加前端 SDK 包装结构
 * ✅ **强制动作**：
   * 检查单条查询是否误用了 `findOne`，必须改为 `getOne`
-  * 检查 SQL 执行是否用了 `result.execResult`，在 BFF 中，`context.client.sql.execute` **直接返回数组**，没有 `execResult` 这一层
+  * 检查 SQL 执行是否用了 `result.execResult`，在 Backend Function 中，`context.client.sql.execute` **直接返回数组**，没有 `execResult` 这一层
 
 ### 5. 听到"CLI 报错 / Dataset not found"
 **AI 的第一反应**：检查基础连通性，指导用户确认环境。
@@ -64,4 +64,4 @@
 
 * **不要猜**：只要涉及"不存在"、"不匹配"，第一步永远是通过 CLI 命令（如 `rabetbase dataset detail`）拉取最新真实数据。
 * **不要盲试**：在没有分析出具体根因前，不要试图通过微调参数名盲目重试。
-* **分清端环境**：报错若是发生在前/后端交互边界，第一时间弄清是前端 SDK 的事，还是 BFF 脚本里的事，两者的返回值和对象结构不同。
+* **分清端环境**：报错若是发生在前/后端交互边界，第一时间弄清是前端 SDK 的事，还是 Backend Function 脚本里的事，两者的返回值和对象结构不同。

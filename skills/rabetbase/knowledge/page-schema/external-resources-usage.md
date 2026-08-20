@@ -1,6 +1,6 @@
 ---
 name: PageSchema-external-resources-usage
-description: 外部资源（自定义SQL、BFF脚本、权限点）在PageSchema中的消费规范，Skill只引用不生成。先验知识：低代码引擎搭建协议、Ant Design 5 组件知识。
+description: 外部资源（自定义SQL、Backend Function脚本、权限点）在PageSchema中的消费规范，Skill只引用不生成。先验知识：低代码引擎搭建协议、Ant Design 5 组件知识。
 tags: [page-schema, external-resources, custom-sql, bff, permission]
 ---
 
@@ -12,8 +12,8 @@ tags: [page-schema, external-resources, custom-sql, bff, permission]
 
 **Skill 职责边界**：
 
-- ✅ **只消费**：引用已生成的自定义 SQL、BFF 脚本、权限点
-- ❌ **不生成**：不负责创建新的自定义 SQL、BFF 脚本、权限点
+- ✅ **只消费**：引用已生成的自定义 SQL、Backend Function 脚本、权限点
+- ❌ **不生成**：不负责创建新的自定义 SQL、Backend Function 脚本、权限点
 
 ## 2. 自定义 SQL 使用规范
 
@@ -105,9 +105,9 @@ tags: [page-schema, external-resources, custom-sql, bff, permission]
 
 ---
 
-## 3. BFF 脚本使用规范
+## 3. Backend Function 脚本使用规范
 
-### 3.1 BFF 脚本类型
+### 3.1 Backend Function 脚本类型
 
 | 类型 | 说明 | 消费方式 | PageSchema 是否需要配置 |
 |------|------|---------|---------------------|
@@ -116,8 +116,8 @@ tags: [page-schema, external-resources, custom-sql, bff, permission]
 
 **职责边界**：
 
-- `skill_edit_smart_page_dov2` 只消费 ENDPOINT 类型的 BFF 脚本
-- HOOK 类型的 BFF 脚本由平台自动执行，不需要在 PageSchema 中引用
+- `skill_edit_smart_page_dov2` 只消费 ENDPOINT 类型的 Backend Function 脚本
+- HOOK 类型的 Backend Function 脚本由平台自动执行，不需要在 PageSchema 中引用
 
 ### 3.2 ENDPOINT 脚本消费方式
 
@@ -168,9 +168,9 @@ HOOK 脚本绑定到数据集 API 上，在 API 执行前或执行后自动触�
 
 ### 3.4 禁止的操作
 
-- ❌ 生成新的 BFF 脚本代码（HOOK 或 ENDPOINT）
+- ❌ 生成新的 Backend Function 脚本代码（HOOK 或 ENDPOINT）
 - ❌ 创建新的 scriptName
-- ❌ 在 PageSchema 中引用 HOOK 类型的 BFF 脚本
+- ❌ 在 PageSchema 中引用 HOOK 类型的 Backend Function 脚本
 
 ---
 
@@ -226,7 +226,7 @@ datasetCode -> {
 | 资源类型 | 允许操作 | 禁止操作 |
 |---------|---------|---------|
 | 自定义 SQL | 引用 sqlCode | 生成 SQL 语句 |
-| BFF 脚本 | 调用 scriptName | 生成脚本代码 |
+| Backend Function 脚本 | 调用 scriptName | 生成脚本代码 |
 | 权限点 | 使用当前表格内置权限过滤 | 生成权限字段或创建权限点 |
 
 **用户需要新建资源时**：引导用户到平台手动配置，获取 code/name 后帮助配置到 Schema。

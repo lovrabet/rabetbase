@@ -1,6 +1,6 @@
 # bff push
 
-把本地 BFF 脚本上传到远端。
+把本地 Backend Function 脚本上传到远端。
 
 > **风险等级：write** — 建议先使用 `--dry-run` 预览。
 
@@ -43,8 +43,8 @@ rabetbase bff push --type HOOK --name beforeFilter --format json
 - 写入字段、必填字段、枚举 `options[].value` 来自当前 `dataset detail`
 - `filter()` 结果从 `.tableData` 读取
 - `create()` 返回新记录 ID，不访问 `created.id`
-- BFF 中没有使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
-- 通知型 BFF 只使用已确认的 `configCode` / `audiences` / `message`，没有渠道地址、密钥、旧 MANUAL 参数或 `${...}` 模板表达式
+- Backend Function 中没有使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
+- 通知型 Backend Function 只使用已确认的 `configCode` / `audiences` / `message`，没有渠道地址、密钥、旧 MANUAL 参数或 `${...}` 模板表达式
 
 ## 提示
 

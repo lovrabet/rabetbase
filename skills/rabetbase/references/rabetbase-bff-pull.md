@@ -1,6 +1,6 @@
 # bff pull
 
-把远端 BFF 脚本同步到本地 `.rabetbase/bff/<appCode>/...`。
+把远端 Backend Function 脚本同步到本地 `.rabetbase/bff/<appCode>/...`。
 
 ## 命令
 

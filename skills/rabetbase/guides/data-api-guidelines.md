@@ -37,12 +37,12 @@
 
 ## 先判定数据访问路线
 
-在决定写 SQL、BFF 还是直接查数据前，先看 `rabetbase dataset detail --code <数据集编码> --format json` 的 `source`：
+在决定写 SQL、Backend Function 还是直接查数据前，先看 `rabetbase dataset detail --code <数据集编码> --format json` 的 `source`：
 
 | `source` | 建议路线 |
 |----------|----------|
-| `METADATA` | **不要走 SQL / aggregate**；优先 `filter` / `getOne` / `create` / `update` / `delete` 等平台返回的标准操作；BFF HOOK 可挂载，operation 以后端返回为准 |
-| `CUSTOM` / `DB` | 可继续评估 SQL、BFF 或标准数据接口 |
+| `METADATA` | **不要走 SQL / aggregate**；优先 `filter` / `getOne` / `create` / `update` / `delete` 等平台返回的标准操作；Backend Function HOOK 可挂载，operation 以后端返回为准 |
+| `CUSTOM` / `DB` | 可继续评估 SQL、Backend Function 或标准数据接口 |
 
 ---
 
@@ -71,7 +71,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 
 本 skill 的**主路径**始终基于 **`rabetbase`**（`dataset detail`、`sql exec` 等），**不要求**安装其它 CLI。
 
-若开发者本机已单独安装 **Lovrabet 运行时 CLI**（npm 包 **`@lovrabet/lovrabet-cli`**，命令名 **`lovrabet`**），可在终端用 **`lovrabet data filter`**、**`lovrabet data getOne`** 按 **与 `@lovrabet/sdk` 相同的语义** 查询数据集行数据，并直接查看 JSON 结构，便于与前端 / BFF 里的 `filter`、`getOne` 对照调试。
+若开发者本机已单独安装 **Lovrabet 运行时 CLI**（npm 包 **`@lovrabet/lovrabet-cli`**，命令名 **`lovrabet`**），可在终端用 **`lovrabet data filter`**、**`lovrabet data getOne`** 按 **与 `@lovrabet/sdk` 相同的语义** 查询数据集行数据，并直接查看 JSON 结构，便于与前端 / Backend Function 里的 `filter`、`getOne` 对照调试。
 
 **版本要求：须 `lovrabet` CLI ≥ 2.0**（主版本 2 及以上）。低于 2.0 的旧包**没有**与本文一致的 `data filter` / `data getOne` 能力（或行为不同），请勿按本节操作；请升级：`npm install -g @lovrabet/lovrabet-cli@^2.0.0`（或 `latest`）。自检：`lovrabet --version`。
 
@@ -106,7 +106,7 @@ rabetbase dataset detail --code <数据集编码> --format json
 
 - **不要默认 `filter()` 返回完整字段**。列表接口常为展示做裁剪，某些字段可能缺失。
 - 需要确认“某条记录的完整字段”或依赖关键字段时，优先 `getOne({ id })`。
-- 遇到 `USER` 类型字段时，留意同名的 `_label` 扩展对象（如 `creator_id_label`、`assignee_id_label`），很多展示信息已在其中，无需立刻反查 SQL 或额外写 BFF。
+- 遇到 `USER` 类型字段时，留意同名的 `_label` 扩展对象（如 `creator_id_label`、`assignee_id_label`），很多展示信息已在其中，无需立刻反查 SQL 或额外写 Backend Function。
 
 ### 错误处理
 
@@ -166,7 +166,7 @@ export default async function validateRelatedRecord(params, context) {
 | **枚举字段** | `type === "SELECT"` 且 `options` 非空 | `data.fields[].options` | 写入 `option.value`，展示 `option.label` |
 | **级联选择** | 父字段决定子字段 | 父字段变化时动态加载 | 监听父字段变化，动态加载子选项 |
 
-枚举/选择字段的 `label` 只用于展示，写入 BFF、SDK 或 SQL 参数时使用对应 `value`。`value` 的类型以数据集详情为准，可能是字符串、数字或其它平台约定类型。
+枚举/选择字段的 `label` 只用于展示，写入 Backend Function、SDK 或 SQL 参数时使用对应 `value`。`value` 的类型以数据集详情为准，可能是字符串、数字或其它平台约定类型。
 
 **前端示例**：
 
