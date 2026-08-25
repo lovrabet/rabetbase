@@ -54,7 +54,7 @@
 
 * ❌ 错误排查方向：建议用户重装各种库
 * ✅ **强制动作**：
-  * 建议用户检查 `.lovrabetrc`（或其他配置）中的 `appcode` 是否正确
+  * 建议用户检查 `.rabetbase.json` 中的 `appcode` 是否正确
   * 建议用户在终端执行 `rabetbase auth` 检查是否未登录或 Cookie 过期
   * 帮用户执行 `rabetbase dataset list --format json` 确认该环境到底有哪些可用数据集
 

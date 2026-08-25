@@ -11,8 +11,8 @@ rabetbase role user-resolve --name 小张 --format compress
 ## 行为
 
 - 精确匹配 `nickname` 或 `username`（大小写不敏感）。
-- 命中 0 个：报 validation error，提示核对或改用 `--user <id>`。
-- 命中多个：报歧义并列出候选 `nickname(userId)`，要求用 id 消歧。
+- 命中 0 个：报 validation error，提示核对昵称或用户名。
+- 命中多个：报歧义并列出候选 `nickname(userId)`；选定后，把该 ID 传给 `role user-add/user-remove --user <id>`，不要向 `user-resolve` 传不存在的 `--user` flag。
 - 输出 `data.user`：`userId`、`username`、`nickname`、`matchedBy`（`id` / `name`）。
 
 ## 边界

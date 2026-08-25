@@ -10,7 +10,7 @@
 | 改连接串 / 账号 | 更新已有连接，避免在界面点来点去 |
 | 验证网络与白名单 | **测连**确认研发环境能打到库 |
 | 同步结构到 Lovrabet | **分析任务**把表结构同步到平台；可看进度、取消 |
-| 看物理表与差异 | **tables / diff** 在写 SQL、对表前确认真实库状态 |
+| 看全部表与差异 | **tables** 查询全部表，**diff** 只查询差异表 |
 
 **与 `dataset` 的区别**：`dataset detail` 里的 `dbId` 来自数据集绑定；**`db list` 的 `id` 是 dblink 主键**，二者数值上通常一致，但 **CLI 管连接用 `db *`，管模型用 `dataset *`**。
 
@@ -41,33 +41,25 @@ trace/plan  → 见下一节（分析任务专用）
 ### 差异读取策略（所有流程共用）
 
 ```text
-db detail --id <id>
-  → 读取 data.tableCount
+用户明确要求不分析、不刷新或只看现有结果：
+  → 直接读取，并说明结果可能不是最新事实
 
-用户明确要求实时/强制刷新：
-  → 无论 tableCount 多少，走“刷新后读取”
-
-用户明确要求不刷新：
-  → 直接读取；tableCount > 200 时提示结果可能滞后
-
-用户未指定：
-  tableCount <= 200 → 直接读取
-  tableCount > 200  → 刷新后读取
-  tableCount 缺失   → 直接读取并说明新鲜度未知，不隐式写入
+其他情况（默认）：
+  → 无论 tableCount 多少或是否缺失，都走“刷新后读取”
 
 直接读取：
-  db diff --id <id> --all --changed-only
+  db diff --id <id> --all
 
 刷新后读取：
   db diff-refresh-start --id <id>
     → 只提交一次，保存 data.traceId
   db diff-refresh-status --id <id> --plan <同一 traceId>
     → 非终态只重复查询同一 traceId
-    → SUCCESS 后执行 data.lookup.command
+    → SUCCESS 后按原始意图执行 db diff --all（差异表）或 db tables（全部表）
     → FAILED / CANCELLED 停止，不自动重提
 ```
 
-`tableCount <= 200` 时服务端通常实时计算默认差异视角，刷新收益很小。`tableCount > 200` 时服务端可能读取最近差异快照，刷新可以降低滞后。`db diff --view all` 是实时全部表分页，用于查看无差异表或主动重新分析已有表，不需要先刷新快照。
+CLI 不再依据 `tableCount` 推断异步刷新是否值得执行。默认通过一次可跟踪的异步任务取得最新差异事实，避免小库、数量未知或服务端实现变化时沿用旧快照。刷新后用 `db diff` 查询差异表；需要查看无差异表或主动重新分析已有表时用 `db tables`。只有用户明确要求跳过时才直接读取现有结果。
 
 差异刷新与 schema 分析是两个独立任务：`diff-refresh-*` 只刷新差异事实，`analyze-*` 才把选中表同步为数据集。两类 traceId 不得混用。
 
@@ -113,7 +105,7 @@ db analyze-status --id <id> --plan <planId>   # 轮询直到终态
 
 ```text
 db detail --id <id>
-按“差异读取策略”刷新或直接执行 db diff --id <id> --all --changed-only
+按“差异读取策略”默认刷新后执行 db diff --id <id> --all
   → 只取 data.toAnalyzeTables；用户要求跳过的表先从列表中剔除
 db analyze-batch-plan --id <id> --tables <toAnalyzeTables> --format compress
   → 保存 data.batches；这是本地 batch plan，不是服务端任务 plan
@@ -135,7 +127,7 @@ db analyze-batch-plan --id <id> --tables <toAnalyzeTables> --format compress
     → 未知状态：停止自动推进并报告，不猜测为终态
 
 全部批次处理完毕：
-按“差异读取策略”刷新或直接执行 db diff --id <id> --all --changed-only
+按“差异读取策略”默认刷新后执行 db diff --id <id> --all
   → 重新读取完整事实；目标差异收敛后才算本轮分析完成
   → 仍未收敛则只对剩余非删除表进入下面的逐表恢复
 ```
@@ -151,8 +143,8 @@ db analyze-batch-plan --id <id> --tables <toAnalyzeTables> --format compress
     → 到达终态后才处理下一张表
 
 全部单表任务结束后：
-  按“差异读取策略”刷新或直接执行 db diff --id <id> --all --changed-only
-    → 以最终 `db diff --all --changed-only` 的 data.toAnalyzeTables 判断是否收敛
+  按“差异读取策略”默认刷新后执行 db diff --id <id> --all
+    → 以最终 `db diff --all` 的 data.toAnalyzeTables 判断是否收敛
     → 已尝试的剩余表只恢复一次，不再次循环提交
 ```
 
@@ -193,7 +185,7 @@ db delete --id <id> --expected-dataset-count 0 --confirm --yes
 
 - **写 SQL 前要 `dbId`**：`dataset detail --code …` 里 `db.id`；或 `db list` 的 `id` 与数据集侧 `dbId` 对应。
 - **看模型关系**：用 `dataset relations`；物理库连接和表清单仍用 `db list` / `db tables` 对照。
-- **查看所有数据表**：使用 `db diff --view all`；默认 `db diff` 只读取差异结果。
+- **查看所有数据表**：使用 `db tables`，它自动聚合全部分页；`db diff` 只读取差异结果。
 - **给用户确认页面**：DB 更新或分析完成后返回 `data.links.erPage`；新建连接后返回 `data.links.databasePage`。
 - **不确定 flags**：`rabetbase schema`（无需登录）查契约。
 

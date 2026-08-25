@@ -4,7 +4,7 @@
 
 ## 何时用
 
-- **analyze-batch-plan**：增量表清单较多时，先预览确定性安全批次；不创建服务端任务
+- **analyze-batch-plan**：只要增量表清单非空，就先预览确定性安全批次；不因表少而跳过，也不创建服务端任务
 - **analyze-start**：接入新库或表结构大变后，同步到 Lovrabet（一次调用只启动一个任务）
 - **analyze-cancel**：任务卡住或误触，需要停掉当前分析
 - **analyze-status**：轮询任务状态，并读取 CLI 派生的终态、重试和耗时字段
@@ -70,7 +70,7 @@ rabetbase db analyze-status --id 10157 --plan <traceId> --format compress
 
 必须按 `index` 严格串行：每批独立调用一次 `analyze-start`，并保存一个独立 `planId`。当前批次为 `PENDING / RUNNING / RETRYING / CANCELING` 时继续查询同一 planId；`SUCCESS` 才直接进入下一批；`PARTIAL_SUCCESS` 记录失败事实后继续；`FAILED / CANCELLED` 停止整个批次编排；未知状态停止自动推进。
 
-如果 `analyze-start` 没有明确返回 `data.planId`，停止自动推进且不得盲目重试，因为请求结果可能不确定。全部批次结束后按 `db detail.tableCount` 的 200 表阈值决定直接读取或先执行 `db diff-refresh-start/status`，再执行完整 `db diff --all --changed-only`；只对仍在 `data.toAnalyzeTables` 的非删除表逐表串行恢复一次，最后按同一策略再读取一次完整 diff。
+如果 `analyze-start` 没有明确返回 `data.planId`，停止自动推进且不得盲目重试，因为请求结果可能不确定。全部批次结束后默认执行 `db diff-refresh-start/status`，再执行完整 `db diff --all`，不根据 `tableCount` 跳过异步刷新；只有用户明确要求不分析、不刷新或只看现有结果时才直接读取。只对仍在 `data.toAnalyzeTables` 的非删除表逐表串行恢复一次，最后按同一策略再读取一次完整 diff。
 
 显式单批 `analyze-start --tables` 的持久化参数超过 1024 UTF-8 bytes 时，CLI 会在调用 API 前返回 validation error 并提示先运行 `db analyze-batch-plan`。960 是规划安全预算；960 至 1024 bytes 的显式单批仍允许启动。未传 `--tables` 的全量分析不受此保护影响。
 
@@ -101,7 +101,7 @@ rabetbase db analyze-status --id 10157 --plan <traceId> --format compress
 | `data.totalElapsedMs` | 从 `firstStartTime` 到 `endTime` 或当前查询时刻的 plan 墙钟耗时；缺少可靠时间戳时为 `null` |
 | `data.hasMultipleAttempts` | `firstStartTime` 与 `startTime` 都有效且不相同时为 `true`，表示服务端开启过后续执行尝试 |
 
-`PENDING / RUNNING / RETRYING / CANCELING` 与未知状态都不是终态。不要根据 `failedTables`、`retryCount` 或错误文案推测状态。`PARTIAL_SUCCESS` 只表示任务已到终态；必须按 200 表阈值刷新或直接复跑 `db diff --all --changed-only` 验证目标差异收敛，才能得出本轮分析完成结论。
+`PENDING / RUNNING / RETRYING / CANCELING` 与未知状态都不是终态。不要根据 `failedTables`、`retryCount` 或错误文案推测状态。`PARTIAL_SUCCESS` 只表示任务已到终态；默认必须异步刷新后复跑 `db diff --all` 验证目标差异收敛，只有用户明确要求跳过分析/刷新时才直接读取现有结果，之后才能得出本轮分析完成结论。
 
 `analyze-status` 每次只查询一次。轮询时必须继续使用当前任务的同一 `planId`；查询超时、断网或临时 API 失败不等于分析失败，也不得触发新的 `analyze-start`。当前稳定任务状态中没有独立的 `TIMEOUT` 终态。
 

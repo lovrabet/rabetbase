@@ -29,7 +29,7 @@
 
 ### 查找或修改已有页面
 
-1. 未知页面 ID 时，先阅读 [`rabetbase-page-custom-list.md`](../references/rabetbase-page-custom-list.md)，执行 `page custom-list --appcode <appCode>`
+1. 未知页面 ID 时，先阅读 [`rabetbase-page-custom-list.md`](../references/rabetbase-page-custom-list.md)，执行 `page custom-list`；仅在跨应用或覆盖工作区默认应用时传 `--appcode <appCode>`
 2. 根据 `data.pages[].pageId` 与 `label` 与用户确认目标页面；`data.pages[].pageUrl` 用于查看最新保存内容，`data.pages[].editPageUrl` 用于打开页面编辑器
 3. 阅读 [`rabetbase-page-custom-detail.md`](../references/rabetbase-page-custom-detail.md)，执行 `page custom-detail --id <pageId>`
 4. 只在返回的最新 `data.codeContent` 基础上编辑，不得根据旧缓存或猜测覆盖文件
@@ -109,7 +109,7 @@ page create --page-pattern BLANK
 
 判断顺序：先确认单一数据集请求能否满足需求；数据组合和数据库计算是主要问题时选择 Custom SQL；当前用户、角色、数据范围或业务规则需要额外控制时选择 Backend Function。三种方式可以根据已确认的 SDK 契约配合使用，但不得自行推测方法、参数或返回结构。
 
-页面和 Backend Function 通过已发布 Custom SQL 的 `sqlCode` + `params` 执行查询。Dataset、Custom SQL 或 Backend Function 执行失败时，保留并报告原始错误，根据资源状态、参数与权限定位问题。
+页面通过已发布 Custom SQL 的 `sqlCode` + `params` 执行查询；Backend Function 默认使用 `context.client.sql.byName(sqlName).execute({ params })`，`sql.execute({ sqlCode, params })` 仅作兼容路径。Dataset、Custom SQL 或 Backend Function 执行失败时，保留并报告原始错误，根据资源状态、参数与权限定位问题。
 
 页面需要读取或写入数据集时，先按以下顺序确认事实：
 

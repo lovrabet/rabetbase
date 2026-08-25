@@ -1,24 +1,24 @@
 # api pull
 
-拉取当前 App 下所有数据集（Dataset）的元信息，生成 TypeScript API 客户端代码到 `src/api/` 目录。
+拉取当前 App 下所有数据集（Dataset）的元信息，刷新 `src/api/sdk-config.ts`，并在 `api.ts` / `client.ts` **缺失时**写入 Cookie-first 脚手架。
 
-生成的代码包含每个 Dataset 的 Model 类，可直接用于 SDK 查询，无需手动调用 HTTP 接口。
+已有 TypeScript **不会被覆盖**。Agent 必须用返回的 `data.models` 按 [`sdk-client-generation.md`](../guides/sdk-client-generation.md) 更新 `api.ts` / `client.ts`。人类若要重新得到脚手架，删除对应文件后再跑本命令。
 
 ## 命令
 
 ```bash
-# 拉取并生成 API 代码（默认 ./src/api/）
-rabetbase api pull
+# 拉取事实并刷新 sdk-config.ts（默认 ./src/api/）
+rabetbase api pull --format compress
 
 # 指定输出目录
-rabetbase api pull --output ./src/generated/api/
+rabetbase api pull --output ./src/generated/api/ --format compress
 
 # 多应用：默认只解析「项目级」apps；与全局合并配置一起拉取时加 --global
-rabetbase api pull --global
+rabetbase api pull --global --format compress
 
 # 多应用模式：指定某个应用
-rabetbase api pull --app order
-rabetbase api pull --appcode app-order-001
+rabetbase api pull --app order --format compress
+rabetbase api pull --appcode app-order-001 --format compress
 ```
 
 ## 参数
@@ -26,9 +26,10 @@ rabetbase api pull --appcode app-order-001
 | 参数 | 说明 |
 |------|------|
 | `--output <dir>` | 输出目录，默认 `./src/api/` |
-| `--global` | 多应用时从「全局+项目」合并配置解析 `apps`（默认仅项目级 `apps`）。若项目配置了 `inherit: false`，见下节 |
+| `--global` | 多应用时显式从「全局+项目」双层解析 `apps`；默认仅项目级 `apps` |
 | `--app <name>` | 多应用模式下，指定应用名称 |
 | `--appcode <code>` | 直接指定 appcode，跳过配置查找 |
+| `--format compress\|json` | 结构化信封。Agent 应读 `data.models`，不要刮 stderr |
 
 ## 多应用过滤
 
@@ -37,31 +38,43 @@ rabetbase api pull --appcode app-order-001
 - **加 `--app <name>`**：仅拉取指定应用
 - **加 `--appcode <code>`**：反查到对应 app profile，使用其 cookie/env/apiDir
 
-## 与 `inherit` 的关系
+## 配置作用域
 
-项目 `.rabetbase.json` 的 `inherit` 字段控制配置合并行为：
+- 默认只从项目文件解析 `apps`，同时可从全局白名单继承 cookie/accessKey 等标量配置。
+- `--global` 显式从全局和项目双层读取 apps；项目同名项覆盖全局同名项。
+- `inherit` 不是受支持的配置项。
 
-- **省略**（默认）：项目主导，仅从全局白名单继承 cookie/accessKey/locale/format/riskLevel/pageSize，不继承 apps/defaultApp/appcode。`--global` 仍可看到全局 apps（多应用列表从双层直接取）。
-- **`true`**：全量合并全局+项目（旧行为，需显式开启）。
-- **`false`**：完全隔离，不继承任何全局字段。
+## CLI 实际写入
 
-此时：
-
-- **`api pull` 使用的 cookie、apiDir、appcode 等**均来自**项目文件**（默认行为下 cookie/accessKey 仍可从全局白名单继承）。
-- **`--global` 多应用列表**始终从全局+项目双层取 apps，不受 inherit 限制。
-
-## 输出文件
-
-| 文件 | 说明 |
+| 文件 | 行为 |
 |------|------|
-| `<prefix>-api.ts` | 数据模型定义（datasetCode → Model 映射） |
-| `<prefix>-client.ts` | SDK 客户端初始化代码 |
+| `sdk-config.ts` | **每次刷新**。只含 `region` / `runtimeDomain`，不含凭证 |
+| `<prefix>-api.ts` | 文件缺失时写入脚手架（含当前 `models`）；已存在则跳过 |
+| `<prefix>-client.ts` | 文件缺失时写入 Cookie-first `createClient`；已存在则跳过 |
 
 默认 `prefix` 为空（单应用），多应用非 default 应用使用应用名作为 prefix。
 
+`project create` 在拷贝空 demo 脚手架后会覆盖写入一次 TypeScript，以便带上真实 models。日常 `api pull` 遇到已有 `api.ts` / `client.ts` 时跳过，只刷新 `sdk-config.ts` 并返回 `data.models`。
+
+## 输出（单应用 `data`）
+
+| 字段 | 说明 |
+|------|------|
+| `appCode` | 当前应用 |
+| `configName` | `"default"` 或具名应用名（不含 TS 引号） |
+| `isDefaultConfig` | 默认应用为 `true` |
+| `models[]` | `datasetCode` / `tableName` / `name` / `alias` |
+| `sdkRouting` | `{ region?: "id", runtimeDomain?: string }` |
+| `files.api` / `files.client` / `files.sdkConfig` | `{ path, action }`：`created` / `overwritten` / `preserved` / `refreshed` |
+| `needsAgentMerge` | 任一 TypeScript 被 `preserved` 时为 `true` |
+| `apiFilePath` / `clientFilePath` / `sdkConfigPath` | 与 `files.*.path` 相同 |
+| `modelCount` / `datasetCount` | 模型数量 |
+
+多应用时 `data` 为 `{ apps, succeeded, failed }`。
+
 ## 生成标识符
 
-`api pull` 遵循 [`best-practices.md`](../guides/best-practices.md) 的动态标识符原则，确保生成的 TypeScript 标识符合法且稳定。数字开头的 App Namespace 使用 `APP` 领域前缀，运行时 AppCode 保持不变；该前缀不适用于其他代码生成场景。
+脚手架路径遵循 [`best-practices.md`](../guides/best-practices.md) 的动态标识符原则。数字开头的 App Namespace 使用 `APP` 领域前缀，运行时 AppCode 保持不变。
 
 ## 前置条件
 
@@ -71,12 +84,14 @@ rabetbase api pull --appcode app-order-001
 ## 示例
 
 ```bash
-# 单应用：生成到 ./src/api/
-rabetbase api pull
+# 单应用：刷新 sdk-config.ts；缺失则写 api.ts/client.ts
+rabetbase api pull --format compress
 
-# 多应用 order：生成到 ./src/api/ 并使用 order- 前缀
-rabetbase api pull --app order
+# 多应用 order
+rabetbase api pull --app order --format compress
 
 # 独立输出目录
-rabetbase api pull --output ./src/generated/api/
+rabetbase api pull --output ./src/generated/api/ --format compress
 ```
+
+更新已有 TypeScript：见 [`sdk-client-generation.md`](../guides/sdk-client-generation.md)。

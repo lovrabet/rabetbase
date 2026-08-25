@@ -1,70 +1,76 @@
-# rabetbase init
+# rabetbase config init
 
-智能初始化 `.rabetbase.json` 配置。
-
-> **风险等级：write** — 创建或修改配置文件。
-
-## 命令
+首次使用、切换官方节点或切换企业独立部署地址时，重建全局 Lovrabet 连接配置。该命令只处理 region/Domain，不负责认证或项目应用绑定。
 
 ```bash
-# 交互模式（从平台拉取应用列表选择）
-rabetbase init
+# 交互选择 cn / id
+rabetbase config init
 
-# 指定 appcode 直接写入（非交互）
-rabetbase init --appcode <code>
+# 自动化选择官方节点
+rabetbase config init --region id
 
-# 指定环境
-rabetbase init --appcode <code> --env daily
+# 企业独立部署
+rabetbase config init --domain-config ./lovrabet-domains.json
 
-# 写入全局配置
-rabetbase init --appcode <code> --global
+# 企业独立部署也可直接传 Domain flags
+rabetbase config init \
+  --user-domain https://user.customer.example.com \
+  --api-domain https://api.customer.example.com \
+  --runtime-domain https://runtime.customer.example.com \
+  --skill-domain https://skills.customer.example.com \
+  --kb-domain https://kb.customer.example.com \
+  --app-domain https://app.customer.example.com
 ```
 
-## 参数
+## 交互与默认行为
 
-| Flag | 类型 | 必填 | 默认 | 说明 |
-|------|------|------|------|------|
-| `--appcode <code>` | string | 否 | — | 直接写入配置，跳过交互选择 |
-| `--env <env>` | string | 否 | `production` | 目标环境：`production` / `daily` |
-| `--global` | boolean | 否 | `false` | 写入全局配置而非项目配置 |
+- 交互执行时选择 `Mainland China (cn)` 或 `Indonesia (id)`，默认选中 `cn`
+- 非交互执行时应显式传 `--region cn|id`；未传 region/Domain 时回退 `cn`
+- 当前只开放 `cn`、`id`；`global` 不可选择
 
-## 执行逻辑
+## 写入行为
 
-按优先级自动路由：
+- 固定写入全局 `~/.rabetbase.json`
+- 不使用也不需要 `--global`，不能写入项目配置
+- 默认中国节点 `cn` 不写冗余 `region` 字段
+- 官方节点模式会清除六个显式 Domain，以及遗留的 `agentDomain` / `platformDomain` / `skillHubDomain`
+- 独立部署模式会清除旧 `region`、显式 Domain 和遗留 Domain，再写入本次提供的 Domain
+- 保留 Cookie、AccessKey、format、locale、apps 等无关配置
+- 不负责登录，也不绑定当前项目应用
 
-1. **老项目检测**（仅 project scope）→ 若检测到旧配置文件（如 `.lovrabet.json`）且无 `.rabetbase.json`，自动触发 `project upgrade`
-2. **`--appcode`** → 直接写入配置（单应用或 CI 模式）
-3. **CI 无 `--appcode`** → 报错 `flag_missing`
-4. **TTY 交互** → 从平台拉取应用列表，用户多选后写入配置
+## 独立部署 Domain
 
-## 输出
-
-- 成功：`✓ Successfully initialized project config` 并显示 AppCode、Env、Config 路径
-- 已有配置：报错 `.rabetbase.json already exists`
-- 旧项目：自动进入 `project upgrade` 流程
-
-## 多应用
-
-交互模式支持选择多个应用，生成多应用配置：
+`--domain-config` 接受只包含以下字段的 JSON 对象：
 
 ```json
 {
-  "apps": {
-    "app1": { "appcode": "code1", "env": "production" },
-    "app2": { "appcode": "code2", "env": "production" }
-  },
-  "defaultApp": "app1"
+  "userDomain": "https://user.customer.example.com",
+  "apiDomain": "https://api.customer.example.com",
+  "runtimeDomain": "https://runtime.customer.example.com",
+  "skillDomain": "https://skills.customer.example.com",
+  "kbDomain": "https://kb.customer.example.com",
+  "appDomain": "https://app.customer.example.com"
 }
 ```
 
-## 提示
+- 每个值必须是 HTTPS origin，不能包含账号、密码、path、query 或 fragment
+- 文件至少提供一个受支持 Domain；企业完整独立部署建议显式提供全部六个
+- 同名 `--*-domain` flag 覆盖文件中的值
+- `--region` 与任意独立部署 Domain 互斥，不能混用
+- 未提供的 Domain 会按默认 `cn` 映射回退，因此完整独立部署不要遗漏实际由客户部署的服务入口
 
-- 这是新用户首次使用的推荐入口命令
-- CI/CD 场景必须传 `--appcode`
-- 已有配置时先删除，或用 `config set env ...` / `workspace add` / `workspace use` 修改；`config set appcode` 仅适合单应用场景，会写成 `apps + defaultApp`
+## 结果语义
 
-## 参考
+- 官方节点返回 `data.mode="official"` 与选中的 `data.region`
+- 独立部署返回 `data.mode="independent"` 与实际写入的 `data.domains`
+- 重复执行用于切换连接配置，不会清除认证、输出偏好或应用绑定
 
-- [SKILL.md](../SKILL.md)
-- [配置参考](rabetbase-config.md)
-- [project upgrade](rabetbase-project-upgrade.md)
+首次使用推荐顺序：
+
+```bash
+rabetbase config init
+rabetbase auth login
+rabetbase workspace init --appcode <code>
+```
+
+旧的项目初始化能力已统一到 `rabetbase workspace init`。

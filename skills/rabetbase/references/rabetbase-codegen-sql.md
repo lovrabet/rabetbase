@@ -25,8 +25,10 @@ rabetbase codegen sql --sqlcode 2305f915-dd48cd4c > ./src/api/getUserList.ts
 
 ## 提示
 
-- `--target bff` 生成的代码使用 `context.client.sql.execute()`，注意 Backend Function 中 SQL 返回直接是数组
+- `--target bff` 生成的代码使用 `context.client.sql.byName(sqlName).execute({ params })`；生成时仍以 `--sqlcode` 定位 SQL 元数据，但产物不硬编码 `sqlCode`。Backend Function 中 SQL 返回直接是数组
 - `--target sdk` 生成的代码使用 `client.sql.execute()`，返回 `{ execSuccess, execResult }`
+- `sqlName` 在当前应用内必须唯一；未找到或重名时，运行时返回 `SQL_NAME_NOT_FOUND` 或 `SQL_NAME_AMBIGUOUS`，不会任选一个 SQL
+- `--target bff` 产物默认使用语义 SQL 名，`sql.execute({ sqlCode, params })` 是 Backend Function 的兼容调用方式；前端 SDK 产物使用 `sqlCode`
 
 ## 参考
 

@@ -67,22 +67,22 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 
 ---
 
-## 可选：`lovrabet` CLI 查数（`data filter` / `data getOne`）
+## 真实行数据：交接给 `lovrabet`
 
-本 skill 的**主路径**始终基于 **`rabetbase`**（`dataset detail`、`sql exec` 等），**不要求**安装其它 CLI。
+不需要真实行数据时，`lovrabet` CLI 可以不装；本 skill 的结构/发布主路径始终基于 **`rabetbase`**（`dataset detail`、`sql exec` 验证已发布 SQL 等）。
 
-若开发者本机已单独安装 **Lovrabet 运行时 CLI**（npm 包 **`@lovrabet/lovrabet-cli`**，命令名 **`lovrabet`**），可在终端用 **`lovrabet data filter`**、**`lovrabet data getOne`** 按 **与 `@lovrabet/sdk` 相同的语义** 查询数据集行数据，并直接查看 JSON 结构，便于与前端 / Backend Function 里的 `filter`、`getOne` 对照调试。
+一旦要验证真实业务行数据，必须交接给 **`lovrabet data filter`** / **`lovrabet data getOne`**（与 `@lovrabet/sdk` 相同语义）。`rabetbase` 与 `lovrabet` Skill 不互斥：不可用时**报告阻断**并提示安装，不要静默安装或修复运行态 CLI，也不要把 `rabetbase sql exec` 当成行数据查询的通用替代。
 
-**版本要求：须 `lovrabet` CLI ≥ 2.0**（主版本 2 及以上）。低于 2.0 的旧包**没有**与本文一致的 `data filter` / `data getOne` 能力（或行为不同），请勿按本节操作；请升级：`npm install -g @lovrabet/lovrabet-cli@^2.0.0`（或 `latest`）。自检：`lovrabet --version`。
+若本机已安装 **Lovrabet 运行时 CLI**（npm 包 **`@lovrabet/lovrabet-cli`**，命令名 **`lovrabet`**，须 **≥ 2.0**），可在终端对照调试前端 / Backend Function 里的 `filter`、`getOne`。低于 2.0 请先升级：`npm install -g @lovrabet/lovrabet-cli@^2.0.0`。自检：`lovrabet --version`。
 
 **注意：**
 
 | 点 | 说明 |
 |----|------|
-| **非必备** | 团队未必全局安装 `lovrabet`；**不要**在文档或 Agent 流程里把 `lovrabet` 写成前置条件。 |
-| **≥ 2.0** | 本节所述 `data` 子命令以 **2.0+** 为准；版本不符时先升级，勿将异常当作 skill 错误。 |
-| **未安装时** | 仍用 `rabetbase dataset detail` 拿结构；要看真实数据可用 **`rabetbase sql exec`**（已有对应 `sqlCode`）、或平台控制台；勿假设用户会去装第二个 CLI。 |
-| **配置与认证** | `lovrabet` 与 `rabetbase` 的配置项、鉴权方式**可能不完全相同**，需按各自 CLI 文档分别配置；勿照搬一条 `rabetbase` 的 flag 就认为 `lovrabet` 等价。 |
+| **结构 vs 行数据** | 结构用 `rabetbase dataset detail`。真实行数据必须用 `lovrabet data filter` / `data getOne`。 |
+| **未安装时** | 报告阻断，并提示安装 `lovrabet` Skill（`npx skills add lovrabet/lovrabet-cli`）和 CLI。不要由本 Skill 静默安装或修复。**`rabetbase sql exec` 只验证已发布 SQL 的可执行性与结果结构。** |
+| **≥ 2.0** | 本节 `data` 子命令以 **2.0+** 为准；版本不符时先升级。 |
+| **配置与认证** | `lovrabet` 与 `rabetbase` 的配置项、鉴权方式可能不完全相同，按各自 CLI 文档配置。 |
 | **详细用法** | 以 `lovrabet data --help`、`lovrabet data filter --help` 为准（参数多为 `--code` + `--params` JSON）。 |
 
 示例（仅作形态参考，需本机已安装且已登录/配置）：

@@ -24,7 +24,7 @@ rabetbase doctor check
 | Config JSON | 分别检测全局/项目配置文件是否为**合法 JSON**；非法时标红并给出解析错误（常见于尾随逗号、注释等，会导致该侧配置在合并时被忽略） |
 | Merged Config | 合并后的所有配置项（appCode / env / cookie / apiDir 等） |
 | Apps | 多应用模式下的应用列表及各自配置 |
-| API Endpoints | 最终生效的三个域名（apiDomain / userDomain / runtimeDomain） |
+| API Endpoints | 最终生效的 region 与六个域名（user / api / runtime / skill / kb / app） |
 | Auth | 登录状态及 cookie 有效性 |
 
 ## 典型场景

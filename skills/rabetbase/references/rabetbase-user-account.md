@@ -28,7 +28,7 @@ rabetbase user-account dingding-sandbox-bind \
 重点检查以下字段：
 
 - `data.operation = "bind"`
-- `data.selector.providerId = "dingding-sandbox"`
+- `data.selector.providerId = "dingtalk"`
 - `data.selector.dingTalkUserId` 与输入一致
 - 正式执行成功时 `data.after.bound = true`
 - `data.dryRun` 与本次执行模式一致

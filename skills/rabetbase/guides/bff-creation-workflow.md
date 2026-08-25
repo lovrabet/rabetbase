@@ -29,7 +29,7 @@ rabetbase notification config-list --type EMAIL --format compress
 
 从 `data.configs[]` 按 `configName` / `description` 选择配置，并使用同一项的 `configCode`。命令不会输出 `channelConfig`、`endpointUrl` 或通知凭据。没有结果或存在多个候选且业务目标不明确时，停下向用户确认；不得猜测。不要把 dataset 级通知通道的 `channelCode` 当成 Backend Function 所需的应用级 `configCode`。
 
-Backend Function HOOK 可挂载 `DB_TABLE` 或 `METADATA` 数据集，具体 operation 以平台返回为准。`METADATA` 数据集不支持 SQL / aggregate 路径；脚本中应使用 `` context.client.models[`dataset_${datasetCode}`] `` 的标准操作能力。
+Backend Function HOOK 可挂载 `DB_TABLE` 或 `METADATA` 数据集，具体 operation 以平台返回为准。`DB_TABLE` 使用 `context.client.models.byTable("<物理表名>")`；同名物理表来自多个 dblink 时，必须从 `rabetbase db list` 取得真实 ID 后传入 `{ dblinkId }`，不要让运行时任选。`METADATA` 没有物理表，且不支持 SQL / aggregate 路径，使用 `` context.client.models[`dataset_${datasetCode}`] `` 的标准操作能力。
 
 常用字段投影：
 
@@ -59,7 +59,8 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 ### 5. 自检
 * 方法名正确
 * 单条查询用 `getOne`
-* Backend Function 模型键使用 `"dataset_" + 32 位数据集 code`
+* `DB_TABLE` 优先使用 `context.client.models.byTable("<物理表名>")`；同名表存在多个 dblink 时补 `{ dblinkId: <已确认 ID> }`
+* `METADATA` 使用 `"dataset_" + 数据集 code`；`DB_TABLE` 仅在兼容调用时使用该形式
 * METADATA 数据集的 Backend Function / HOOK 不走 SQL 或 aggregate；只使用平台返回的标准数据操作
 * `filter()` 结果从 `.tableData` 读取，不是 `.list`
 * `create()` 返回新记录 ID，不是完整对象；不要访问 `created.id`
@@ -67,6 +68,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 * 批量更新使用 `update({ id: [...] })`；不存在 `batchUpdate()`，也不传记录数组
 * 枚举/选择字段写入 `options[].value`，不是展示 `label`
 * Backend Function 中 `sql.execute` 返回数组，不是 `{ execSuccess, execResult }`
+* Backend Function 中 Custom SQL 默认使用 `context.client.sql.byName("<唯一 SQL 名>").execute({ params })`；名称不唯一时先处理 `SQL_NAME_AMBIGUOUS`，不要回退任意 `sqlCode`
 * 没有在 Backend Function 中使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
 * 参数校验、错误处理、脱敏
 * 中文 JSDoc 已写清根请求参数、实际 `params.<字段名>`、返回值；显式抛出异常时包含 `@throws`
@@ -139,8 +141,8 @@ lovrabet bff exec --appcode <appCode> --name <functionName> --params '<json>' --
 
 | 场景 | 前端 SDK | Backend Function (context.client) |
 |------|---------|---------------------|
-| SQL 返回值 | `{ execSuccess, execResult }` | 直接返回数组 |
-| 模型键 | 可通过初始化/生成代码使用 alias | 使用 `"dataset_" + 32 位数据集 code` |
+| SQL 调用 / 返回值 | `sql.execute({ sqlCode, params })`，返回 `{ execSuccess, execResult }` | 默认使用 `sql.byName(sqlName).execute({ params })`，直接返回数组；`sql.execute({ sqlCode, params })` 为兼容调用方式 |
+| 数据集访问 | 可通过初始化/生成代码使用 alias | `DB_TABLE` 默认使用 `models.byTable(tableName, { dblinkId? })`；`METADATA` 使用 `"dataset_" + 数据集 code`，`DB_TABLE` 也支持该兼容调用方式 |
 | `filter()` 返回 | `tableData` 为列表数据 | `tableData` 为列表数据，不是 `list` |
 | `create()` 返回 | 以 SDK 文档/类型为准 | 新记录 ID，不是完整对象 |
 | `batchCreate()` 返回 | 以 SDK 文档/类型为准 | 新记录 ID 数组；直接传非空对象数组 |

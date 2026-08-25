@@ -18,14 +18,25 @@ rabetbase dataset business-group-update \
 
 确认 dry-run 结果无误后再去掉 `--dry-run` 执行。
 
+清空当前业务场景分组：
+
+```bash
+rabetbase dataset business-group-update \
+  --code 1a90dbff5f094a9a89936fa99b10984c \
+  --business-group ungrouped \
+  --expect-business-group "旧分组" \
+  --dry-run \
+  --format compress
+```
+
 ## 参数
 
 | Flag | 必填 | 说明 |
 | --- | --- | --- |
 | `--appcode <code>` | 否 | 目标应用编码；未配置默认 app 时必填 |
 | `--code <code>` | 是 | Dataset code，32 位 hex UUID |
-| `--business-group <name>` | 是 | 目标业务场景分组；空字符串表示清空 |
-| `--expect-business-group <name>` | 否 | 当前业务场景分组保护；不匹配即中止且不写入 |
+| `--business-group <name>` | 是 | 目标业务场景分组；保留值 `ungrouped` 表示清空 |
+| `--expect-business-group <name>` | 否 | 当前业务场景分组保护；使用 `ungrouped` 表示期望当前未分组；不匹配即中止且不写入 |
 | `--dry-run` | 否 | 只返回 before/after 预览，不执行写入 |
 | `--format <fmt>` | 否 | 输出格式，AI Agent 优先用 `compress` |
 
@@ -33,9 +44,9 @@ rabetbase dataset business-group-update \
 
 - 命令用 `--code` 定位 Dataset。
 - 当前值和写后校验都按 Dataset code 读取业务场景分组；不需要 `dblinkId`、`tableName` 或 `sourceType`。
-- `--business-group` 为空字符串时表示清空业务场景分组。
-- 回读到 `businessGroup` 为空字符串时表示未分组，是合法当前值。
-- `--expect-business-group` 用于保护当前值；不匹配时中止且不写入。
+- `--business-group ungrouped` 表示清空业务场景分组；`ungrouped` 是保留值，不能作为分组名称使用。
+- 平台原始详情可能以空字符串返回 `businessGroup`，也可能省略 `extend.businessGroup`；CLI 会将这两种形态统一归一化为空字符串，表示未分组。
+- `--expect-business-group` 用于保护当前值；当前未分组时传 `ungrouped`，不匹配时中止且不写入。
 - `--dry-run` 只预览 before/after，不执行写入。
 - 正式写入后会校验目标值已生效。
 - 当目标值和当前值一致时，命令返回 `changed=false`，不会执行写入。
@@ -70,7 +81,7 @@ rabetbase dataset business-group-update \
 ## 提示
 
 - 写入前必须先运行 `--dry-run`。
-- `businessGroup` 用于按业务场景组织 Dataset，而不是按数据库、表类型或服务名等技术结构分组。优先按业务场景命名并复用当前应用已有分组；需要跨领域消歧或沿用既有两级分组体系时，可使用 `<业务领域>---<业务场景>`，否则使用 `<业务场景>`。表数量不决定是否拆分层级。建议最多两级，层级不得为空或带首尾空白；空字符串表示清空。CLI 仅描述推荐格式并保持兼容，不额外拒绝历史非标准值。
+- `businessGroup` 用于按业务场景组织 Dataset，而不是按数据库、表类型或服务名等技术结构分组。优先按业务场景命名并复用当前应用已有分组；需要跨领域消歧或沿用既有两级分组体系时，可使用 `<业务领域>---<业务场景>`，否则使用 `<业务场景>`。表数量不决定是否拆分层级。建议最多两级，层级不得为空或带首尾空白；使用保留值 `ungrouped` 清空。CLI 仅描述推荐格式并保持兼容，不额外拒绝历史非标准值。
 - 推荐用 `--expect-business-group` 保护当前值。
 - 不确定 Dataset code 时，先用 `rabetbase dataset list --name <name> --format compress` 定位。
 - 业务场景分组只能使用本命令更新，不要通过 `dataset extend-update` 或 `/smartapi/dataset/update-driven-data` 修改。

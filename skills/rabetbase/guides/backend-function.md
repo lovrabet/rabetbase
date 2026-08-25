@@ -48,10 +48,12 @@
 
 ## 平台配置地址
 
+优先使用相关命令返回的 `data.links`。需要手工拼接时，以当前生效的 `appDomain` 作为 `<appDomain>`，不要硬编码 `app.lovrabet.com`：
+
 | 类型 | 地址 |
 |------|------|
-| HOOK | `https://app.lovrabet.com/app/{appCode}/data/dataset/{datasetId}#api-list` |
-| ENDPOINT | `https://app.lovrabet.com/app/{appCode}/data/backend-function` |
+| HOOK | `<appDomain>/app/{appCode}/data/dataset/{datasetId}#api-list` |
+| ENDPOINT | `<appDomain>/app/{appCode}/data/backend-function` |
 
 其中 `datasetId` 需要通过 `rabetbase dataset detail --code xxx --format json` 获取。
 
@@ -85,10 +87,10 @@ Backend Function 脚本统一存放在 `.rabetbase/bff/<appCode>/` 目录下，�
 
 HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 
-1. **alias**（优先）：来自 `api.ts`（由 `rabetbase api pull` 生成）
+1. **alias**（优先）：来自 `api.ts`（`api pull` 返回的 models，按 [`sdk-client-generation.md`](sdk-client-generation.md) 维护）
 2. **datasetCode**（兜底）：当 `api.ts` 不可用时，直接使用 32 位数据集编码
 
-推荐始终先执行 `rabetbase api pull` 以获得可读性更好的 alias 命名。
+推荐先执行 `rabetbase api pull --format compress`，再按 guide 更新 `api.ts` 以获得可读 alias。
 
 ## 文件命名与函数命名
 
@@ -108,7 +110,7 @@ HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
 * `delete`
 * `aggregate`（仅在数据集 operation 实际返回时使用；METADATA 默认不会提供）
 
-使用 `aggregate` 时，聚合列名写在 `aggregate[].column`；`field` 只是历史兼容别名，新脚本不要使用。
+使用 `aggregate` 时，聚合列名写在 `aggregate[].column`；`field` 是兼容别名，默认使用 `column`。
 
 Backend Function HOOK 可以挂在 `DB_TABLE` 或 `METADATA` 数据集上；是否可挂某个 operation，以平台返回的 operation types 为准。
 
@@ -343,7 +345,20 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 
 ## 数据集调用规范
 
-通过 `context.client.models` 调用数据集。模型键格式为固定前缀 `"dataset_"` 拼接 32 位数据集编码，编码来自 `rabetbase dataset list/detail` 返回的 `code` 字段。
+通过 `context.client.models` 调用数据集。有物理表的 `DB_TABLE` 默认按物理表名解析，避免把 Dataset code 写入业务代码：
+
+```javascript
+const primary = context.client.models.byTable("<primary_physical_table>");
+const detail = context.client.models.byTable("<detail_physical_table>", {
+  dblinkId: "<dblinkId>", // 从 rabetbase db list 确认后替换
+});
+
+const record = await primary.getOne({ id: params.id });
+```
+
+`byTable` 只在当前应用内解析。若物理表名只对应一个数据集，不需要 `dblinkId`；若同名表来自多个 dblink，必须从 `rabetbase db list` 取得真实 dblink ID 后传入，运行时遇到 `DATASET_TABLE_AMBIGUOUS` 不会按更新时间或任意 Dataset code 选择。表不存在时返回 `DATASET_TABLE_NOT_FOUND`。
+
+`METADATA` 没有物理表，使用 Dataset code 访问；`DB_TABLE` 的 Dataset code 访问作为兼容方式。模型键格式为固定前缀 `"dataset_"` 拼接数据集编码，编码来自 `rabetbase dataset list/detail` 返回的 `code` 字段：
 
 ```javascript
 const TABLES = {
@@ -357,7 +372,10 @@ const record = await models[TABLES.primary].getOne({ id: params.id });
 
 规则：
 
-* 必须使用 `"dataset_" + 32 位数据集编码`，不要只写裸 `code`
+* `DB_TABLE` 默认使用 `models.byTable("<物理表名>", { dblinkId? })`
+* 同名表跨 dblink 时必须显式传已确认的 `dblinkId`；不要把歧义错误改为任意 Dataset code
+* `METADATA` 使用 `"dataset_" + 数据集 code`；`DB_TABLE` 的该形式仅作为兼容路径
+* 使用兼容路径时必须使用 `"dataset_" + 32 位数据集编码`，不要只写裸 `code`
 * 每个映射后写 `// 数据集: ... | 数据表: ...`
 * 查询单条统一使用 `getOne({ id })`
 * 列表查询优先使用 `filter()`
@@ -395,7 +413,13 @@ await models[TABLES.primary].update({
 
 ### aggregate 调用与选型
 
-`` context.client.models[`dataset_${datasetCode}`].aggregate(params) `` 是 Backend Function 的数据集 Instant API。实际脚本仍按上文的数据集映射，通过 `models[TABLES.xxx]` 访问；示例字段只用于展示参数契约，编写业务脚本前必须用 `dataset detail` 替换为真实字段：
+`aggregate()` 只适用于 `DB_TABLE`：
+
+- `` context.client.models.byTable("<物理表名>"[, { dblinkId }]).aggregate(params) ``：`DB_TABLE` 的推荐寻址
+- `context.client.models[`dataset_${datasetCode}`].aggregate(params)`：仅 `DB_TABLE` 的兼容寻址
+- `METADATA`：**不支持** `aggregate()`
+
+实际脚本仍按上文的数据集映射，通过 `models[TABLES.xxx]` 访问；示例字段只用于展示参数契约，编写业务脚本前必须用 `dataset detail` 替换为真实字段：
 
 ```javascript
 const aggregateResult = await models[TABLES.primary].aggregate({
@@ -597,16 +621,19 @@ export default async function runBusinessFlow(params, context) {
 
 ## SQL 调用规则
 
-Backend Function 入参使用业务参数；需要执行 SQL 时，通过已发布 Custom SQL 的 `sqlCode` + `params` 调用。执行失败时保留并报告原始错误，根据 SQL 资源状态、参数与权限定位问题。
+Backend Function 入参使用业务参数，默认通过已发布 Custom SQL 的唯一 `sqlName` + `params` 调用，避免在业务代码中硬编码 `sqlCode`。执行失败时保留并报告原始错误，根据 SQL 资源状态、参数与权限定位问题。
 
 在 Backend Function 中使用：
 
 ```javascript
-const rows = await context.client.sql.execute({
-  sqlCode: "example-read-list",
+const rows = await context.client.sql.byName("<confirmed_sql_name>").execute({
   params,
 });
 ```
+
+`sqlName` 只在当前应用内解析。名称不存在时返回 `SQL_NAME_NOT_FOUND`，重名时返回 `SQL_NAME_AMBIGUOUS`；两种情况都不会选择任意 SQL。使用前通过 `rabetbase sql list --name "<名称>"` 与 `rabetbase sql detail --sqlcode <code>` 确认目标 SQL 和参数契约。
+
+Backend Function 默认使用 `byName`；`context.client.sql.execute({ sqlCode, params })` 是兼容调用方式。前端 SDK 使用 `sqlCode`。
 
 关键差异：
 
@@ -860,7 +887,8 @@ await context.client.db.transaction(async (tx) => {
 * [ ] 顶部注释完整且占位符已替换
 * [ ] JSDoc 已覆盖根请求参数、实际字段和返回值；显式抛出异常时已补充 `@throws`
 * [ ] 依赖数据集、调用 BF、执行 SQL 和副作用说明与实际代码一致
-* [ ] 数据集映射使用 `"dataset_" + 32 位编码`
+* [ ] `DB_TABLE` 数据集优先使用 `models.byTable("<物理表名>", { dblinkId? })`；同名表已按真实 dblink ID 消歧
+* [ ] `METADATA` 使用 `"dataset_" + 32 位编码`；`DB_TABLE` 使用该形式时属于兼容路径
 * [ ] 单条查询统一使用 `getOne`
 * [ ] 列表查询使用 `filter`，并从 `.tableData` 读取结果
 * [ ] DB_TABLE 简单单表聚合优先使用 `aggregate()`，并从 `.tableData` 读取结果
@@ -869,6 +897,7 @@ await context.client.db.transaction(async (tx) => {
 * [ ] 批量更新使用 `update({ id: [...] })`，没有使用不存在的 `batchUpdate()` 或记录数组参数
 * [ ] 枚举/选择字段写入 `options[].value`，不是展示 `label`
 * [ ] SQL 返回值按 Backend Function 语义处理
+* [ ] Backend Function 的 Custom SQL 默认使用 `sql.byName("<唯一名称>").execute({ params })`，并已确认名称在当前应用唯一
 * [ ] 未设置系统自动维护字段
 * [ ] 无明显 N+1 或循环写入问题
 * [ ] HOOK 返回 `params`，ENDPOINT 返回业务对象

@@ -39,7 +39,9 @@ rabetbase bff push --type HOOK --name beforeFilter --format json
 
 `bff push` 负责同步脚本，不等价于业务逻辑验证。推送前按 [`backend-function.md`](../guides/backend-function.md) 自检，尤其确认：
 
-- 数据集模型键使用 `"dataset_" + 32 位数据集 code`
+- `DB_TABLE` 数据集优先通过 `context.client.models.byTable("<物理表名>")` 访问；同名表跨 dblink 时传入已确认的 `{ dblinkId }`
+- `METADATA` 数据集使用 `"dataset_" + 数据集 code`；`DB_TABLE` 使用该形式时属于兼容路径
+- Backend Function 的 Custom SQL 默认使用 `context.client.sql.byName("<唯一 SQL 名>").execute({ params })`；名称不存在或重名时先处理 `SQL_NAME_NOT_FOUND` / `SQL_NAME_AMBIGUOUS`
 - 写入字段、必填字段、枚举 `options[].value` 来自当前 `dataset detail`
 - `filter()` 结果从 `.tableData` 读取
 - `create()` 返回新记录 ID，不访问 `created.id`

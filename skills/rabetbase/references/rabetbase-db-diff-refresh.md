@@ -4,11 +4,11 @@
 
 ## 何时刷新
 
-- `db detail` 返回 `tableCount > 200`，读取差异前建议刷新。
-- 用户明确要求“实时刷新”或“强制刷新”，无论表数量多少都刷新。
-- `tableCount <= 200` 时服务端通常实时计算差异，默认不刷新。
+- DBAgent 增量分析工作流默认刷新，无论 `tableCount` 多少或是否缺失。
+- 用户明确要求“实时刷新”或“强制刷新”时执行刷新。
+- 只有用户明确要求“不需要分析”“不刷新”或“只看现有结果”时才跳过，并说明现有差异可能不是最新事实。
 
-刷新只影响默认 `db diff` 差异视角；`db diff --view all` 本身就是实时全表分页，不需要先刷新差异快照。
+刷新用于形成一致、可跟踪的最新差异事实。刷新成功后，按意图执行 `db diff` 查询差异表，或执行 `db tables` 查询包含无差异表在内的全部表。
 
 ## 命令
 
@@ -22,7 +22,7 @@ rabetbase db diff-refresh-status --id 10157 --plan <traceId> --format compress
 1. `diff-refresh-start` 只执行一次并保存 `data.traceId`。
 2. 若响应没有明确 `traceId`，结果未知，停止且不得自动重提。
 3. `PENDING / RUNNING / RETRYING` 时继续执行 `data.query.command`，始终查询同一个 traceId。
-4. `SUCCESS` 时执行 `data.lookup.command`，重新读取刷新后的差异结果。
+4. `SUCCESS` 时按原始意图执行 `db diff --all`（差异表）或 `db tables`（全部表）。状态命令不替调用者选择后续查询。
 5. `FAILED / CANCELLED` 为失败终态；报告 `data.status.errorMsg`，不得自动重启。
 6. 未知状态不是终态，停止自动推进或继续只读查询，不猜测成功。
 
@@ -42,7 +42,8 @@ rabetbase db diff-refresh-status --id 10157 --plan <traceId> --format compress
 - `data.isTerminal`
 - `data.isSuccessful`
 - `data.query`：非终态时的同 traceId 查询命令
-- `data.lookup`：仅成功时返回的 `db diff --all --changed-only` 命令
+
+`diff-refresh-status` 只表达任务状态，不输出结果查询 `lookup`，避免在“全部表”和“差异表”两种意图之间替 Agent 作错误选择。
 
 差异刷新任务与 schema 分析任务不是同一业务动作。不要用 `diff-refresh-start` 代替 `analyze-start`，也不要把刷新成功描述为数据集分析已经完成。
 

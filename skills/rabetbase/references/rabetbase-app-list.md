@@ -2,7 +2,7 @@
 
 列出应用。
 
-默认列出**本地配置视图**，与 CLI 运行时一致：合并全局 `~/.rabetbase.json`（或同目录下首个匹配的旧名）与**项目**当前目录下的配置文件。
+默认列出**本地配置视图**，与 CLI 运行时一致：合并全局 `~/.rabetbase.json` 与从当前目录向父目录解析到的项目 `.rabetbase.json`。旧 `.lovrabet.json` / `.lovrabetrc` 不会自动参与配置发现。
 加 `--remote` 时改为查询**平台目录视图**：当前登录账号在平台上可访问的应用，不读取或修改本地 app 配置。
 
 - **不加 flag**：合并视图（global + project）。
@@ -38,7 +38,7 @@ rabetbase app list --remote
 | 字段 | 说明 |
 |------|------|
 | `items` | 应用条目数组 |
-| `meta` | **合并视图**：`globalPath`、`projectPath`、`defaultApp`（无命名默认时为**有效 appcode**）、`defaultAppSource`（`project` \| `global` \| `null`）。**`--global` / `--project`**：`scope`、`configPath` |
+| `meta` | **合并视图**：`globalPath`、`projectPath`、`defaultApp`（唯一 app 时为其 alias）、`defaultAppSource`（显式配置来源；隐式单应用为 `null`）。**`--global` / `--project`**：`scope`、`configPath` |
 
 每个 `items[]` 元素除 `name`、`appcode`、`env` 等外，另有：
 

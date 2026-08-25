@@ -2,6 +2,8 @@
 
 管理开发者侧当前解析应用下的 `company` 知识库，并检索当前应用可访问的公司与公共知识。所有命令都通过标准工作区、`--app <name>` 或 `--appcode <code>` 解析目标应用。
 
+企业知识库请求使用独立的 `kbDomain`。当前官方节点的 KB 仍由平台 API 服务承载，因此未显式配置 `kbDomain` 时跟随 `apiDomain`；KB 服务拆分或企业独立部署时可单独覆盖 `kbDomain`。`runtimeDomain` 不参与 rabetbase 企业 KB 路由。当前 rabetbase-cli 没有调用 SkillHub 业务 API，未来新增时必须使用独立的 `skillDomain`。
+
 > 边界：`lovrabet kb` 使用运行态 AK/当前应用/当前用户，面向个人知识库和可见知识搜索；`rabetbase kb` 使用开发者登录态，面向公司知识库管理以及公司/公共知识检索。不要用其中一个替代另一个。
 
 ## 命令

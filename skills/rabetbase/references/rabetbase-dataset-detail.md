@@ -97,7 +97,7 @@ rabetbase dataset detail --code <数据集编码> --format json --jq '.data.oper
 ## 提示
 
 - 写 SQL / Backend Function 前先调用此命令确认真实字段名、类型与枚举；关联关系统一看 **`dataset relations`**
-- `--alias` 需要先执行 `rabetbase api pull` 生成 `api.ts`
+- `--alias` 需要本地 `api.ts` 已有对应 alias（`api pull` 取事实后按 [`sdk-client-generation.md`](../guides/sdk-client-generation.md) 更新）
 - 横切数据访问流程、外键与性能：见 [`guides/data-api-guidelines.md`](../guides/data-api-guidelines.md)
 
 ## 参考

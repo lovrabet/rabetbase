@@ -14,7 +14,7 @@ rabetbase page create --name "客户看板" --page-content '<json>' --appcode <a
 
 | 参数 | 必填 | 说明 |
 |---|---|---|
-| `--name <name>` | 否 | 可选页面名称，1–100 个字符；省略时默认 `自定义页面_<timestamp>` |
+| `--name <name>` | 否 | 可选页面名称，1–100 个字符；省略时默认 `Custom_page_<timestamp>` |
 | `--parent-menu-id <id>` | 否 | 父菜单 ID |
 | `--page-pattern <pattern>` | 条件必填 | 页面模式；当前只支持 `BLANK`，与 `--page-content` 必须且只能提供一个 |
 | `--page-content <json>` | 条件必填 | 完整页面文件 JSON；对象的键为相对路径，值为文件内容，与 `--page-pattern` 必须且只能提供一个 |

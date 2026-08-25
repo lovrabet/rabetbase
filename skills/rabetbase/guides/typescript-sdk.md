@@ -16,6 +16,8 @@
 
 不要把本指南里的 `createClient`、`registerModels` 等前端 / Node SDK 初始化能力套用到 Backend Function。Backend Function 内只使用平台注入的 `context.client`。
 
+生成或更新项目里的 `src/api/api.ts` / `client.ts` 时，先 `rabetbase api pull --format compress`，再遵守 [`sdk-client-generation.md`](sdk-client-generation.md)。浏览器子应用的默认 client 是 Cookie + `...LOVRABET_SDK_CONFIG`，不要把下面的服务端 `accessKey` 示例写进 `src/api/client.ts`。
+
 ## 初始化规则
 
 必须使用 `createClient` 命名导出，禁止使用 `new LovrabetClient()`：
@@ -25,12 +27,19 @@ import { createClient } from "@lovrabet/sdk";
 
 const client = createClient({
   appCode: "your-app-code",
+  authMode: "client-ak", // 必须显式声明；否则一律走 cookie 模式，accessKey 会被忽略
   accessKey: process.env.RABETBASE_ACCESS_KEY, // 仅在服务端使用
   models: [
     { tableName: "users", datasetCode: "39f758e7b38c476b8bb3996771a601a1", alias: "users" }
   ],
 });
 ```
+
+认证模式必须显式声明,不会按字段自动推断:
+
+* 仅 `accessKey` → `authMode: "client-ak"`
+* `accessKey`(+可选 `secretKey`)签名，或已配对的预计算 `token` + `timestamp` → `authMode: "openapi"`（凭据通过 `X-Token` / `X-Time-Stamp` 请求头传递，不是 Authorization Bearer；用 `token` 时必须同时提供配对的 `timestamp`，否则首次请求报 `timestamp is required`）
+* 浏览器 Cookie 环境 → 省略 `authMode`(默认 cookie)
 
 ## 1. 模型查询 (Filter API)
 
@@ -47,7 +56,7 @@ const client = createClient({
 * ❌ `where: { status: 'active' }`
 * ✅ `where: { status: { $eq: 'active' } }`
 
-支持的操作符：`$eq`, `$ne`, `$gte`, `$lte`, `$gt`, `$lt`, `$contain`, `$startWith`, `$endWith`, `$in`。
+支持的操作符：`$eq`, `$ne`, `$gt`, `$lt`, `$gte`（或兼容旧写法 `$gteq`）, `$lte`（或兼容旧写法 `$lteq`）, `$contain`, `$startWith`, `$endWith`, `$in`, `$notNull`。`$gteq` / `$lteq` 是后端保留的别名，与 `$gte` / `$lte` 映射到同一 SQL 比较，新代码推荐用 `$gte` / `$lte`。
 
 逻辑组合：
 ```typescript
@@ -80,7 +89,7 @@ const result = await client.models.article.filter({
 
 **接口**：
 ```typescript
-client.models.dataset_[code].update({
+client.models[`dataset_${code}`].update({
   id: number | string | (number | string)[]; [key: string]: any
 })
 ```
@@ -108,7 +117,7 @@ await client.models.customer.update({
 
 **接口**：
 ```typescript
-client.models.dataset_[code].delete({ id: number | string | (number | string)[] })
+client.models[`dataset_${code}`].delete({ id: number | string | (number | string)[] })
 ```
 
 **示例**：
@@ -122,8 +131,9 @@ const inactiveUsers = await client.models.customer.filter({
   select: ['id']
 });
 
+// filter() 返回 ListResponse（{ tableData, paging, tableColumns }），列表数据在 tableData
 await client.models.customer.delete({
-  id: inactiveUsers.map(u => u.id)
+  id: inactiveUsers.tableData.map(u => u.id)
 });
 ```
 
@@ -148,17 +158,43 @@ async function updateInBatches(ids: number[], batchSize = 1000) {
 
 ### 别名模式（Alias Pattern）
 
-如果在前端 / Node SDK 中使用 `registerModels` 定义了别名，批量操作同样支持。此能力不适用于 Backend Function 的 `context.client`。
+在前端 / Node SDK 中给数据集配置 `alias` 后，可用别名访问模型，批量操作同样支持。此能力不适用于 Backend Function 的 `context.client`。
+
+别名在初始化时配置，最常见的是直接写进 `createClient` 的 `models`：
 
 ```typescript
-// 注册别名
-client.registerModels({
-  primary: 'dataset_abc123',
-  detail: 'dataset_def456'
+import { createClient } from "@lovrabet/sdk";
+
+const client = createClient({
+  appCode: "your-app-code",
+  models: [
+    { tableName: "orders", datasetCode: "abc123", alias: "primary" },
+    { tableName: "order_items", datasetCode: "def456", alias: "detail" },
+  ],
 });
 
 // 使用别名批量操作
-await client.models.primary.update({ id: [1, 2, 3], status: 'active' });
+await client.models.primary.update({ id: [1, 2, 3], status: "active" });
+```
+
+`registerModels` 是 `@lovrabet/sdk` 的独立命名导出（不是 client 实例方法），用于把一份完整 `ModelsConfig`（`{ appCode, models }`）注册到全局配置表，再由 `createClient` 按配置名引用（CLI 生成的 `src/api/*.ts` 就是这样自动注册的）：
+
+```typescript
+import { createClient, registerModels } from "@lovrabet/sdk";
+
+registerModels(
+  {
+    appCode: "your-app-code",
+    models: [
+      { tableName: "orders", datasetCode: "abc123", alias: "primary" },
+      { tableName: "order_items", datasetCode: "def456", alias: "detail" },
+    ],
+  },
+  "prod",
+);
+
+const client = createClient("prod"); // 或 createClient({ apiConfigName: "prod", authMode: "openapi", token, timestamp, env })（用 token 时必须显式 authMode 且带配对 timestamp）
+await client.models.primary.update({ id: [1, 2, 3], status: "active" });
 ```
 
 ## 2. 自定义 SQL (SQL API)

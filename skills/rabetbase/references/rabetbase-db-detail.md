@@ -5,7 +5,7 @@
 ## 何时用
 
 - 已用 `db list` 拿到 `id`，需要比列表更全的字段
-- 读取 `tableCount`，按 200 张表阈值决定是否先刷新差异结果
+- 读取 `tableCount` 作为连接规模事实；不再用它决定是否先刷新差异结果
 - 需要当前 **`latestAnalysisTraceId`** 查询最新分析状态；取消已知任务时仍使用正在跟踪的原 planId
 
 ## 命令
@@ -24,7 +24,7 @@ rabetbase db detail --id 10157 --format compress
 
 ## 参考
 
-输出中的 `tableCount` 是当前连接表数量：不大于 200 时通常直接读取 `db diff`；大于 200 时建议先执行 `db diff-refresh-start/status`。字段缺失时不猜测数量，也不隐式刷新。
+输出中的 `tableCount` 是当前连接表数量，仅用于展示和排期。DBAgent 增量分析默认先执行 `db diff-refresh-start/status`，无论该字段大小或是否缺失；只有用户明确要求跳过分析/刷新时才直接读取现有 `db diff`。
 
 `datasetDependency.hasDependencies` 表示当前连接是否仍有有效 Dataset 依赖，`activeDatasetCount` 是依赖数量；明细见同级 `datasets`。
 

@@ -13,12 +13,7 @@
 
 ## 平台入口
 
-先按当前 `rabetbase` 环境计算 `<appBaseUrl>`：
-
-```text
-production https://app.lovrabet.com/app/<appCode>
-daily      https://daily.lovrabet.com/web-app/app/<appCode>
-```
+优先使用命令返回的页面链接。需要手工拼接时，从当前生效的 `appDomain` 得到 `<appBaseUrl>`，不要硬编码官方域名；独立部署和不同 region 的入口可能不同。
 
 总入口：
 

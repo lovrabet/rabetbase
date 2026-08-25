@@ -49,9 +49,9 @@ rabetbase project upgrade --yes
 ## 触发方式
 
 - 手动执行：`rabetbase project upgrade`
-- 自动触发：`rabetbase init` 检测到旧配置时自动路由
+- 显式执行：`rabetbase project upgrade` 检测并迁移旧配置
 
 ## 参考
 
 - [SKILL.md](../SKILL.md)
-- [rabetbase init](rabetbase-init.md)
+- [rabetbase config init](rabetbase-init.md)

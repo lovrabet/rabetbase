@@ -6,7 +6,7 @@
 
 平台是唯一 source of truth。团队长期维护 SQL 时，优先使用 **本地同步工作流**：`sql create / pull / status / push / delete` + `.rabetbase/sql.lock.json`。
 
-SQL 内容编写、参数绑定与 MyBatis 语法以 [`sql-mybatis.md`](sql-mybatis.md) 为准。页面和 Backend Function 执行已发布的 Custom SQL 时使用 `sqlCode` + `params`。
+SQL 内容编写、参数绑定与 MyBatis 语法以 [`sql-mybatis.md`](sql-mybatis.md) 为准。页面执行已发布的 Custom SQL 时使用 `sqlCode` + `params`；Backend Function 默认使用 `context.client.sql.byName(sqlName).execute({ params })`，`sql.execute({ sqlCode, params })` 仅作兼容路径。
 
 ## 工作流
 

@@ -4,7 +4,7 @@
 
 > **边界**：`workspace` 负责所有「配置我的工作环境」的写操作——绑定目录默认应用（`init` / `use`），以及登记/移除应用清单（`add` / `remove`）。默认写当前项目 `.rabetbase.json`；`add` / `remove` 支持 `--global`（全局视作一个大工作空间）；`init` / `use` 只写当前目录。纯事实查询「有哪些 app」用 [`app list`](rabetbase-app-list.md)。
 
-**选型**：首次安装全局引导用 `rabetbase init`；当前目录还没绑定默认 app → `workspace init`（始终写 `defaultApp`）；已有配置只再登记 profile → `workspace add`；切换默认 → `workspace use`。
+**选型**：首次安装全局引导用 `rabetbase config init`；当前目录还没绑定 app → `workspace init`（单应用不写 `defaultApp`）；已有配置只再登记 profile → `workspace add`；多应用切换默认 → `workspace use`。
 
 ## 命令
 
@@ -28,18 +28,18 @@ rabetbase workspace remove <name> [--global]
 | `--defaultFormat <format>` | 写入该 app profile 的默认输出格式 |
 | `--pageSize <n>` | 写入该 app profile 的分页大小 |
 | `--riskLevel <level>` | 写入该 app profile 的风险等级 |
-| `--locale <locale>` | 写入该 app profile 的地区设置 |
+| `--locale <locale>` | 写入该 app profile 的本地化设置（不是 CLI 语言；目前命令尚未消费） |
 
 `add` / `remove` 用位置参数 `<name>` 指定应用名；`add` 必带 `--appcode <code>`，两者都支持 `--global`（写/删全局清单，全局视作一个大工作空间），其余 profile flags 与上表一致。
 
 ## 行为
 
-- `workspace init --appcode app-xxx`：用 appcode 作为应用名，写入 `apps.app-xxx` 和 `defaultApp`。
-- `workspace init --app crm --appcode app-xxx`：用业务名 `crm` 绑定 appcode，写入 `apps.crm` 和 `defaultApp`。
+- `workspace init --appcode app-xxx`：用 appcode 作为应用名写入 `apps.app-xxx`；若它是唯一应用，不写 `defaultApp`。
+- `workspace init --app crm --appcode app-xxx`：用业务名 `crm` 绑定 appcode；若它是唯一应用，不写 `defaultApp`。
 - `workspace use --app crm`：切换当前目录默认应用；如果 `crm` 只存在于全局配置，会复制非敏感 profile 字段到当前目录。
 - `workspace use --app crm --appcode app-xxx`：直接在当前目录新增或更新 `crm`，并设为默认应用。
-- `workspace add crm --appcode app-xxx`：登记应用 profile（默认写当前项目，`--global` 写全局）；当前无 `defaultApp` 时首个自动设为默认。已存在则更新。
-- `workspace remove crm`：移除本地应用 profile。默认按「项目优先、其次全局」定位要删的那一层，`--global` 强制删全局；若删的是当前 `defaultApp`，自动切到剩余的第一个；若该应用在项目与全局都有定义，只删单侧并在结果里提示另一侧仍存在。
+- `workspace add crm --appcode app-xxx`：登记应用 profile（默认写当前项目，`--global` 写全局）。第一个应用不写 `defaultApp`；增加第二个应用时保留原应用为默认。已存在则更新。
+- `workspace remove crm`：移除本地应用 profile。默认按「项目优先、其次全局」定位要删的那一层，`--global` 强制删全局；只剩一个应用时删除冗余的 `defaultApp`，仍有多个应用时才自动切换；若该应用在项目与全局都有定义，只删单侧并在结果里提示另一侧仍存在。
 
 `workspace init` / `workspace use` 不会从全局配置复制 `cookie` / `accessKey` 到项目文件。若当前项目文件里原本已有这些字段，更新应用时会保留它们。
 

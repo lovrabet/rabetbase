@@ -1,6 +1,6 @@
 # api list
 
-列出当前 App 下已生成的所有数据集（Dataset）模型，查看 API 客户端代码中有哪些可用 Model。
+列出当前 App 下平台返回的数据集（Dataset）模型事实。本命令查询远端 Dataset 元信息，**不检查**本地是否已生成 `api.ts` / `client.ts`。
 
 ## 命令
 
@@ -23,7 +23,7 @@ rabetbase api list --format json
 
 | 参数 | 说明 |
 |------|------|
-| `--global` | 多应用时从「全局+项目」合并配置解析 `apps`（默认仅项目级 `apps`）。项目配置了 `inherit: false` 时见 `api pull` 文档同名词条 |
+| `--global` | 多应用时显式从「全局+项目」双层解析 `apps`；默认仅项目级 `apps` |
 | `--app <name>` | 多应用模式下，指定应用名称 |
 | `--appcode <code>` | 直接指定 appcode |
 | `--format json` | JSON 格式输出（用于脚本解析） |
@@ -46,7 +46,7 @@ rabetbase api list --format json
 - **加 `--app <name>`**：仅列出指定应用的模型
 - **加 `--appcode <code>`**：反查到对应 app profile，使用其 cookie/env
 
-若项目 **`inherit: false`**，`--global` 无法合并进全局 `apps`，行为与 `api pull` 一致（详见 **api pull** 文档「与 inherit: false 的关系」）。
+`inherit` 不是受支持的配置项；`--global` 始终显式读取全局和项目双层 apps。
 
 ## 风险等级
 
@@ -55,4 +55,4 @@ rabetbase api list --format json
 ## 前置条件
 
 - 已完成 `rabetbase auth` 登录
-- 已运行过 `rabetbase api pull` 生成过 API 代码（用于确认本地已有哪些模型）
+- 已配置 appcode（单应用或多应用）

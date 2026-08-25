@@ -25,11 +25,13 @@ rabetbase auth login --help
 
 ## 行为
 
-1. 检查本机是否已有有效 session。
-2. 无有效 session 时启动本地 OAuth 回调服务。
+1. 使用 `rabetbase config init` 已配置的节点与 Domain。
+2. 检查本机是否已有有效 session，无有效 session 时启动本地 OAuth 回调服务。
 3. 交互式模式会自动打开浏览器；非交互 `--yes` 模式只打印登录 URL。
 4. 用户授权成功后，CLI 保存 cookie 并输出登录成功。
 5. 10 分钟内未完成授权时，登录服务退出，需要重新执行命令。
+
+`auth login` 只负责认证，不接受 region 或 Domain 参数。节点调整统一使用 `config init/set/delete`。
 
 ## 常见错误
 
