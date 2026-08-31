@@ -2,7 +2,7 @@
 
 管理开发者侧当前解析应用下的 `company` 知识库，并检索当前应用可访问的公司与公共知识。所有命令都通过标准工作区、`--app <name>` 或 `--appcode <code>` 解析目标应用。
 
-企业知识库请求使用独立的 `kbDomain`。当前官方节点的 KB 仍由平台 API 服务承载，因此未显式配置 `kbDomain` 时跟随 `apiDomain`；KB 服务拆分或企业独立部署时可单独覆盖 `kbDomain`。`runtimeDomain` 不参与 rabetbase 企业 KB 路由。当前 rabetbase-cli 没有调用 SkillHub 业务 API，未来新增时必须使用独立的 `skillDomain`。
+企业知识库管理与 `kb search` 都使用 `kbDomain`；未显式配置时跟随当前 region/env 的 `apiDomain`，`runtimeDomain` 不参与。`kb search` Cookie-only 调用 SmartCode Java，KB Service 下游域名由 Java 配置，CLI 不再持有或直连该地址。
 
 > 边界：`lovrabet kb` 使用运行态 AK/当前应用/当前用户，面向个人知识库和可见知识搜索；`rabetbase kb` 使用开发者登录态，面向公司知识库管理以及公司/公共知识检索。不要用其中一个替代另一个。
 
@@ -37,11 +37,12 @@ rabetbase kb delete --id 60 --yes
 
 ## search
 
-- 调用 `POST /smartapi/knowledge/company-public/search`，请求仅包含 `query`、解析后的 `appCode` 和可选 `topK`。
-- 不传 `userId`，不查询个人知识库；命中 `scope` 只可能为 `COMPANY` 或 `PUBLIC`。
-- `--query` 必填且不能是纯空白；`--topk` 可选，必须是正整数。不传时沿用服务端缺省规则。
-- 输出 `total` 与 `hits`，命中字段为 `scope/title/docId/score/weightedScore/content/jsonPath/jsonData`；无命中时返回空数组。
-- 同时判断 HTTP 状态和平台业务结果；未登录、无权限、参数错误、检索异常或响应字段漂移都会以结构化错误失败。
+- Cookie-only 调用 SmartCode Java `POST /smartapi/knowledge/company-public/search`，请求体包含 `appCode`、`query` 和可选 `topK`；不发送 AK、`userId`、profile 或 scope。
+- SmartCode Java 是统一鉴权、调用量记录与后续计费入口，并按自身配置转发 KB Service 固定 Development 接口；响应保持完整 V2 证据且带 `Cache-Control: no-store`。
+- Development profile 在检索前固定限制为 `public/company`；任何 `personal` 命中都按协议错误失败关闭。
+- `--query` 必填且不能是纯空白；`--topk` 可选，必须为 1–50 的整数。不传时沿用服务端缺省规则。
+- 结构化输出固定为 `data: { schemaVersion:2, profile:"development", total, strategyFingerprint, timingsMs, hits }`。`total` 等于命中数；每个命中完整保留 `documentId/revision/chunkId/scope/title/text/tags/rank/rawScore/finalScore/scoreKind` 的服务端顺序和值，无 legacy 别名。
+- 无命中是 `total:0/hits:[]` 的成功。HTTP、`no-store`、JSON、字段、rank、score、timing、TopK 或 scope 漂移均以脱敏结构化错误失败；错误不包含查询、正文或后端 body。
 
 ## create
 
@@ -73,4 +74,4 @@ rabetbase kb delete --id 60 --yes
 
 - 使用 `--env daily` 或 `--env production` 选择 Profile 环境，不通过 URL 参数切换。
 - Production 写操作必须单独取得授权；需求、dry-run 或命令可用不等于写入授权。
-- 输出和错误不得包含 Cookie、Token、AccessKey 或知识正文。
+- 输出和错误不得包含 Cookie、Token 或 AccessKey。只有成功的 `search` 按上述 V2 合同返回知识正文；失败输出不得包含查询、正文、后端 body 或原始异常。

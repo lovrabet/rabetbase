@@ -120,6 +120,8 @@ const customer = await client.models.customers.getOne({ id: customerId });
 * 使用 `filter()` 进行列表和条件查询
 * 不要在页面里写循环单条请求
 * 批量查询和性能优化统一参考 `data-api-guidelines.md`
+* 调用 Personal Backend Function 时使用 `client.personal.bff.execute({ scriptId, params })`；先显式校验能力存在，禁止用 `execute?.(...)` 静默吞掉旧版 SDK 或 client 未初始化问题
+* 浏览器只使用当前登录 Cookie，不在前端源码、构建变量或页面配置中保存 Client AK；完整示例与返回值校验见 `typescript-sdk.md`
 
 ## 禁止 Mock 替代正式数据
 

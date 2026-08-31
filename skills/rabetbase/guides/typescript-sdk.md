@@ -235,6 +235,45 @@ const dashboard = await client.bff.execute<DashboardData>({
 console.log(dashboard.userCount);
 ```
 
+## 4. 前端 / Node 调用 Personal Backend Function API
+
+Personal Backend Function 通过数值型 `scriptId` 定位，`params` 必须是业务契约允许的对象。返回值是个人函数直接 `return` 的业务数据，不带 `execSuccess` 或 `execResult` 包装。
+
+```typescript
+interface DashboardData {
+  userCount: number;
+}
+
+const personalBff = client?.personal?.bff;
+if (typeof personalBff?.execute !== "function") {
+  throw new Error("client.personal.bff.execute is not available");
+}
+
+const dashboard = await personalBff.execute<DashboardData>({
+  scriptId: 123,
+  params: { userId: "123" },
+});
+
+if (!dashboard || typeof dashboard.userCount !== "number") {
+  throw new Error("Unexpected Personal Backend Function response");
+}
+```
+
+认证边界：
+
+- 浏览器 client 使用当前登录 Cookie。不要把 Cookie、AccessKey、SecretKey 或 token 写进前端源码、构建变量、页面配置或日志。
+- Node 服务使用 Client AK 时，凭据只保存在服务端，并显式设置 `authMode: "client-ak"`。
+- Personal Backend Function 不支持 `authMode: "openapi"`。
+
+兼容与 `undefined` 安全规则：
+
+- 可选链只用于读取能力：`const personalBff = client?.personal?.bff`。
+- 禁止调用 `client.personal?.bff?.execute?.(...)`。方法缺失时该写法会静默返回 `undefined`，无法与业务函数的空返回可靠区分。
+- 能力不存在时立即抛出明确错误，提示升级到包含 `client.personal.bff.execute` 的 SDK 版本。
+- 检测通过后通过 `personalBff.execute(...)` 调用；不要提取成 `const execute = personalBff.execute` 后裸调用，以免丢失方法上下文。
+- 不以 `result === undefined` 作为能力检测；根据个人函数已确认的返回契约校验必需字段和空态。
+- 接入页面前，先通过 `lovrabet personal-bff exec --id <id> --params '<json>' --format compress` 核对同一 `scriptId` 的字段、空态和错误形状。
+
 ## 异常处理底线
 
 所有通过 `client` 发起的网络调用都可能抛出 HTTP 级别的错误，AI 必须养成使用 `try...catch` 包裹代码的习惯，并识别 `LovrabetError`。
@@ -260,4 +299,7 @@ try {
 * [ ] `where` 对象里是否老老实实带了 `$eq` 等操作符？
 * [ ] 处理 SQL 的返回值时，判断了 `execSuccess` 吗？
 * [ ] 处理 Backend Function 的返回值时，是不是直接使用了业务数据？
+* [ ] 调 Personal Backend Function 前，是否显式校验了 `client.personal.bff.execute`，且没有使用可选调用？
+* [ ] 浏览器代码是否只依赖登录 Cookie，没有写入 Client AK 或其他凭据？
+* [ ] 是否按已确认契约校验 Personal Backend Function 的返回形状，而不是用 `undefined` 猜测能力状态？
 * [ ] 加入了 `try...catch` 块防止整个应用崩溃吗？

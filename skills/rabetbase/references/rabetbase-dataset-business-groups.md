@@ -19,7 +19,7 @@ rabetbase dataset business-groups --dbid 10282 --format compress
 
 - `scope` 固定为 `DB_TABLE`。
 - `totalDatasetCount` 是该连接下参与统计的有效 DB_TABLE Dataset 数。
-- `groups[]` 只包含 `businessGroup` 与 `datasetCount`；空字符串原样表示未分组。
+- `groups[]` 每项只包含 `businessGroup` 和 `datasetCount`；未分组项的 `businessGroup` 固定为 `ungrouped`。
 - 本命令不修改分组。写入仍使用 `dataset business-group-update --code ...`，建议先复用这里发现的已有业务场景名。
 
 ## 参考

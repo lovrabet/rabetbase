@@ -22,9 +22,10 @@ rabetbase doctor check
 | Built-in Skill | 目标路径、包版本、Skill 版本、内容状态；不一致时给出 `rabetbase cli-skill install` 修复命令 |
 | Config Files | 全局和项目级配置文件路径 |
 | Config JSON | 分别检测全局/项目配置文件是否为**合法 JSON**；非法时标红并给出解析错误（常见于尾随逗号、注释等，会导致该侧配置在合并时被忽略） |
+| Country/Region Configuration | 检查项目与全局 `region`；显式未知值会标明来源，并给出对应作用域的 `config delete region` 修复命令 |
 | Merged Config | 合并后的所有配置项（appCode / env / cookie / apiDir 等） |
 | Apps | 多应用模式下的应用列表及各自配置 |
-| API Endpoints | 最终生效的 region 与六个域名（user / api / runtime / skill / kb / app） |
+| API Endpoints | 最终生效的 region 与域名（user / api / runtime / skill / kb / app）；KB 管理与 search 共用 SmartCode Java origin |
 | Auth | 登录状态及 cookie 有效性 |
 
 ## 典型场景

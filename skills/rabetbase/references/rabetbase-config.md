@@ -73,7 +73,9 @@ CLI 对旧版顶层 `appcode` 仍兼容读取，但它已经不是推荐主模�
   "runtimeDomain": "https://custom-runtime.example.com",
   "skillDomain": "https://custom-skills.example.com",
   "kbDomain": "https://custom-kb.example.com",
-  "appDomain": "https://custom-app.example.com"
+  "appDomain": "https://custom-app.example.com",
+  "localDomain": "https://custom-local.example.com",
+  "certificateDomain": "https://custom-cert.example.com"
 }
 ```
 
@@ -126,7 +128,7 @@ rabetbase workspace remove product --yes
 | `pageSize` | number | — | 默认分页大小，用于 `sql list` 等分页命令 |
 | `riskLevel` | string | `"write"` | 允许执行的最高风险等级。可选值：`read`、`write`、`high-risk-write` |
 | `apiDir` | string | `"./src/api"` | `api pull` 生成代码的输出目录 |
-| `region` | string | `"cn"`（省略） | 当前开放的官方节点快捷配置：`cn`、`id` |
+| `region` | string | `"cn"`（省略） | 官方节点快捷配置：当前开放 `cn`、`id`；历史 `global` 配置仅保留读取兼容。显式未知值会阻止业务命令回落默认节点，先用 `rabetbase doctor` 定位后修复 |
 | `template_base_url` | string | 平台默认 CDN | 模板 CDN 基础 URL，一般无需修改 |
 | `defaultApp` | string | — | 多应用模式下的默认应用名称；单应用省略 |
 | `apps` | object | — | 多应用配置。key 为应用名，value 为 AppProfile（见下方） |
@@ -134,8 +136,10 @@ rabetbase workspace remove product --yes
 | `userDomain` | string | 平台默认 | 自定义用户域名 |
 | `runtimeDomain` | string | 平台默认 | 自定义运行时域名 |
 | `skillDomain` | string | 节点默认 | SkillHub HTTPS origin 覆盖 |
-| `kbDomain` | string | 跟随 `apiDomain` / 节点 API 默认值 | 企业知识库 HTTPS origin 覆盖；显式配置时优先，`runtimeDomain` 不参与回退 |
+| `kbDomain` | string | 跟随 `apiDomain` / 节点 API 默认值 | 企业知识库管理与 `kb search` 的 SmartCode Java HTTPS origin；KB Service 下游地址由 Java 配置 |
 | `appDomain` | string | 节点默认 | 工作台、页面编辑器和发布页面域名 |
+| `localDomain` | string | 独立部署默认 `http://localhost` | 自定义 HTTPS 本地回调 origin；与 `certificateDomain` 同时配置 |
+| `certificateDomain` | string | 节点默认；独立部署无 | 本地 HTTPS 证书服务 origin；与 `localDomain` 同时配置 |
 
 ### AppProfile 字段（`apps.*` 内的每个应用）
 
@@ -194,7 +198,7 @@ CLI flag (--appcode, --env, --format, --app ...)
 配置合并使用固定模型，`inherit` 不是受支持的配置项：
 
 - 项目显式值覆盖全局显式值。
-- 项目存在时，仅从全局白名单继承 `cookie`、`accessKey`、`locale`、`format`、`riskLevel`、`pageSize`、`region` 和六个 Domain（`userDomain` / `apiDomain` / `runtimeDomain` / `skillDomain` / `kbDomain` / `appDomain`）；不继承 `apps` / `defaultApp` / `appcode` / `env`。
+- 项目存在时，仅从全局白名单继承 `cookie`、`accessKey`、`locale`、`format`、`riskLevel`、`pageSize`、`region` 和显式 Domain（服务、本地回调、证书服务）；不继承 `apps` / `defaultApp` / `appcode` 等项目状态。
 - `apps` / `defaultApp` 始终项目隔离，避免研发写操作落到全局应用。
 - `region` 是 Domain fallback profile；显式 Domain 按普通 key 继承和覆盖，不会被 `region` 清除或屏蔽。
 - `riskLevel` 始终取全局与项目顶层的更严格值，项目不能借配置覆盖提权。
@@ -323,7 +327,7 @@ rabetbase config set --key region --value id --global
 rabetbase config init --domain-config ./lovrabet-domains.json
 ```
 
-该文件只接收 `userDomain`、`apiDomain`、`runtimeDomain`、`skillDomain`、`kbDomain`、`appDomain`；值必须是无 path/query/fragment 的 HTTPS origin。完整行为与命令行 flags 见 [`rabetbase config init`](rabetbase-init.md)。
+推荐使用 `lovrabet-routing/v1`，完整声明 `userDomain`、`apiDomain`、`runtimeDomain`、`skillDomain`、`kbDomain`、`appDomain`、`cdn.libraries` 与 `cdn.lovrabet`，并可选声明成对出现的 `localDomain`、`certificateDomain`。Domain 默认写成共用 HTTPS 字符串，确有差异时可按消费者覆盖。旧扁平 Domain 文件仍兼容。完整行为与命令行 flags 见 [`rabetbase config init`](rabetbase-init.md)。
 
 也可以逐项覆盖：
 
@@ -337,4 +341,4 @@ rabetbase config set --key kbDomain --value https://your-kb.example.com --global
 rabetbase config set --key appDomain --value https://your-app.example.com --global
 ```
 
-官方模式：`region` 内置完整 Domain 映射，默认 `cn`，配置文件可省略；`id` 只需保存 `"region": "id"`。企业独立部署模式才保存显式 Domain。项目级配置可覆盖全局配置；默认项目合并会继承全局节点配置。
+官方模式：`region` 内置 Routing Profile，默认 `cn`，配置文件可省略；当前新配置只开放 `cn`、`id`，`id` 需保存对应 region。历史文件中的 `global` 仍可读取，但不能通过 `config init` 或 `config set` 新写入。每个官方节点直接配置最终 `cdn.libraries` 与 `cdn.lovrabet`，因此可按节点使用独立 CDN；中国大陆当前使用 AliCDN，印尼当前使用 Cloudflare cdnjs。企业独立部署模式保存显式 Domain 与 CDN。项目级配置可覆盖全局配置；默认项目合并会继承全局节点配置。

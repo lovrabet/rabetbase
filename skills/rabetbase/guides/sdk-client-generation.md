@@ -2,7 +2,7 @@
 
 > 目标：根据 `rabetbase api pull` 返回的数据集事实，生成或更新浏览器子应用的 `src/api/api.ts` 与 `src/api/client.ts`，并保留项目已有的自定义写法。
 >
-> CLI 不再每次覆盖 TypeScript。`api pull` 只保证：刷新 `sdk-config.ts`、返回 `data.models`，并在文件缺失时写入 Cookie-first 脚手架。已有文件由本指南更新。
+> CLI 默认不覆盖 TypeScript。`api pull` 只保证：刷新 `sdk-config.ts`、返回 `data.models`，并在文件缺失时写入 Cookie-first 脚手架。已有文件由本指南更新；只有用户明确要求放弃本地定制并完整重建时，才使用 `--force --yes`。
 
 ## 何时执行
 
@@ -19,21 +19,24 @@
 
 ```
 rabetbase api pull --format compress
-  → 读 data.models / data.configName / data.isDefaultConfig / data.files / data.needsAgentMerge
+  → 单应用读 data；项目应用清单逐项读 data.apps[]
+  → 读取每项的 models / configName / isDefaultConfig / files / needsAgentMerge
   → 读已有 api.ts、client.ts、sdk-config.ts（含 {prefix}-api.ts / {prefix}-client.ts）
   → 按事实更新 models，保留本地 extras
   → 不要改已经正确的 createClient({ apiConfigName, ...LOVRABET_SDK_CONFIG })
 ```
 
 1. 执行 `rabetbase api pull --format compress`（需要人类可读缩进时用 `--format json`）。
-2. 使用返回的 `data.models`，不要手写或猜测 `datasetCode`。也可用 `rabetbase api list --format compress` 核对目录，但写文件以 pull 的 `data.models` 为准。
+   - 不要自动添加 `--force`。
+   - 只有用户明确要求丢弃本地 `api.ts` / `client.ts` 定制并完整重建时，才执行 `rabetbase api pull --force --yes --format compress`；此时根据返回的 `files.*.action` 回查是否为 `overwritten`。
+2. 直接单应用结果使用 `data.models`；项目应用清单结果逐项使用 `data.apps[].models`。不要手写或猜测 `datasetCode`。也可用 `rabetbase api list --format compress` 核对目录，但写文件以 pull 返回的 models 为准。
 3. 先读现有文件再写：
    - 默认单应用：`src/api/api.ts`、`src/api/client.ts`、`src/api/sdk-config.ts`
    - 多应用非 default：`{name}-api.ts` / `{name}-client.ts`（`data.files.api.path` / `data.files.client.path`）
 4. `sdk-config.ts` 由 CLI 维护（`data.files.sdkConfig.action === "refreshed"`），不要往里面写 `cookie` / `accessKey` / `token`。
 5. 看 `data.needsAgentMerge` 和 `data.files.*.action`，**不要**用已删除的 `wroteScaffold`：
    - `needsAgentMerge === false` 且 `api`/`client` 均为 `created` 或 `overwritten`：脚手架已按当前 `models` 写好，只需检查项目 extras。
-   - `needsAgentMerge === true`：至少有一个 TypeScript 文件被 **preserved**。即使 `client` 刚 `created`，过期的 `api.ts` 仍要按下方规则合并，**不要**当成脚手架已完成。
+   - `needsAgentMerge === true`：至少有一个 TypeScript 文件被 **preserved**。先比较本地配置与返回事实，只在有差异时合并；即使 `client` 刚 `created`，也不能据此跳过对已保留 `api.ts` 的检查。
 6. 默认应用：`data.isDefaultConfig === true`，`data.configName === "default"`，代码里用 `CONFIG_NAMES.DEFAULT`。
 7. 具名应用：`data.isDefaultConfig === false`，`data.configName` 是不含引号的名字（如 `order`），`registerModels(..., "order")` 与 `apiConfigName: "order"`。不要把 `configName` 再包一层引号。
 
@@ -51,7 +54,7 @@ rabetbase api pull --format compress
 export const LOVRABET_SDK_CONFIG = {} as const;
 ```
 
-CLI 可能写入 `region: "id"` 或 `runtimeDomain: "https://…"`。不要手改成认证字段。
+默认节点保持空对象；其他官方节点和企业独立部署统一写入最终 `runtimeDomain`。不要手改成认证字段。项目模板所需的完整公开 Domain 与资源策略由独立命令 `rabetbase project domain-routing-sync` 写入项目根目录的 `rabetbase.domain-routing.json`。
 
 ### api.ts
 
@@ -137,7 +140,7 @@ export const lovrabetClient = createClient({
 | `configName` | `"default"` 或具名应用名（不含 TS 引号） |
 | `isDefaultConfig` | 默认应用为 `true` |
 | `models[]` | `datasetCode` / `tableName` / `name` / `alias` |
-| `sdkRouting` | `{ region?: "id", runtimeDomain?: string }` |
+| `sdkRouting` | `{ runtimeDomain?: string }` |
 | `files.api` / `files.client` / `files.sdkConfig` | `{ path, action }`；`action` 为 `created` / `overwritten` / `preserved` / `refreshed` |
 | `needsAgentMerge` | 任一 TypeScript 被 `preserved` 时为 `true`，必须合并 `models` |
 | `apiFilePath` / `clientFilePath` / `sdkConfigPath` | 与 `files.*.path` 相同，兼容路径字段 |
