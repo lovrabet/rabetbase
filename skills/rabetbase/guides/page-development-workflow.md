@@ -39,7 +39,7 @@
 - 标准管理后台
 - 单数据集或轻度关联数据集
 
-如果目标是工作台、看板、时间轴或复杂协作视图，它不属于数据列表页工作流，但仍然属于页面需求，应使用 `rabetbase page create --page-pattern BLANK` 或 `--page-content` 创建 CUSTOM JSX 页面。`rabetbase project` 表达的是独立子应用工程，不是页面类型，也不是复杂页面的兜底入口。
+综合操作页面、工作台、时间轴和复杂协作视图不走数据列表页工作流，应使用自定义页面。内置模板的选型、内容边界和交互模式见 [`page-templates.md`](../knowledge/custom-page/page-templates.md)；已有完整页面文件时使用 `--page-dir <dir>`。`rabetbase project` 用于独立子应用工程，不作为自定义页面类型或复杂页面的兜底入口。
 
 ### 2. 校验数据集与关联页
 

@@ -16,12 +16,12 @@ rabetbase project domain-routing-sync --format compress
 - 不要求登录或 AppCode，不访问平台，不生成全局副本。
 - 该文件供项目模板与 Vite 消费，不是 React Router、页面 path 或菜单路由配置。
 
-生成内容只包含公开信息：User/App/Runtime Domain、资源策略、本地开发 Domain 与可选证书 URL；不会写入 Cookie、AccessKey 等认证配置。
+生成内容只包含公开信息：API/User/App/Runtime/Skill/KB Domain、资源策略、本地开发 Domain 与可选证书 URL；不会写入 Cookie、AccessKey 等认证配置。
 
 ## 使用时机
 
 - `project create` 会自动完成首次生成，无需紧接着重复执行。
-- 修改项目级 Domain 配置后执行。
+- 修改项目级 Domain 配置后需要立即刷新时执行；后续执行 `rabetbase run start|dev|build|preview` 也会在脚本启动前自动刷新。
 - 全局 Domain 配置变化且当前项目需要采用新结果时执行。
 - 文件缺失或模板提示重新生成时执行。
 

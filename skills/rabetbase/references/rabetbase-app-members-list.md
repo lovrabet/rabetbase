@@ -29,6 +29,7 @@ rabetbase app members-list --appcode app-example --format compress
         "roles": [
           {
             "roleId": 2,
+            "roleCode": "developer",
             "roleName": "开发者",
             "roleType": "DEV",
             "membershipStatus": "ACTIVE"
@@ -42,6 +43,7 @@ rabetbase app members-list --appcode app-example --format compress
 ```
 
 - `membershipStatus` 为 `ACTIVE`（正式成员）或 `PENDING`（待加入成员）。
+- 每条角色归属包含服务端稳定业务标识 `roleCode`。
 - 同一用户只要存在一个 ACTIVE 角色，顶层 `status` 即为 `ACTIVE`；全部角色待加入时为 `PENDING`。
 - 人员按 `userId` 升序；角色按 `roleId` 升序，同角色下 ACTIVE 排在 PENDING 前。
 - `username`、`displayName` 缺失时为 `null`；不会用 userId 伪造。

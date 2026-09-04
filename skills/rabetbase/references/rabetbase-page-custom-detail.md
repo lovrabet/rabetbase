@@ -23,4 +23,4 @@ rabetbase page custom-detail --id <pageId> --format compress
 - `runtimePageUrl`：查看已发布内容的页面地址，仅在有已发布内容时返回；host 为 `<appCode>.<appDomain host>`
 - `editPageUrl`：打开当前节点或独立部署工作台中的页面编辑器
 
-`data.codeContent` 是当前完整页面文件，可在本地完成新增、修改或删除后，作为 `page custom-update --page-content <json>` 的完整页面内容提交。
+`data.codeContent` 是当前完整页面文件。将其写入本地目录后完成新增、修改或删除，再以 `page custom-update --page-dir <dir>` 提交该目录中的完整页面内容。

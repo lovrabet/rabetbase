@@ -20,10 +20,24 @@
 ### 新建页面
 
 1. 先阅读 [`rabetbase-page-create.md`](../references/rabetbase-page-create.md)
-2. 使用基础模板时传 `--page-pattern BLANK`；已有完整源码时只传 `--page-content`。先执行 `page create --dry-run`，确认页面名称、父菜单和最终页面文件
-3. 经用户确认后创建页面，记录 `data.after.pageId`。新页面默认尚未发布
-4. 执行 `page custom-detail --id <pageId>`，以 `data.codeContent` 中的完整页面文件为修改基线
-5. 需要定制初始文件时，再按“更新页面”流程保存完整页面文件
+2. 阅读 [`page-templates.md`](../knowledge/custom-page/page-templates.md)，先判断内置模板能否作为页面的主要结构和交互起点；适合时选择 `BLANK`、`ONEPAGE` 或 `DASHBOARD`，不适合时按完整页面内容创建。模板也可在创建或更新页面时作为布局、主题和交互实现参考
+3. 根据模板判断和本地内容情况选择创建方式：
+
+| 内容来源 | 处理方式 |
+|---|---|
+| 使用内置模板 | 直接传 `--page-pattern <BLANK|ONEPAGE|DASHBOARD>`，由 CLI 读取对应模板 |
+| 不使用内置模板，且没有本地已有内容 | 在当前工作目录创建临时专用页面目录，生成完整 JSX、样式、词包和组件文件，再将该目录传给 `--page-dir <dir>` |
+| 本地已有完整页面目录 | 直接将该目录传给 `--page-dir <dir>`，无需创建临时目录或重新生成内容 |
+
+模板只能作为局部实现参考，或创建后需要替换其中大部分文件时，按不使用内置模板处理，直接准备完整页面目录并使用 `--page-dir`。
+
+`--page-pattern` 与 `--page-dir` 必须且只能选择一个；两者同时提供、均未提供，或 `--page-dir` 指向空目录时，本地校验失败。CLI 会递归读取 `--page-dir` 指向的目录并转换为页面请求内容，Agent 不得自行拼接或转码 `page-content` JSON
+4. 先使用与正式创建相同的 `--page-pattern` 或 `--page-dir` 参数执行 `page create --dry-run`，确认页面名称、父菜单和最终页面文件
+5. 经用户确认后执行正式创建命令
+6. 仅当步骤 2 为从零生成内容而创建了临时目录时，流程成功、失败、中断或用户取消后都删除该目录；删除范围仅限本次创建的临时目录，不得删除用户已有页面目录
+7. 创建成功时记录 `data.after.pageId`。新页面默认尚未发布
+8. 执行 `page custom-detail --id <pageId>`，以 `data.codeContent` 中的完整页面文件为修改基线
+9. 需要定制初始文件时，再按“更新页面”流程保存完整页面文件
 
 创建页面会同时创建菜单入口。不得额外调用菜单创建命令重复创建入口。
 
@@ -37,15 +51,18 @@
 ### 更新页面
 
 1. 阅读 [`rabetbase-page-custom-update.md`](../references/rabetbase-page-custom-update.md)
-2. 将新增、修改和保留的所有文件整理为完整 `page-content` JSON
-3. 先执行 `page custom-update --dry-run` 审阅完整页面文件
-4. 经用户确认后执行更新
-5. 再执行 `page custom-detail --id <pageId>`，确认 `codeContent` 已包含预期文件和内容
-6. 已发布页面更新后，最新保存内容需要再次发布，用户访问的已发布页面才能看到本次修改
+2. 以 `page custom-detail` 返回的最新完整页面内容为修改基线
+3. 需要调整页面模式或交互时，可参考 `BLANK`、`ONEPAGE` 或 `DASHBOARD` 的布局、主题和交互实现，按实际需求选择性合并；模板仅作为实现参考，不直接覆盖已有页面
+4. 将新增、修改和保留的所有文件整理到一个专用本地目录
+5. 先执行 `page custom-update --page-dir <dir> --dry-run` 审阅完整页面文件
+6. 经用户确认后执行更新
+7. 正式更新命令结束后，无论成功、失败或中断，都删除步骤 4 创建的临时页面目录，删除范围仅限该目录
+8. 再执行 `page custom-detail --id <pageId>`，确认 `codeContent` 已包含预期文件和内容
+9. 已发布页面更新后，最新保存内容需要再次发布，用户访问的已发布页面才能看到本次修改
 
-`page custom-update` 会完整保存页面文件：未提交的文件会被删除。不得仅提交本次修改的单个文件，也不得为删除文件再调用不存在的独立删除命令。
+`page custom-update` 会完整保存页面文件：传入目录中未包含的文件会被删除。不得只保留本次修改的单个文件，也不得为删除文件再调用不存在的独立删除命令。
 
-当前 CLI 没有逐文件新增、编辑或删除命令。将本地文件操作整理为完整 `codeContent` 后再调用 `custom-update`；每次更新都会创建一个新的保存版本，`custom-detail` 默认读取最新页面内容。
+当前 CLI 没有逐文件新增、编辑或删除命令。将本地文件操作整理到完整目录后再调用 `custom-update`；每次更新都会创建一个新的保存版本，`custom-detail` 默认读取最新页面内容。
 
 ### 发布页面
 
@@ -62,7 +79,8 @@
 自定义页面的 React JSX 实现有“未发布”和“已发布”两种状态。未发布的修改可通过 `pageUrl` 或编辑器查看，已发布页面只展示最近一次发布的内容。
 
 ```text
-page create --page-pattern BLANK
+page create --page-pattern <BLANK|ONEPAGE|DASHBOARD>
+或 page create --page-dir <dir>
   → 未发布
   → 生成或更新完整页面文件
   → 未发布
@@ -139,7 +157,7 @@ page create --page-pattern BLANK
 
 编写页面内容前，先阅读 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md)。
 
-- 选择、组合或新增 UI 组件时，按需阅读 [`components.md`](../knowledge/custom-page/components.md)
+- 选择、组合或新增 UI 组件时，按需阅读 [`components.md`](../knowledge/components.md)
 - 调用页面上下文、国际化、路由或数据客户端时，按需阅读 `generation-standards.md` 中的“页面上下文内置能力”
 - 未登记的组件、方法、参数和返回结构不得猜测，先补充确认后的规范再复用
 
@@ -157,14 +175,14 @@ src/components/*.jsx
 代码遵循以下约束：
 
 - 仅导入 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md)“依赖白名单”中的包及其子路径
-- 使用页面上下文时，从 `@/context/app-context` 导入 `useSdkClient`、`useI18n`、`useNavigate`、`useLocation`
+- 使用页面上下文时，从 `@/context/app-context` 导入 `useSdkClient`、`useI18n`、`useNavigate`、`useLocation`、`useAppTheme`
 - 数据读取或写入前，先确认数据集及 SDK 用法；接口或字段无法从现有事实确认时，不得猜测请求协议
 - 所有用户可见文案通过 `$i18n.t("key")` 获取，并在 `src/locales/index.js` 提供有效翻译
 - 路由跳转使用 `navigate`，读取地址信息使用 `location`；关联页面优先使用 `navigate("/pagecode", { onePage: true })`
 - CSS 使用 Ant Design CSS 变量，不写死颜色或其他样式常量
 - 不新增白名单外依赖，不使用 `window.location`
 
-传 `--page-pattern BLANK` 时，`page create` 生成基础 JSX、样式和词包。首次自定义时，将初始文案和样式一并调整为上述约束后再发布，不把初始化模板视为最终页面实现。
+内置模板的本地文件、内容边界、mock 数据替换方式以及 `ONEPAGE`、`DASHBOARD` 交互设计统一见 [`page-templates.md`](../knowledge/custom-page/page-templates.md)。页面通过 `client` 访问真实业务数据的方式仍按 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md) 执行。
 
 ## 页面内容自检
 
@@ -183,7 +201,7 @@ src/components/*.jsx
 ## 最小验证闭环
 
 ```text
-新建：create --page-pattern BLANK --dry-run → create --page-pattern BLANK → custom-detail → [按需] custom-update --dry-run → custom-update → custom-detail → [尚未发布（status 非 FORMAL）且经确认] custom-publish --dry-run → custom-publish
+新建：选择 --page-pattern <BLANK|ONEPAGE|DASHBOARD> 或 --page-dir <dir> → 使用相同来源参数执行 create --dry-run → create → custom-detail → [按需] custom-update --dry-run → custom-update → custom-detail → [尚未发布（status 非 FORMAL）且经确认] custom-publish --dry-run → custom-publish
 
 修改：custom-list（按需）→ custom-detail → custom-update --dry-run → custom-update → custom-detail → [尚未发布（status 非 FORMAL）且经确认] custom-publish --dry-run → custom-publish
 ```
@@ -198,5 +216,5 @@ CLI 当前不提供本地预览或独立删除命令。
 - [`rabetbase-page-custom-update.md`](../references/rabetbase-page-custom-update.md)
 - [`rabetbase-page-custom-publish.md`](../references/rabetbase-page-custom-publish.md)
 - [`generation-standards.md`](../knowledge/custom-page/generation-standards.md)
-- [`components.md`](../knowledge/custom-page/components.md)
+- [`components.md`](../knowledge/components.md)
 - [`rabetbase-codegen-sdk.md`](../references/rabetbase-codegen-sdk.md)

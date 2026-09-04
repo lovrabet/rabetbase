@@ -6,7 +6,7 @@
 
 在生成 JSX、CSS 或词包前，先阅读本规范，并按需加载以下文档：
 
-- 选择或组合 UI 组件时，阅读 [`components.md`](components.md)
+- 选择或组合 UI 组件时，阅读 [`components.md`](../components.md)
 - 访问数据集时，先确认数据集事实，并按“数据客户端文档”拉取目标数据集的 SDK 契约
 
 未在这些文档中登记的规范、组件或方法，不得假设存在。
@@ -15,7 +15,7 @@
 
 | 范畴     | 约束                                                                                                                      |
 | -------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 提交内容 | `page custom-update` 提交完整页面文件，未提交的已有文件会被删除                                                            |
+| 提交内容 | `page custom-update --page-dir <dir>` 提交目录中的完整页面文件，未包含的已有文件会被删除                               |
 | 推荐结构 | 页面入口仍为 `src/app/index.jsx`；其余文件和组件目录可按页面需要组织，`src/app/index.css`、`src/locales/index.js`、`src/components/*.jsx` 仅为示例 |
 | 组件复用 | 优先查阅并复用已有组件库和页面已有组件；仅当现有能力无法满足需求时才创建新组件 |
 | 依赖     | 仅使用“依赖白名单”中的包及其子路径                                                                                       |
@@ -46,7 +46,7 @@
 | -------- | ---------------------------------- | ------ |
 | 页面目标 | 页面解决的问题、目标用户、完成标准 |        |
 | 页面身份 | 新建页面或已有 `pageId`            |        |
-| 布局     | 区域划分、响应式要求、视觉约束     |        |
+| 布局     | 区域划分、响应式要求（PC Web 与 mobile）以及视觉约束     |        |
 | 交互     | 查询、编辑、跳转、提交、确认等行为 |        |
 | 数据     | 数据集、字段、操作、权限和错误语义 |        |
 | 文案     | 语言范围、词条命名和默认文案       |        |
@@ -58,16 +58,22 @@
 - `src/app/index.jsx` 负责页面入口、页面级状态和主布局
 - 复杂或可复用区域可按页面需要拆分到合适的相对路径，`src/components/` 仅为示例
 - 每个组件只接收其实际需要的数据和回调，避免把页面全部状态逐层透传
+- 建议根据具体需求优先考虑自适应设计，尽量避免不必要的固定像素宽高和固定列数；页面需要同时用于 PC Web 与 mobile 时，建议兼顾两端的展示与交互。对于明确限定终端、尺寸或布局的场景，可采用与需求匹配的固定方案
+
+### 内置页面模板
+
+`BLANK`、`ONEPAGE` 和 `DASHBOARD` 的选型、内容边界、mock 数据替换、创建与更新方式及交互设计统一见 [`page-templates.md`](page-templates.md)。本文件只维护页面实现所需的数据访问、主题、路由、国际化、ECharts 和源码约束。
 
 ### `src/app/index.jsx` 模板
 
-初始化创建自定义页面时，必须以此模板生成 `src/app/index.jsx`。将 `{{pageName}}` 替换为页面名称；保留词包注册、上下文 Hook 和样式导入，再按需求扩展布局、状态与数据调用。通过 `page create --page-content` 初始化创建时，传入的 `src/app/index.jsx` 也必须从此模板派生。
+初始化创建自定义页面时，必须以此模板生成 `src/app/index.jsx`。将 `{{pageName}}` 替换为页面名称；保留词包注册、上下文 Hook 和样式导入，再按需求扩展布局、状态与数据调用。通过 `page create --page-dir <dir>` 初始化创建时，目录中的 `src/app/index.jsx` 也必须从此模板派生。
 
 更新已有页面时，以 `page custom-detail` 返回的最新 `codeContent` 为基线；不强制套用或补齐本模板，应仅按更新需求修改页面内容。
 
 ```jsx
 import React from "react";
 import {
+  useAppTheme,
   useSdkClient,
   useNavigate,
   useLocation,
@@ -79,6 +85,9 @@ const App = () => {
   const $i18n = useI18n(); // 国际化多语言实例
   const navigate = useNavigate(); // 路由跳转实例
   const location = useLocation(); // 浏览器 location 实例
+  const theme = useAppTheme(); // 当前主题（可能未提供）
+  const mode = theme?.mode; // "light" | "dark"
+  const skinColor = theme?.skinColor; // 十六进制色值，如 "#ababab"
 
   return <div className="page-container">{/* 自定义页面内容 */}</div>;
 };
@@ -133,6 +142,7 @@ export default App;
 
 ```js
 import {
+  useAppTheme,
   useSdkClient,
   useI18n,
   useNavigate,
@@ -146,6 +156,66 @@ import {
 | `useI18n`      | 获取页面国际化实例       | 词条 key 和词包翻译                   | 见“国际化”     |
 | `useNavigate`  | 获取页面路由跳转方法     | 目标页面 code 和跳转方式              | 见“导航”       |
 | `useLocation`  | 获取当前地址信息         | 需要读取的地址信息                    | 见“导航”       |
+| `useAppTheme`  | 获取当前主题             | 主题是否可用与组件兼容性              | 见“主题配置”   |
+
+### 主题配置
+
+在页面中调用 `useAppTheme()` 即可读取当前主题；没有主题时返回 `undefined`。
+
+```js
+const theme = useAppTheme();
+const mode = theme?.mode; // "light" | "dark"
+const skinColor = theme?.skinColor; // 十六进制色值，如 "#ababab"
+```
+
+- 不要依赖 `theme` 一定存在；所有访问必须使用可选链或默认值
+- `mode` 与 `skinColor` 为运行期提示，不替代完整的 Ant Design 主题系统
+- 推荐使用 `antd` 主题系统设置主题色，优先复用 `ConfigProvider` 的 `token`、`algorithm` 与组件 token
+- 新增页面逻辑涉及颜色时，推荐优先使用当前 `ConfigProvider` 提供的 token 或 CSS 变量，让按钮、链接、选中态和自定义区域尽量跟随应用主题色变化
+
+### antd 主题色使用 Demo
+
+```jsx
+import { Card, ConfigProvider, theme as antdTheme } from "antd";
+import { useAppTheme, useI18n } from "@/context/app-context";
+
+const isThemeColor = (value) =>
+  /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value || "");
+
+const getThemeConfig = (appTheme) => ({
+  cssVar: { key: "custom-page-theme" },
+  algorithm:
+    appTheme?.mode === "dark"
+      ? antdTheme.darkAlgorithm
+      : antdTheme.defaultAlgorithm,
+  ...(isThemeColor(appTheme?.skinColor)
+    ? {
+        token: {
+          colorPrimary: appTheme.skinColor,
+        },
+      }
+    : {}),
+});
+
+const App = () => {
+  const $i18n = useI18n();
+  const appTheme = useAppTheme();
+
+  return (
+    <ConfigProvider theme={getThemeConfig(appTheme)}>
+      <Card title={$i18n.t("title")}>{$i18n.t("content")}</Card>
+    </ConfigProvider>
+  );
+};
+
+export default App;
+```
+
+- 推荐做法（最佳实践，可按页面实际情况调整，不作为强制要求）：
+  - `mode === "dark"` 时可使用 `antdTheme.darkAlgorithm`，其他情况可使用 `antdTheme.defaultAlgorithm`
+  - `skinColor` 合法时可作为 `colorPrimary`；未传入或不合法时建议不设置该 token，交由 Ant Design 使用默认主题色
+  - 需要在 CSS 中使用 token 时，建议启用 `cssVar`，随后使用 `var(--ant-color-primary)`、`var(--ant-color-bg-layout)` 等变量，减少直接写死 hex
+  - 仅使用组件 token 时，可以不启用 `cssVar`
 
 ### 国际化
 

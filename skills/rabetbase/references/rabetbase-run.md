@@ -34,6 +34,7 @@ rabetbase run build -- --mode production
 ## 特殊行为
 
 - **自动检测包管理器**：按 lock 文件判断 bun / pnpm / yarn / npm
+- **公开 Domain 快照**：在 Rabetbase 项目中执行 `start`、`dev`、`build` 或 `preview` 前，根据当前有效配置刷新 `rabetbase.domain-routing.json`；内容未变化时不重写、不输出提示
 - **`start` / `dev` 脚本**：执行前自动检查 CLI 和 SDK 版本，有更新时打印升级警告
 - **`preview --watch`**：并行启动 `vite build --watch` 和 `vite preview`，适合开发时预览生产构建
 
