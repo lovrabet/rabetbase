@@ -27,6 +27,8 @@ SQL 内容编写、参数绑定与 MyBatis 语法以 [`sql-mybatis.md`](sql-myba
 ### 3. 校验字段
 执行 `rabetbase dataset detail --code <数据集编码> --format json` 确认表名、字段名、字段类型。禁止凭经验猜。
 
+同时核对各表所属连接与该 SQL 的执行连接；同名表须按真实连接消歧。不同连接的逻辑关联由 [跨库 BFF 查询与拼接](cross-database-bff.md)编排分库读取，不能用跨库 JOIN、子查询或视图绕过边界。`sql validate` 的静态检查不证明跨连接可执行、权限完整或全局结果正确。
+
 ### 4. 先把 SQL 拉/落到同步目录
 
 #### 修改已有 SQL

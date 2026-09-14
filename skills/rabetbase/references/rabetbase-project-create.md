@@ -51,8 +51,8 @@ rabetbase project create my-project --appcode <code>
 **关键边界：**
 
 - 当前目录非空时不得覆盖、移动或删除已有内容，应报告冲突。
-- `needsAgentMerge` 只表示已有 TypeScript 被保留，是检查提示，不代表必须改写文件；仅在模型事实存在差异时合并。
-- `--force --yes` 只用于首次脚手架拉取明确失败，或用户明确要求放弃本地定制的场景。
+- `needsProjectUpgrade` 表示模型事实已刷新，但已有项目尚未安装稳定源码入口；新建项目模板正常不会出现该状态。
+- `--force --yes` 在注册表模式只用于确认远端空清单，不用于源码迁移。
 - 此意图只授权本地工程创建与平台事实读取，不授权修改线上业务数据或平台资源。
 
 `api pull` 的单应用/项目应用清单输出结构见 [`rabetbase-api-pull.md`](rabetbase-api-pull.md)，TypeScript 合并规则见 [`sdk-client-generation.md`](../guides/sdk-client-generation.md)。Agent 可根据实际输出选择检查、修复和验证方式。
@@ -70,7 +70,7 @@ rabetbase project create my-project --appcode <code>
 - 交互与非交互模式使用同一创建流程，都会安装依赖、格式化代码并写入项目配置
 - 项目模板从 CDN 下载并校验 SHA-256；CDN 不可用、模板不兼容或校验失败时命令停止，修复后重试
 - 新项目中的 `.rabetbase.json` **只继承**全局中的少量偏好及 `region` / Domain 路由配置，**不会**把全局的 `apps` / `defaultApp` 复制进新项目
-- `src/api/sdk-config.ts` 与 `rabetbase.domain-routing.json` 只生成浏览器可公开的最终路由，不会写入 `cookie`、`accessKey` 等认证配置；`rabetbase run start|dev|build|preview` 会在执行脚本前刷新公开 Domain 快照，也可用 [`project domain-routing-sync`](rabetbase-project-domain-routing-sync.md) 立即显式刷新。`api.ts` / `client.ts` 仅在缺失时由 CLI 写脚手架，已有文件按 [`sdk-client-generation.md`](../guides/sdk-client-generation.md) 更新；若项目创建时首次拉取失败，按 CLI 提示执行 `rabetbase api pull --force --yes` 完成占位脚手架初始化
+- `src/api/sdk-config.ts` 与 `rabetbase.domain-routing.json` 只生成浏览器可公开的最终路由，不会写入 `cookie`、`accessKey` 等认证配置；`rabetbase run start|dev|build|preview` 会在执行脚本前刷新公开 Domain 快照，也可用 [`project domain-routing-sync`](rabetbase-project-domain-routing-sync.md) 立即显式刷新。新项目模板已经包含稳定 `api.ts` / `client.ts`；若首次拉取失败，修复登录或连接后执行普通 `rabetbase api pull --format compress` 刷新占位注册表
 
 | 当前有效路由 | `src/api/sdk-config.ts` |
 |--------------|-------------------------|

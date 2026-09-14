@@ -21,7 +21,13 @@ tags: [jsx, custom-component, page-schema]
 
 ## 机制
 
-`render` 只写 `source`，不写编译后的 `value`。`source` 按 React 组件源码编写，固定使用 `function render(props)`；页面上下文从 `props.env` 读取。Agent 只维护 `source`。
+`render` 只写 `source`，不手工写编译后的 `value`。`source` 按 React 组件源码编写，固定使用 `function render(props)`；页面上下文从 `props.env` 读取。Agent 只维护 `source`。
+
+页面编辑器与 `rabetbase page push` 都使用平台正式 JSX 编译器把 `source` 包装为运行时函数，并在调用源码组件时注入 `{ env, sdkClient }`。因此：
+
+- `props.env` / `props.sdkClient` 是源码 React 组件的 props，不是原始 `render.value` 函数的直接参数
+- 不要根据运行时外层 `function render(env)` 手工拼装 `value`，也不要在源码中改用 `this`
+- 通过 CLI 推送时，缺失或变化的 `value` 会自动生成；编译失败时页面不会更新
 
 推荐固定写法：
 
@@ -45,6 +51,7 @@ function render(props) {
 |------|------|------|
 | `props.render.type` | 是 | 固定为 `JSFunction` |
 | `props.render.source` | 是 | JSX 源码 |
+| `props._context` | 是 | 页面运行时上下文，固定为 `{ "type": "JSExpression", "value": "this" }`；`rabetbase page push` 会自动补齐或规范化 |
 
 ### source 可用参数
 
@@ -114,6 +121,7 @@ function render(props) {
 
 | 要点 | 说明 |
 |------|------|
-| 只需提供 `source` | `value` 由系统自动生成 |
-| source 中访问上下文 | 使用 `props.env`；不要手写编译后的函数参数 |
+| 只需维护 `source` | `value` 由页面编辑器或 `rabetbase page push` 使用平台正式编译器生成 |
+| source 中访问上下文 | 使用 `props.env` / `props.sdkClient`；不要手写编译后的函数参数，不要改用 `this` |
+| `_context` 固定 | 运行时需要页面上下文；CLI 推送时会自动规范为 `JSExpression: this` |
 | `setState` 触发刷新的前提 | 数据源 params 必须绑定 `this.state.xxx` |

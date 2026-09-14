@@ -37,6 +37,8 @@
 - `--dry-run` 预览成功，不等于远端已执行
 - 命令执行失败时，不能用“已处理”“已保存”这类表述蒙混过去
 
+**BFF 同步分歧例外**：`bff pull` / `bff push` 的 `data.conflicts` 表示可恢复的本地与远端分歧，不是 `failed`。必须报告每项 `lockKey`、`code` 和 `nextAction`；`BFF_LOCAL_UNSYNCED` 经审阅后可精确 push 更新远端，`BFF_REMOTE_VERSION_CHANGED` / `BFF_REMOTE_VERSION_MISSING` 则先用其 `bff detail` 命令读取远端源码并合并。两类场景都不得自动 `--force` 或声称已完成同步。
+
 ---
 
 ## AI 的沟通义务

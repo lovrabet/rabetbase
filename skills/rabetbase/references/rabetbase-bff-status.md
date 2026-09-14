@@ -23,6 +23,8 @@ rabetbase bff status --remote --format json
 - `unchanged`：本地与 lock 一致
 - `remoteOnly`：仅远端存在（需 `--remote`）
 
+启用 `--remote` 时，CLI 会自动聚合远端 Backend Function 的全部分页后再计算 `remoteOnly`。
+
 ## 提示
 
 - `push` 前先看 `status`

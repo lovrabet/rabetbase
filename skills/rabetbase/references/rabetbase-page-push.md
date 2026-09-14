@@ -31,7 +31,11 @@ rabetbase page push --id 1020286 --dry-run --format json
 ## 行为说明
 
 - 单页模式：校验本地文件、读取 lock、比对远端版本，再调用更新接口
-- 批量模式：只推送本地 hash 有变更的页面；无基线时会 fail-fast，提示先执行 `page pull`
+- 批量模式：先完成远端版本检查与 `LrSmartJsx` 编译准备，再只推送结果 hash 与 lock 不同的页面；无基线时会 fail-fast，提示先执行 `page pull`
+- 遇到 `LrSmartJsx` 时，以 `props.render.source` 为唯一手工维护内容；源码变化、`render.value` 缺失或远端无编译值时，CLI 调用平台正式编译器生成 `value`
+- CLI 会把 `LrSmartJsx.props._context` 规范为 `{ "type": "JSExpression", "value": "this" }`；`source` 组件仍通过 `props.env` / `props.sdkClient` 消费平台注入能力
+- `--dry-run` 同样执行编译校验，但不会更新页面；任一组件编译失败时整页不提交
+- 不要手写或直接修改 `render.value`；当 `source` 未变化但本地 `value` 与远端不一致时，命令会拒绝推送并提示修改 `source`
 - 推送后会再次拉取远端 canonical schema，并覆盖本地文件和 lock，避免本地保留非 canonical 版本
 
 ## 提示

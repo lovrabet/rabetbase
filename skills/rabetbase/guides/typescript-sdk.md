@@ -18,6 +18,15 @@
 
 生成或更新项目里的 `src/api/api.ts` / `client.ts` 时，先 `rabetbase api pull --format compress`，再遵守 [`sdk-client-generation.md`](sdk-client-generation.md)。浏览器子应用的默认 client 是 Cookie + `...LOVRABET_SDK_CONFIG`，不要把下面的服务端 `accessKey` 示例写进 `src/api/client.ts`。
 
+## 多 profile 的调用边界
+
+CLI 生成的多 profile 注册表用于**同一份代码在不同节点分别运行**：当前 Runtime Domain 必须且只能选中一个 profile，随后业务代码通过同一 alias 使用该 profile 的 `datasetCode`。它不表示一个浏览器实例能同时查询多个节点。
+
+- 不在业务代码中读取 `datasetCodes`、指定另一个 profile，或硬编码任一节点的 DatasetCode。
+- 当前 profile 没有某 alias 时，让 SDK 抛出 `MODEL_NOT_FOUND`；节点独有功能可先检查生成入口导出的 `LOVRABET_PROFILE_NAME`，不得回退默认 profile。
+- 不在浏览器中创建多个跨 Domain client 或转发 Cookie、AccessKey、token。确需跨节点聚合时，由可信服务端或 Backend Function 按明确授权编排。
+- 只需分别验证节点数据时，使用对应项目 profile 和运行态工具逐端验证，不把它实现成业务前端的跨节点调用。
+
 ## 初始化规则
 
 必须使用 `createClient` 命名导出，禁止使用 `new LovrabetClient()`：

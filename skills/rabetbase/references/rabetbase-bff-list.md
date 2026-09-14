@@ -38,7 +38,7 @@ rabetbase bff list --appcode app-xxxxxxxx
 
 ## 输出
 
-默认返回精简列表（id, functionName, description, scriptType）。`--verbose` 返回完整对象。
+CLI 自动聚合服务端全部分页。默认返回精简列表（id, functionName, description, scriptType）。`--verbose` 返回完整对象。
 
 ## Backend Function 脚本类型
 

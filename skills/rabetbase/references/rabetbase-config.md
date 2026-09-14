@@ -6,7 +6,7 @@
 
 它**不是**平台应用目录。若要查看当前登录账号在平台上能访问哪些应用，应使用 `rabetbase app list --remote`，而不是直接查看 `.rabetbase.json`。
 
-只自动读取 `.rabetbase.json`，不会把 `.lovrabet.json` 或 `.lovrabetrc` 当作 Rabetbase 配置。旧文件需要迁移时，显式执行 `rabetbase project upgrade`。
+只自动读取 `.rabetbase.json`，不会把 `.lovrabet.json` 或 `.lovrabetrc` 当作 Rabetbase 配置。`.lovrabet.json` 属于 Lovrabet 运行态 CLI，可与 `.rabetbase.json` 在同一项目共存；Rabetbase 命令不会迁移、改写或删除它。
 
 ## 初始化
 
@@ -32,6 +32,8 @@ rabetbase workspace init --appcode <code>
 ```
 
 CLI 对旧版顶层 `appcode` 仍兼容读取，但它已经不是推荐主模型。
+
+CLI 新写入或重写配置时不会持久化默认内部路由字段；历史文件仍保持读取兼容。若顶层存在非默认值，而某个应用显式回到默认值，写入时会把非默认值下沉到实际继承它的应用，再省略默认标记，确保配置精简且生效语义不变。
 
 ## 兼容读取的单应用模式
 
@@ -59,7 +61,6 @@ CLI 对旧版顶层 `appcode` 仍兼容读取，但它已经不是推荐主模�
 ```json
 {
   "appcode": "app-xxx",
-  "env": "production",
   "locale": "en-US",
   "cookie": "session-cookie-value",
   "accessKey": "ak-xxx",
@@ -94,20 +95,20 @@ CLI 对旧版顶层 `appcode` 仍兼容读取，但它已经不是推荐主模�
     },
     "product": {
       "appcode": "app-zzzzzzzz",
-      "env": "production",
+      "region": "id",
       "apiDir": "./src/api/product"
     }
   }
 }
 ```
 
-每个 app profile 可单独覆盖普通顶层字段。唯一 app 自动激活；两个及以上 app 必须通过 `--app <name>` 临时选择，或用 `defaultApp` 持久选择，CLI 不按 JSON key 顺序猜测。`riskLevel` 是安全例外：默认值为 `write`，全局、项目与 profile 决定基础上限并取最严格值。权限不足时停止执行并请求授权人员处理；Agent 和自动化脚本不得自行修改 `riskLevel`、配置文件、环境变量或尝试提权。
+每个 app profile 可单独覆盖普通顶层字段。顶层 `region` 是共享国家/地区回退值，`apps.<name>.region` 优先；因此同一个项目可以同时登记中国大陆与印尼应用。唯一 app 自动激活；两个及以上 app 必须通过 `--app <name>` 临时选择，或用 `defaultApp` 持久选择，CLI 不按 JSON key 顺序猜测。`riskLevel` 是安全例外：默认值为 `write`，全局、项目与 profile 决定基础上限并取最严格值。权限不足时停止执行并请求授权人员处理；Agent 和自动化脚本不得自行修改 `riskLevel`、配置文件、环境变量或尝试提权。
 
 管理命令（声明式 flags，非位置参数）：
 
 ```bash
 rabetbase workspace add order --appcode app-order-001 --env daily
-rabetbase workspace add product --appcode app-product-002
+rabetbase workspace add product --appcode app-product-002 --region id
 rabetbase workspace use --app order
 rabetbase app list
 rabetbase workspace remove product --yes
@@ -120,7 +121,7 @@ rabetbase workspace remove product --yes
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `appcode` | string | — | 顶层单应用兼容字段。新写入优先使用 `apps`。兼容旧名 `app` |
-| `env` | string | `"production"` | 环境。可选值：`production`、`daily`（配置文件若仍为旧值 `online`，加载时会规范为 `production`） |
+| `env` | string | — | 历史兼容字段；默认连接不落盘，读取旧配置时仍兼容 |
 | `locale` | string | `"en-US"` | 应用本地化设置（不是 CLI 语言；目前命令尚未消费） |
 | `cookie` | string | — | 内联 session cookie。设置后优先于 `~/.lovrabet/cookie` 文件 |
 | `accessKey` | string | — | Access Key 认证（预留，未来替代 cookie） |
@@ -146,7 +147,9 @@ rabetbase workspace remove product --yes
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `appcode` | string | **必填**。该应用的 appcode |
-| `env` | string | 覆盖顶层 `env` |
+| `apiGroup` | string | 可选显式归并键。同一套业务 API 的多个部署使用相同值并共用一个 `apiDir`；普通单应用不配置 |
+| `region` | string | 覆盖顶层国家/地区；当前可写 `cn`、`id`。显式 `cn` 会保留，以便覆盖顶层 `id` |
+| `env` | string | 历史兼容字段；默认连接不落盘 |
 | `apiDir` | string | 覆盖顶层 `apiDir` |
 | `cookie` | string | 覆盖顶层 `cookie` |
 | `accessKey` | string | 覆盖顶层 `accessKey` |
@@ -160,9 +163,9 @@ rabetbase workspace remove product --yes
 每个配置项的解析优先级从高到低（`appcode` 不从环境变量自动解析，必须来自 `--appcode` 或配置文件）：
 
 ```
-CLI flag (--appcode, --env, --format, --app ...)
+CLI flag (--appcode, --format, --app ...)
   ↓
-当前项目 app profile / 顶层字段
+当前项目 app profile（包括 `region`）/ 顶层字段
   ↓
 环境变量 (RABETBASE_ENV, RABETBASE_FORMAT ...)
   ↓
@@ -243,7 +246,6 @@ rabetbase dataset list --appcode "$RABETBASE_APPCODE"
     },
     "product": {
       "appcode": "app-product-002",
-      "env": "production",
       "riskLevel": "read"
     }
   }

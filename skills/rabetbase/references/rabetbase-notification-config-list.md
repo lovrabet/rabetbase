@@ -7,6 +7,7 @@
 ```bash
 rabetbase notification config-list --format compress
 rabetbase notification config-list --type EMAIL --format compress
+rabetbase notification config-list --all --format compress
 rabetbase notification config-list --type EMAIL --appcode app-xxxxx --format json
 ```
 
@@ -19,6 +20,8 @@ rabetbase notification config-list --type EMAIL --appcode app-xxxxx --format jso
 * `WEBHOOK`
 
 类型值使用大写。
+
+`--all` 会分别查询 `EMAIL`、`FEISHU`、`DINGTALK`、`WECOM`、`WEBHOOK`，合并为同一份安全摘要。`--all` 与 `--type` 互斥；不传二者时继续保持默认 `EMAIL` 行为。
 
 ## 输出
 
@@ -42,6 +45,20 @@ rabetbase notification config-list --type EMAIL --appcode app-xxxxx --format jso
     ]
   },
   "message": "Found 1 EMAIL notification config(s)"
+}
+```
+
+`--all` 输出使用 `data.channelTypes` 代替单个 `data.channelType`，`configs` 为五种类型结果的合并列表：
+
+```json
+{
+  "ok": true,
+  "data": {
+    "appCode": "app-xxxxx",
+    "channelTypes": ["EMAIL", "FEISHU", "DINGTALK", "WECOM", "WEBHOOK"],
+    "count": 2,
+    "configs": []
+  }
 }
 ```
 

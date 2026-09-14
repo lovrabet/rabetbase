@@ -66,7 +66,7 @@ Backend Function 脚本统一存放在 `.rabetbase/bff/<appCode>/` 目录下，�
 ```text
 .rabetbase/bff/<appCode>/
 ├── HOOK/
-│   └── <alias>/
+│   └── <alias-or-datasetCode>/
 │       └── <operationType>/
 │           └── <functionNode>/
 │               └── <name>.js
@@ -78,26 +78,28 @@ Backend Function 脚本统一存放在 `.rabetbase/bff/<appCode>/` 目录下，�
 
 规则：
 
-* HOOK 放在 `.rabetbase/bff/<appCode>/HOOK/<alias>/<operationType>/<functionNode>/`
+* HOOK 放在 `.rabetbase/bff/<appCode>/HOOK/<alias-or-datasetCode>/<operationType>/<functionNode>/`
 * ENDPOINT 放在 `.rabetbase/bff/<appCode>/ENDPOINT/`
 * COMMON 放在 `.rabetbase/bff/<appCode>/COMMON/`
 * 本地文件是可选的人类辅助物，平台是唯一 source of truth
 
-### HOOK 目录名优先级
+### HOOK 目录协议
 
-HOOK 的第一层子目录名（标识数据集）按以下优先级确定：
+HOOK 的第一层子目录名按 SDK 模型配置确定：
 
-1. **alias**（优先）：来自 `api.ts`（`api pull` 返回的 models，按 [`sdk-client-generation.md`](sdk-client-generation.md) 维护）
-2. **datasetCode**（兜底）：当 `api.ts` 不可用时，直接使用 32 位数据集编码
+1. SDK 模型中有唯一 alias 时使用 alias。
+2. 没有可用 alias（包括已删除 Dataset 遗留的 HOOK）时，使用 Dataset code。
+3. `bff pull` 会将 lock 跟踪的旧表名或过期 alias 目录安全迁移到当前 alias；当前没有 alias 时迁移到 Dataset code。`--dry-run` 会返回迁移计划。
+4. alias / Dataset code 命名空间碰撞、映射漂移，或同一 Dataset 同时存在两个实际本地目录时，pull/push 在首次写入前失败，不猜测、不合并、不覆盖；pull 迁移时目标目录已存在也会失败。
 
-推荐先执行 `rabetbase api pull --format compress`，再按 guide 更新 `api.ts` 以获得可读 alias。
+目录协议只影响本地源码组织。正式 push 始终解析并提交平台真实 Dataset ID；operationType、functionNode 和脚本内容合同不变。
 
 ## 文件命名与函数命名
 
 | 类型 | 文件名 | 导出函数 |
 |------|--------|---------|
-| HOOK Before | `<name>.js`（位于 `HOOK/<alias>/<operationType>/before/`） | `<name>` |
-| HOOK After | `<name>.js`（位于 `HOOK/<alias>/<operationType>/after/`） | `<name>` |
+| HOOK Before | `<name>.js`（位于 `HOOK/<alias-or-datasetCode>/<operationType>/before/`） | `<name>` |
+| HOOK After | `<name>.js`（位于 `HOOK/<alias-or-datasetCode>/<operationType>/after/`） | `<name>` |
 | ENDPOINT | `<scriptName>.js`（位于 `ENDPOINT/`） | `<scriptName>` |
 | COMMON | `<scriptName>.js`（位于 `COMMON/`） | `<scriptName>` |
 
@@ -200,6 +202,14 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 * 必要时再 `rabetbase bff pull --format json` 同步远端到本地
 
 先确认“远端现在是什么”，再决定是否继续改本地、查页面或查锁状态。
+
+需要定位运行时输入、分支或异常时，用只读日志查询缩小范围：
+
+* `rabetbase bff logs --since 10 --format compress`
+* `rabetbase bff logs --since 30 --level ERROR --keyword timeout --format compress`
+* 已知精确时段时使用 `--start-time <毫秒时间戳> --end-time <毫秒时间戳>`
+
+日志查询默认最近 30 分钟、最多 200 行。无结果时先核对 App Code 和时间范围，再逐步移除 `level` / `keyword`，不要通过反复执行写操作来制造日志。
 
 ### Step 5：自检
 
@@ -820,6 +830,8 @@ rabetbase notification config-list --type EMAIL --format compress
 
 ## 事务规则
 
+事务原子性只适用于已核验的运行时事务范围。跨连接模型操作或外部 API 不因位于同一个回调就成为原子操作；分库读取也不能假定共享一致性快照。涉及这些场景时，按 [跨库 BFF 查询与拼接](cross-database-bff.md)确认授权、一致性与写入边界。
+
 事务使用方式：
 
 ```javascript
@@ -850,6 +862,8 @@ await context.client.db.transaction(async (tx) => {
 
 编写 Backend Function 前，必须阅读 `data-api-guidelines.md` 中的性能优化部分。
 
+跨库关联须先区分展示补充与参与筛选、排序、统计的关联，执行顺序见 [跨库 BFF 查询与拼接](cross-database-bff.md)。批量调用仍需处理分页完整性和重复匹配；不能用单次 `$in` 或当前页拼接代替完整结果。
+
 重点避免：
 
 * 循环查询单条
@@ -858,7 +872,7 @@ await context.client.db.transaction(async (tx) => {
 
 性能要求：
 
-* 单次脚本数据库调用尽量控制在 `50` 次以内
+* 按接口限制与业务预算设定调用次数、读取量和超时上限；超限时明确报告，不能截断并冒充完整结果
 * 可批量查询时，用 `filter + $in`
 * 同一数据集批量新增优先使用 `batchCreate()`；相同字段值的批量更新优先使用 `update({ id: [...] })`
 * 只有 Instant API 无法表达的复杂写入才考虑已有且契约可信的 Custom SQL

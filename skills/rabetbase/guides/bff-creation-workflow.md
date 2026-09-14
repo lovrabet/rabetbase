@@ -41,7 +41,9 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 写入前必须确认：
 * 业务必填字段：`data.fields[].required === true`，平台自动维护字段除外
 * 枚举/选择字段：写入 `options[].value`，不要写展示用 `label`
-* 外键字段：从 `data.relations[]` 或 `dataset relations` 确认真实关系
+* 外键字段：同库关系从 `data.relations[]` 或 `dataset relations` 确认；跨库关系使用 `dataset cross-relation-list`，不能用同库关系列表代替
+
+涉及跨连接读取或拼接时，先读 [跨库 BFF 查询与拼接](cross-database-bff.md)，确认完整键、基数、目标字段用途、各端授权和读取预算。业务关系说明与平台登记事实分别核对；冲突时报告差异，不能自动采用平台关系。复合键不能拆成独立的单字段 Relation。
 
 ### 3. 查平台（按需）
 * 新建 → 跳过
@@ -94,6 +96,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 执行 `rabetbase bff push --type <type> --name <name> --format json`：
 * 成功项进入 `uploaded`
 * 未变更项进入 `skipped: unchanged`
+* 同步分歧进入 `conflicts`；逐项审阅 `lockKey`、`code` 和 `nextAction`，不要将它们说成失败
 * 失败项进入 `failed`
 
 ### 9. 运行态 smoke（按需）
@@ -114,10 +117,18 @@ lovrabet bff exec --appcode <appCode> --name <functionName> --params '<json>' --
 ### 10. 本地文件
 脚本内容直接保存在本地文件中，纳入 Git 管理。路径遵循 `.rabetbase/bff/<appCode>/` 目录约定（详见 `backend-function.md`）：
 * ENDPOINT → `.rabetbase/bff/<appCode>/ENDPOINT/<name>.js`
-* HOOK → `.rabetbase/bff/<appCode>/HOOK/<alias>/<operationType>/<functionNode>/<name>.js`
+* HOOK → `.rabetbase/bff/<appCode>/HOOK/<alias-or-datasetCode>/<operationType>/<functionNode>/<name>.js`
 * COMMON → `.rabetbase/bff/<appCode>/COMMON/<name>.js`
 
+`bff create` 使用 Dataset alias；没有可用 alias（例如已删除 Dataset 遗留的 HOOK）时，CLI 使用 Dataset code 目录。`bff pull` 会将 lock 跟踪的旧表名或过期 alias 目录安全迁移到当前 SDK alias；当前没有 alias 时迁移到 Dataset code。目标目录冲突、映射歧义或无法安全迁移时，命令会失败而不会覆盖本地脚本；先用 `--dry-run` 查看迁移计划。
+
 ## 冲突处理
+
+若返回 `conflicts`：
+* 告知用户冲突的 `lockKey`、`code` 和 `nextAction`
+* `BFF_LOCAL_UNSYNCED`：审阅本地脚本；确认本地版本应生效后，执行该项精确 `bff push` 命令更新远端
+* `BFF_REMOTE_VERSION_CHANGED` / `BFF_REMOTE_VERSION_MISSING`：保留本地脚本，先执行该项 `bff detail` 命令读取远端源码，合并后再重试 push
+* 不要自动使用 `--force`、盲目重试整批脚本，或将同步分歧报告为失败
 
 若返回 `failed`：
 * 告知用户失败的 `lockKey` 和错误原因

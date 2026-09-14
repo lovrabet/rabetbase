@@ -29,7 +29,7 @@ rabetbase bff create --type HOOK --name beforeFilter --alias appUser --operation
 |------|------|
 | ENDPOINT | `.rabetbase/bff/<appCode>/ENDPOINT/<name>.js` |
 | COMMON | `.rabetbase/bff/<appCode>/COMMON/<name>.js` |
-| HOOK | `.rabetbase/bff/<appCode>/HOOK/<alias-or-datasetCode>/<operationType>/<functionNode>/<name>.js` |
+| HOOK 草稿 | `.rabetbase/bff/<appCode>/HOOK/<alias-or-datasetCode>/<operationType>/<functionNode>/<name>.js` |
 
 Backend Function 源码**仅**应在此目录树内创建与长期维护（与 `bff status` / `bff push` 扫描一致）；不要在本仓库其他路径手写 Backend Function 再尝试推送。
 

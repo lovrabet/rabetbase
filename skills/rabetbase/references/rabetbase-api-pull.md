@@ -1,8 +1,8 @@
 # api pull
 
-拉取当前 App 下所有数据集（Dataset）的元信息，刷新 `src/api/sdk-config.ts`，并在 `api.ts` / `client.ts` **缺失时**写入 Cookie-first 脚手架。项目公开 Domain 路由由 [`project domain-routing-sync`](rabetbase-project-domain-routing-sync.md) 独立维护。
+拉取当前 App 下所有数据集（Dataset）的元信息并刷新 SDK 模型事实。单应用与显式配置同一 `apiGroup` 的多部署项目使用稳定的 `api.ts` / `client.ts`，CLI 将模型写入 `models.generated.ts`，由 `model-runtime.ts` 按最终 Runtime Domain 选择 profile。项目公开 Domain 路由由 [`project domain-routing-sync`](rabetbase-project-domain-routing-sync.md) 独立维护。
 
-已有 TypeScript 默认**不会被覆盖**。Agent 必须用返回的 `data.models` 按 [`sdk-client-generation.md`](../guides/sdk-client-generation.md) 更新 `api.ts` / `client.ts`。人类明确要放弃本地定制并重新生成完整脚手架时，可使用 `--force --yes`。
+`apiGroup` 只作为归并键，不进入文件名。第二套业务使用独立 `apiDir`，目录内仍是无前缀入口。同一目录中多个未配置 `apiGroup` 的历史 profile 继续使用 `[name-]api.ts` / `[name-]client.ts`。`api pull` 只刷新模型事实；已有应用的稳定入口迁移由 [`project upgrade`](rabetbase-project-upgrade.md) 负责。Agent 按 [`sdk-client-generation.md`](../guides/sdk-client-generation.md) 检查输出。
 
 ## 命令
 
@@ -13,8 +13,8 @@ rabetbase api pull --format compress
 # 指定输出目录
 rabetbase api pull --output ./src/generated/api/ --format compress
 
-# 放弃本地定制，按最新 Dataset 事实整体重建 TypeScript
-rabetbase api pull --force --yes --format compress
+# 确认远端清单确实为空，允许清空当前 profile
+rabetbase api pull --app oa-id --force --yes --format compress
 
 # 多应用：默认只解析「项目级」apps；与全局合并配置一起拉取时加 --global
 rabetbase api pull --global --format compress
@@ -22,6 +22,9 @@ rabetbase api pull --global --format compress
 # 多应用模式：指定某个应用
 rabetbase api pull --app order --format compress
 rabetbase api pull --appcode app-order-001 --format compress
+
+# 一个 AppCode 对应多个 profile 时必须按名称选择
+rabetbase api pull --app oa-id --format compress
 ```
 
 ## 参数
@@ -30,9 +33,9 @@ rabetbase api pull --appcode app-order-001 --format compress
 |------|------|
 | `--output <dir>` | 输出目录，默认 `./src/api/` |
 | `--global` | 多应用时显式从「全局+项目」双层解析 `apps`；默认仅项目级 `apps` |
-| `--force` | 整体替换已有 `api.ts` / `client.ts`；必须同时传 `--yes`，本地定制会丢失 |
+| `--force` | 注册表模式允许空结果替换当前 profile；历史前缀模式允许替换对应生成文件；必须同时传 `--yes` |
 | `--app <name>` | 多应用模式下，指定应用名称 |
-| `--appcode <code>` | 直接指定 appcode，跳过配置查找 |
+| `--appcode <code>` | 指定唯一 AppCode；匹配多个 profile 时必须改用 `--app` |
 | `--format compress\|json` | 结构化信封。Agent 应读 `data.models`，不要刮 stderr |
 
 ## 多应用过滤
@@ -40,7 +43,8 @@ rabetbase api pull --appcode app-order-001 --format compress
 多应用模式下：
 - **不加 `--app` / `--appcode`**：遍历已配置应用（默认仅 **项目** `.rabetbase.json` 中的 `apps`；若需包含全局里合并进来的应用，加 **`--global`**）
 - **加 `--app <name>`**：仅拉取指定应用
-- **加 `--appcode <code>`**：反查到对应 app profile，使用其 cookie/env/apiDir
+- **加 `--appcode <code>`**：唯一匹配时使用该 profile 的 `region`、cookie 和 apiDir；同一 AppCode 匹配多个 profile 时拒绝猜测，改用 `--app <name>`
+- 每个应用请求前都会切换到其有效 `region`，不会沿用上一个应用的官方服务地址
 
 ## 配置作用域
 
@@ -52,13 +56,17 @@ rabetbase api pull --appcode app-order-001 --format compress
 
 | 文件 | 行为 |
 |------|------|
-| `sdk-config.ts` | **每次刷新**。只含必要的最终 `runtimeDomain`，不含凭证 |
-| `<prefix>-api.ts` | 文件缺失时写入脚手架（含当前 `models`）；已存在时默认跳过，`--force` 时整体替换 |
-| `<prefix>-client.ts` | 文件缺失时写入 Cookie-first `createClient`；已存在时默认跳过，`--force` 时整体替换 |
+| `models.generated.ts` | 注册表模式下**每次刷新当前 profile**并保留其他 profile；公共代码写 `datasetCode`，差异或部分可用代码写 `datasetCodes[profile]`，不含凭证 |
+| `model-runtime.ts` | 由 `project create` / `project upgrade` 维护；`api pull` 不改写 |
+| `api.ts` / `client.ts` | 由 `project create` / `project upgrade` 维护稳定结构；注册表模式的 `api pull` 不创建、不覆盖 |
+| `sdk-config.ts` / `<prefix>-sdk-config.ts` | 每次刷新，只含必要的最终 Runtime Domain，不含凭证；旧式多应用继续使用前缀文件 |
+| `<prefix>-api.ts` / `<prefix>-client.ts` | 同目录未显式分组的历史多应用结构；默认保留，仍可被命令侧别名解析读取 |
 
-默认 `prefix` 为空（单应用），多应用非 default 应用使用应用名作为 prefix。
+注册表模式不使用国家/地区文件名前缀。业务代码始终 import `api.ts` / `client.ts`；页面加载时优先读取平台注入的 Runtime Domain，本地构建使用 `rabetbase.domain-routing.json`，据此物化该 profile 的 SDK `models` 数组。
 
-`project create` 在拷贝空 demo 脚手架后会覆盖写入一次 TypeScript，以便带上真实 models。首次拉取失败时，恢复提示会要求执行 `rabetbase api pull --force --yes`，避免占位脚手架被继续保留。日常 `api pull` 遇到已有 `api.ts` / `client.ts` 时跳过，只刷新 `sdk-config.ts` 并返回 Dataset 事实。
+同一 `apiGroup` + 同一规范化 `apiDir` 才进入同一注册表，组内 AppCode 可以相同或不同。相同 `apiGroup` 分散到不同目录、同一目录出现不同组、或显式分组与未分组混用都会在请求前报错。多个未分组 profile 共用目录时继续使用旧式具名入口；要共享模型必须显式配置同一个 `apiGroup`。
+
+`project create` 直接生成注册表结构。旧项目先执行 `project upgrade --dry-run`，确认后执行 `project upgrade --yes`；标准旧脚手架会备份后迁移，业务定制入口会保留并生成候选文件。随后运行普通 pull 刷新事实。只拉取一个 profile 时会保留同组其他 profile 的模型代码。注册表已有非空 profile 而远端返回空清单时，普通 pull 会拒绝清空；仅在确认远端确实为空时使用 `--force --yes`。
 
 ## 输出（单应用 `data`）
 
@@ -69,9 +77,13 @@ rabetbase api pull --appcode app-order-001 --format compress
 | `isDefaultConfig` | 默认应用为 `true` |
 | `models[]` | `datasetCode` / `tableName` / `name` / `alias` |
 | `sdkRouting` | `{ runtimeDomain?: string }` |
-| `files.api` / `files.client` / `files.sdkConfig` | `{ path, action }`：`created` / `overwritten` / `preserved` / `refreshed` |
-| `needsAgentMerge` | 任一 TypeScript 被 `preserved` 时为 `true`；这是本地检查提示，不表示文件一定存在差异 |
-| `apiFilePath` / `clientFilePath` / `sdkConfigPath` | 与 `files.*.path` 相同 |
+| `files.api` / `files.client` / `files.sdkConfig` | `{ path, action }`：`created` / `overwritten` / `preserved` / `refreshed` / `missing` |
+| `files.modelRegistry` / `files.modelRuntime` | 注册表模式下的生成文件及动作 |
+| `needsAgentMerge` | 旧式 TypeScript 被保留且尚未使用注册表时为 `true` |
+| `needsProjectUpgrade` | 注册表事实已刷新，但稳定源码入口缺失或仍为旧结构时为 `true` |
+| `modelProfile` | 已刷新的 profile 名称；旧式输出可省略 |
+| `apiFilePath` / `clientFilePath` / `sdkConfigPath` | 稳定入口与 SDK 路由路径 |
+| `modelRegistryPath` / `modelRuntimePath` | 注册表模式下的模型事实与选择器路径 |
 | `modelCount` / `datasetCount` | 模型数量 |
 
 项目使用 `apps` 清单解析时，`data` 为 `{ apps, succeeded, failed }`，每个 `data.apps[]` 元素都使用上表结构。因此 Dataset 事实从直接单应用结果的 `data.models` 读取，或从项目应用清单结果的 `data.apps[].models` 读取；以实际信封为准。
@@ -82,13 +94,13 @@ rabetbase api pull --appcode app-order-001 --format compress
 
 ## 前置条件
 
-- 已完成 `rabetbase auth` 登录
+- 已完成 `rabetbase auth login`；不同官方节点的登录态不通用时，先对目标 profile 执行 `rabetbase auth login --app <name>`
 - 已配置 appcode（单应用或多应用）
 
 ## 示例
 
 ```bash
-# 单应用：刷新 sdk-config.ts；缺失则写 api.ts/client.ts
+# 单应用：刷新模型事实
 rabetbase api pull --format compress
 
 # 多应用 order
@@ -97,8 +109,8 @@ rabetbase api pull --app order --format compress
 # 独立输出目录
 rabetbase api pull --output ./src/generated/api/ --format compress
 
-# 仅在明确放弃本地 TypeScript 定制时整体重建
-rabetbase api pull --force --yes --format compress
+# 仅在确认目标 profile 的远端 Dataset 清单确实为空时
+rabetbase api pull --app oa-id --force --yes --format compress
 ```
 
 更新已有 TypeScript：见 [`sdk-client-generation.md`](../guides/sdk-client-generation.md)。

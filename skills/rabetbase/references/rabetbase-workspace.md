@@ -9,7 +9,7 @@
 ## 命令
 
 ```bash
-rabetbase workspace init --appcode <code> [--env daily|production]
+rabetbase workspace init --appcode <code> [--region cn|id]
 rabetbase workspace init --app <name> --appcode <code>
 rabetbase workspace use --app <name>
 rabetbase workspace use --app <name> --appcode <code>
@@ -23,7 +23,8 @@ rabetbase workspace remove <name> [--global]
 |------|------|
 | `--app <name>` | 工作空间里的应用名，如 `crm`、`order` |
 | `--appcode <code>` | 应用 App Code；不知道本地应用名时可直接使用 |
-| `--env <env>` | 写入该 app profile 的环境：`daily` / `production` |
+| `--region <region>` | 写入该 app profile 的国家/地区：`cn` / `id` |
+| `--env <env>` | 历史兼容参数；默认内部路由值不会写入 app profile |
 | `--apiDir <dir>` | 写入该 app profile 的 API 目录 |
 | `--defaultFormat <format>` | 写入该 app profile 的默认输出格式 |
 | `--pageSize <n>` | 写入该 app profile 的分页大小 |
@@ -39,6 +40,7 @@ rabetbase workspace remove <name> [--global]
 - `workspace use --app crm`：切换当前目录默认应用；如果 `crm` 只存在于全局配置，会复制非敏感 profile 字段到当前目录。
 - `workspace use --app crm --appcode app-xxx`：直接在当前目录新增或更新 `crm`，并设为默认应用。
 - `workspace add crm --appcode app-xxx`：登记应用 profile（默认写当前项目，`--global` 写全局）。第一个应用不写 `defaultApp`；增加第二个应用时保留原应用为默认。已存在则更新。
+- `region` 省略时继承项目顶层、再继承全局回退；显式传 `--region cn` 或 `--region id` 时只作用于该应用。
 - `workspace remove crm`：移除本地应用 profile。默认按「项目优先、其次全局」定位要删的那一层，`--global` 强制删全局；只剩一个应用时删除冗余的 `defaultApp`，仍有多个应用时才自动切换；若该应用在项目与全局都有定义，只删单侧并在结果里提示另一侧仍存在。
 
 `workspace init` / `workspace use` 不会从全局配置复制 `cookie` / `accessKey` 到项目文件。若当前项目文件里原本已有这些字段，更新应用时会保留它们。

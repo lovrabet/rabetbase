@@ -113,6 +113,8 @@ rabetbase page pull --datasetcode <datasetCode> --version-tag <versionTag> --for
 1. 先 `pull` 建立基线，不要手工从零伪造页面文件
 2. 如需理解 PageSchema 组件语义，再按需查看 `knowledge/page-schema/`；那是组件知识，不是 CLI 命令 reference
 
+若页面包含 `LrSmartJsx`，只编辑 `props.render.source`。不要手写 `render.value`，也不要把平台渲染函数的内部参数模型复制进源码；`page push` 会调用平台正式编译器生成 `value`，补齐 `_context`，并在编译失败时阻止页面更新。
+
 ### 6. 推送前先做 `push --dry-run`
 
 真实推送前，先执行 [`page push`](../references/rabetbase-page-push.md) 的预演：
@@ -127,6 +129,7 @@ rabetbase page push --datasetcode <datasetCode> --version-tag <tag> --dry-run --
 - 本地是否存在基线
 - 远端页面版本是否已变化
 - 批量模式下目标页面组是否正确
+- `LrSmartJsx.render.source` 是否能被平台正式编译器成功编译
 
 若命令提示先重新 `pull`，不要盲推覆盖。
 

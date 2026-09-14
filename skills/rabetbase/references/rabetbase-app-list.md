@@ -2,7 +2,7 @@
 
 列出应用。
 
-默认列出**本地配置视图**，与 CLI 运行时一致：合并全局 `~/.rabetbase.json` 与从当前目录向父目录解析到的项目 `.rabetbase.json`。旧 `.lovrabet.json` / `.lovrabetrc` 不会自动参与配置发现。
+默认列出**本地配置视图**，与 CLI 运行时一致：合并全局 `~/.rabetbase.json` 与从当前目录向父目录解析到的项目 `.rabetbase.json`。Lovrabet 运行态配置 `.lovrabet.json` 以及 `.lovrabetrc` 不参与 Rabetbase 配置发现，也不会被修改。
 加 `--remote` 时改为查询**平台目录视图**：当前登录账号在平台上可访问的应用，不读取或修改本地 app 配置。
 
 - **不加 flag**：合并视图（global + project）。
@@ -48,6 +48,9 @@ rabetbase app list --remote
 | `definedIn` | `global` / `project` / `both`（合并视图下；单边视图下为对应侧） |
 | `isDefault` | 是否为当前解析出的默认应用 |
 | `isCurrent` | 是否为当前激活应用（合并视图） |
+| `region` | profile 中显式保存的国家/地区；未配置时为 `null` |
+| `effectiveRegion` | 当前应用最终使用的国家/地区 |
+| `regionSource` | `app` / `project` / `global` / `default`，表示有效值来源 |
 
 **jq 示例**（只取命名应用名）：`--format json --jq '.data.items[] | select(.named) | .name'`
 
