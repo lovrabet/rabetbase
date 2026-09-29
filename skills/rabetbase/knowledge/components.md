@@ -7,7 +7,7 @@
 - 自定义页面可导入的组件包仅限 [`generation-standards.md`](custom-page/generation-standards.md)“依赖白名单”中的包及其子路径
 - `@lovrabet/components` 使用包根入口的公开具名导出，不导入内部实现路径
 - 组件的用户可见文案必须使用 `$i18n.t("key")`
-- 所有组件均支持 Ant Design 主题、多语言和响应式自适应；优先继承页面配置，仅在单个组件确需覆盖时传入 `locale`
+- 所有组件均支持 Ant Design 主题、多语言和响应式自适应；Ant Design 文案继承外层 `ConfigProvider.locale`，YT 文案跟随 `@lovrabet/i18n` 全局语言
 - `env` 已废弃，后续不再透出，也不属于向用户展示或由用户选择的能力；新代码不得传入该参数
 - 组件样式优先复用 Ant Design token 和 CSS 变量，不写死主题色
 - 未登记的业务组件、组件属性或行为不得猜测
@@ -16,7 +16,7 @@
 
 组件、属性和行为以 `@lovrabet/components` 最新版本包根入口的公开导出为准。页面代码从包根入口导入：
 
-```js
+```ts
 import {
   YTAIButton,
   YTAIInput,
@@ -26,6 +26,8 @@ import {
   YTRichEditorPreview,
   YtUpload,
   YtUserSelect,
+  type YTUserSelectCode,
+  type YtUploadFile,
 } from "@lovrabet/components";
 ```
 
@@ -77,9 +79,9 @@ import { YtConfigProvider } from "@lovrabet/components";
 | --- | --- | --- |
 | `YTAIButton` | 通过已配置的提示词或 Skill 发起 AI 调用 | 配置 `promptId` 或 `skillId` 与必填 `userPrompt`，处理成功和失败回调 |
 | `YTAIInput` | 需要输入内容后发起 AI 调用 | 配置 AI 调用参数，并使用 `inputType`、`userPromptTemplate` 和提交前校验控制输入流程 |
-| `YtUserSelect` | 多选、编辑或只读展示应用用户 | 交互值使用用户 code 字符串数组，使用 `preview` 切换只读展示 |
+| `YtUserSelect` | 多选、编辑或只读展示应用用户 | 交互值使用用户 code 编号数组，使用 `preview` 切换只读展示 |
 | `YtAddressPicker` | 选择或只读展示地址层级 | 受控传入地址 value 路径；需要自定义地址时传入 `options` 或 `optionsUrl` |
-| `YtUpload` | 上传、展示、预览或下载附件 | 使用默认上传时必须显式传入当前有效的 `appCode`，组件不再自动注入；以 `value` 和 `onChange` 管理已完成的业务文件，使用 `maxCount` 限制数量 |
+| `YtUpload` | 上传、展示、预览或下载附件 | 使用 Ant Design 原生 `fileList` 和 `onChange(info)` 管理完整文件列表；默认上传传入当前有效的 `appCode`，自定义上传使用 `customRequest` |
 | `YTRichEditor` | 编辑富文本内容 | 用 `defaultValue` 初始化，通过 `onChange` 接收 HTML；使用默认图片上传时必须显式传入 `appCode`，组件不再自动注入，也可通过 `upload` 使用自定义上传 |
 | `YTRichEditorPreview` | 只读展示富文本 HTML | 传入必填 `content` |
 | `YtCodeEditor` | 编辑或只读展示代码、JSON 等文本 | 以 `value` 和 `onChange` 受控，按需设置 `language`、`readOnly` 和编辑器选项 |
@@ -122,8 +124,8 @@ import { YtConfigProvider } from "@lovrabet/components";
 
 ### 用户选择
 
-```jsx
-const [userCodes, setUserCodes] = useState([]);
+```tsx
+const [userCodes, setUserCodes] = useState<YTUserSelectCode[]>([]);
 
 <YtUserSelect
   appCode={appCode}
@@ -151,31 +153,31 @@ const [address, setAddress] = useState([]);
 
 ### 附件上传
 
-```jsx
-const [files, setFiles] = useState([]);
+```tsx
+const [files, setFiles] = useState<YtUploadFile[]>([]);
 
 <YtUpload
   appCode={appCode}
   accept="image/*"
   maxCount={maxFiles}
   maxSizeMB={maxFileSizeMB}
-  value={files}
-  onChange={setFiles}
+  fileList={files}
+  onChange={({ fileList }) => setFiles(fileList)}
 />
 ```
 
-展示已有附件时，将已确认的 `YtUploadFile[]` 传给 `value`；只读预览、下载和列表展示时传入 `preview`。`max` 是已废弃的兼容属性，新代码使用 `maxCount`。
+展示已有附件时，将完整的 `YtUploadFile[]` 传给 `fileList`；每项至少提供稳定 `uid` 和标准 `name`。只读预览、下载和列表展示时传入 `preview`。
 
-自定义 `upload` 的类型为 `(file: File) => Promise<string>`。方法每次只接收一个文件，必须返回非空且可直接用于预览和下载的最终文件 URL；失败时应抛出或返回 rejected Promise，不得吞掉错误后返回空字符串。正式页面不得返回 `URL.createObjectURL(file)` 等仅在当前浏览器会话内有效的临时地址。传入 `upload` 后使用方自行负责上传服务、鉴权和服务端文件校验，组件仍负责 `maxCount`、`maxSizeMB`、`accept` 和上传状态展示；其中 `accept` 只限制文件选择器，不能替代服务端类型校验。文件与业务数据的关联、持久化和删除不属于 `upload` 方法职责。
+自定义请求、响应转换、校验和表单绑定约束见下方 `YtUpload` 章节。
 
 ### 富文本编辑与预览
 
-```jsx
-const [content, setContent] = useState(initialContent);
+```tsx
+const [content, setContent] = useState<string | null>(null);
 
 <YTRichEditor
   appCode={appCode}
-  defaultValue={initialContent}
+  defaultValue={content}
   onChange={setContent}
   onImageUploadError={setError}
 />
@@ -196,18 +198,17 @@ const [code, setCode] = useState("");
   language="json"
   value={code}
   onChange={setCode}
-  placeholder={$i18n.t("codeEditor.placeholder")}
   wordWrap="on"
 />
 ```
 
-`YtCodeEditor` 默认使用 JSON 语言和 `240px` 高度。只读展示时使用 `readOnly`，按需使用 `minimap`、`lineNumbers`、`wordWrap`、`fontSize`、`tabSize` 或 `options` 配置编辑器；这些显式属性优先于 `options` 中的同名配置。
+`YtCodeEditor` 默认使用 JSON 语言和 `240px` 高度。只读展示时使用 `readOnly`，按需使用 `minimap`、`lineNumbers`、`wordWrap`、`fontSize`、`tabSize` 或 `options` 配置编辑器；这些显式属性优先于 `options` 中的同名配置。当前公开类型不提供 `placeholder` 属性。
 
 ## 主题、多语言与自适应
 
 - 所有组件继承外层 Ant Design `ConfigProvider` 的主题色以及浅色、深色算法，不需要为组件单独写死颜色
-- 组件默认跟随页面由 `@lovrabet/i18n` 管理的全局语言；确需覆盖单个组件时传入 `locale`
-- `locale` 支持 `zh-CN`、`en-US`、`id-ID`、`ja-JP` 和 `tr-TR`，显式传入时优先于页面全局语言
+- YT 自身文案跟随页面由 `@lovrabet/i18n` 管理的全局语言，组件不再提供独立 `locale` 属性
+- Ant Design 内部文案继承外层 `ConfigProvider.locale`；切换语言时由上层同时更新全局语言和 `ConfigProvider`
 - 所有组件均支持响应式自适应；页面仍应提供可收缩的容器，避免固定宽度阻止组件适配小屏
 
 ### AI 调用组件
@@ -235,8 +236,8 @@ const [code, setCode] = useState("");
 #### `YtUserSelect`
 
 - 当前用户列表由组件加载，页面不自行猜测或复刻用户查询接口
-- 组件固定为多选模式；交互场景使用用户 code 字符串数组，`onChange` 始终返回 `string[]`
-- 读取时兼容字符串或数字类型的用户编号、历史 `{ code }[]` 以及用于旧数据展示的单个字符串或数字，新写入仍使用字符串数组
+- 组件固定为多选模式；交互场景使用用户 code 数组，`onChange` 返回 `YTUserSelectCode[]`，编号可以是字符串或数字
+- 读取时兼容字符串或数字类型的用户编号、历史 `{ code }[]` 以及用于旧数据展示的单个字符串或数字；新写入使用组件返回的 `YTUserSelectCode[]`，不转换成对象数组
 - 需要只读展示时传入 `preview`
 - 查询应用用户列表时传入当前 `appCode`
 
@@ -249,12 +250,15 @@ const [code, setCode] = useState("");
 
 #### `YtUpload`
 
-- 使用默认上传时必须由调用方显式传入当前有效的 `appCode`，组件不会自动注入；使用自定义 `upload` 或只读预览时不依赖默认上传配置
-- 自定义 `upload` 的签名为 `(file: File) => Promise<string>`，必须返回非空、稳定且可直接预览和下载的最终文件 URL；传入后替代默认上传逻辑
-- 自定义上传失败时抛出错误或返回 rejected Promise，不返回空字符串、响应对象或仅当前会话有效的 Blob URL
-- `value` 支持 `YtUploadFile[]` 或兼容的 JSON 字符串，`onChange` 返回上传完成的业务文件列表
-- 使用 `maxCount`、`maxSizeMB` 和 `accept` 限制上传数量、体积和文件选择范围；`max` 仅用于兼容旧代码
-- `accept` 只限制文件选择器，需要严格限制文件类型时仍由上传服务校验；需要只读展示、预览和下载时传入 `preview`
+- `YtUploadProps` 以 Ant Design `UploadProps<T>` 为主线，使用 `fileList`、`defaultFileList` 和原生 `onChange(info)`；不再使用历史 `value`、`onChange(files)` 或 JSON 字符串协议
+- `YtUploadFile<T>` 等同于 Ant Design `UploadFile<T>`；已有附件使用稳定 `uid`、标准 `name` 和 `status`，文件服务路径放在已确认的 `response` 数据结构中
+- 使用默认上传时传入当前有效的 `appCode`；仅传 `action` 时使用原生请求，传 `customRequest` 时由调用方完整接管请求
+- `dataProcess` 可同步或异步把内置请求、`action` 或 `customRequest` 的成功响应转换为最终文件 URL；未配置时保留原始响应
+- 自定义 `customRequest` 成功时调用 `onSuccess`，失败时调用 `onError`，需要取消时返回带 `abort` 的对象；不得把仅当前会话有效的 Blob URL 持久化为附件地址
+- `maxCount` 遵循 Ant Design 列表规则，不保证上传请求数量上限；需要严格限制请求数量或类型时在 `beforeUpload` 和服务端共同校验
+- 未提供自定义 `beforeUpload` 时，`maxSizeMB` 才接管文件大小校验；`accept` 只限制文件选择器
+- `preview` 是可覆盖的只读展示预设，不是权限控制；自定义 `showUploadList`、`children`、`onPreview` 或 `onDownload` 时使用调用方行为
+- 表单使用 `valuePropName="fileList"` 和 `getValueFromEvent={(info) => info.fileList}`；提交时只转换成功附件，不把筛选后的列表回写 `fileList`
 - 文件持久化、提交和删除由页面业务逻辑处理；先确认数据集 SDK 或其他已确认服务契约，再写入文件字段
 
 ### 内容编辑组件
@@ -267,7 +271,7 @@ const [code, setCode] = useState("");
 - 自定义图片上传失败时抛出错误或返回 rejected Promise，由 `onImageUploadError` 处理；不返回响应对象或临时 Blob URL
 - `upload` 和 `appCode` 均未配置时，文字编辑和内容预览仍可使用，图片上传功能不可用
 - 使用 `maxImageSize` 和 `imageAccept` 限制图片，使用 `onImageUploadError` 处理上传或校验失败
-- 通过 `disabled` 控制编辑状态；通过 `locale` 设置工具栏和错误提示语言
+- 通过 `disabled` 控制编辑状态；工具栏和错误提示跟随页面全局语言，不传入独立 `locale`
 - 使用 `YTRichEditorPreview` 或 `YTRichEditor.Preview` 展示 HTML，且必须传入 `content`
 - 需要自定义加载占位时使用 `loadingFallback`，不得猜测组件内部资源地址
 
@@ -276,6 +280,7 @@ const [code, setCode] = useState("");
 - 使用 `value` 与 `onChange` 管理编辑内容；空值按空字符串处理
 - `language`、`theme`、`minimap`、`lineNumbers`、`wordWrap`、`fontSize`、`tabSize` 和 `options` 用于配置 Monaco 编辑器
 - 需要展示不可编辑内容时使用 `readOnly` 或 `disabled`
+- 当前公开类型不支持 `placeholder`，需要空态提示时由页面在编辑器外层呈现
 - 未传 `theme` 时组件跟随外层 Ant Design 主题；页面不自行猜测 Monaco 运行资源或加载方式
 
 ### 非组件公开能力
@@ -287,6 +292,7 @@ const [code, setCode] = useState("");
 
 - 组件名称与属性以公开类型声明为准，不使用 README、Storybook 或包内部文件中未公开的实现路径
 - `YTRichEditor` 和 `YtUpload` 使用默认上传时，确认代码显式传入当前有效的 `appCode`，不得依赖历史默认注入行为
+- `YtUpload` 使用 `fileList`、原生 `onChange(info)` 与 `customRequest`，不得生成已移除的 `value`、`upload` 或组件级 `locale` 属性
 - 所有用户可见字符串，包括按钮文本、占位文本和自定义选项 label，均使用 `$i18n.t("key")` 或来自已确认的业务数据
 - 组件的加载、空态、失败和禁用状态与页面交互一致
 - 自定义数据读取或写入仍遵循 [`generation-standards.md`](custom-page/generation-standards.md) 中的数据客户端文档流程

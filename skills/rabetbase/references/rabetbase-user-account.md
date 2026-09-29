@@ -1,8 +1,26 @@
 # rabetbase user-account
 
-绑定当前已登录的 Lovrabet 平台用户与钉钉沙箱用户账号。该能力只处理显式提供的钉钉沙箱用户 ID，不负责打开登录流程或自动获取 ID。
+绑定当前已登录的 Lovrabet 平台用户与飞书或钉钉沙箱账号。只处理显式提供的账号 ID，不负责打开登录流程或自动获取 ID。
 
-## 命令
+## 飞书绑定
+
+先确认当前研发登录用户与飞书 union_id，再预演并显式执行：
+
+```bash
+rabetbase user-account feishu-bind --union-id on_example_001 --dry-run --format compress
+rabetbase user-account feishu-bind --union-id on_example_001 --format compress
+```
+
+- 绑定对象由当前登录会话确定，不需要 appCode，不接受代其他平台用户绑定的 userId，也不需要 appId 或 secret。
+- 使用与平台飞书应用相同开发者范围内的 union_id；不要传入 open_id 或 user_id。
+- CLI 去除首尾空白后按 `^on_[A-Za-z0-9_-]+$` 校验。该绑定是用户声明，格式合法不代表已验证账号归属，也不保证账号可以收到消息。
+- 普通 `write` 操作；dry-run 不发送绑定请求，`after.bound = true` 只是计划目标。
+- 正式执行调用 `POST /smartapi/user-accounts/cli/feishu/bind`，请求体只含 `{unionId}`；仅服务端明确返回 `success: true, data: true` 才确认成功。
+- 结果中 `selector.providerId = "feishu"`、`selector.unionId` 为去除首尾空白后的输入，`before: null` 表示没有绑定查询能力，不代表旧绑定不存在。
+- 网络超时、响应丢失或成功响应无法解码时，结果未知，不自动重试。先通过平台核实当前绑定，再人工决定是否使用同一 union_id 重试。
+- 不提供绑定查询或解绑命令；不承诺不同用户并发绑定同一 ID 的全局唯一性。
+
+## 钉钉沙箱命令
 
 先预览：
 

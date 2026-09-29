@@ -21,6 +21,7 @@ rabetbase page generate-status --datasetcode 097b7361b76c42bcb12b923fa5a08861 --
 
 - 命令查询的是**任务状态**，不是页面事实。
 - 当任务进入成功终态时，CLI 会补查 `page data-list-status`，把页面事实一并附在结果里，方便你直接判断是否形成完整数据列表页组。
+- 生成流程自动创建菜单入口；成功终态仍需核对完整页面组及对应菜单事实。预期菜单入口缺失时如实报告并核查，不报告整体就绪，也不自动用 `menu sync` 补建。
 - 若任务仍在 `PENDING/PROCESSING/RUNNING`，结果会保持机器可读的 `status / nextAction / query`。
 - 提交生成后保存 `taskId`、`operationId` 与 `clientOperationId`；超时、未知状态或网络失败时复用原标识查询，不重新执行 `generate-start --apply`，不得自动重提。
 - 成功终态时，页面组锚点位于 `data.dataListPageStatus.pageSets[].versionTag`。存在多个完整组、残留页或冲突时交给用户确认，不猜测 `versionTag`。

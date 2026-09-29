@@ -240,6 +240,8 @@ const client = useSdkClient();
 
 - 数据集模型调用（如 `models.<dataset>`）的调用标识、方法、参数、返回值和异常形态，严格以当前数据集的 API-doc 返回文档为准，不得自行推测或自由发挥
 - SQL、BFF 及其他非数据集能力的可用方法、参数、返回值和异常形态，均以 `@lovrabet/sdk` 的使用规范为准
+- 独立自定义页面工作流使用无参数 `client.flow()`；调用前完整阅读 [`custom-page-flow-sdk.md`](../../guides/custom-page-flow-sdk.md) 的返回对象字段字典、状态映射和页面组合规则，不在页面代码中重复创建 client、传 `appCode`、`operatorUserId`、AccessKey 或 Cookie，也不根据字段名猜测展示方式
+- 生成流程时间线时，必须按 [`custom-page-flow-timeline-display.md`](../../guides/custom-page-flow-timeline-display.md) 的节点、办理人状态、操作记录三层布局编写页面 JSX；中文页面显示“提交人 / 处理人 / 处理结果 / 处理说明 / 处理时间”等字段标题，不仅翻译状态值；转签记录与当前办理人状态分别展示，跳过任务不显示为已同意
 - 页面通过已发布 Custom SQL 的 `sqlCode` + `params` 执行查询
 - 页面调用 SQL 前，先用 `rabetbase sql list` 与 `rabetbase sql detail --sqlcode <sqlCode>` 确认目标资源
 - 生成使用自定义 SQL 的页面代码前，使用代表性参数执行 `rabetbase sql exec --sqlcode <sqlCode> --params <json> --format json`。若返回 `data.error`，先解决执行错误；成功后再根据 `data.rows` 与 `data.rowCount` 确认实际数据结构

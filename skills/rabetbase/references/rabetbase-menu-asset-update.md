@@ -1,8 +1,10 @@
 # menu asset-update
 
-更新指定线上微前端菜单的 CDN 资源 URL。
+更新指定线上菜单自身的 CDN 资源 URL。宿主可同时集成多个前端子应用和平台页面（数据列表页、自定义页面）。平台页面按其配置与发布流程管理，需要菜单资源时，该资源是正常加载配置，无需绑定 appName；本命令不修改页面内容或代替页面发布。绑定有效子应用共享资源时，支持该机制的宿主优先加载对应子应用的共享资源，菜单资源才作为兜底。
 
-> **风险等级：write** — 修改线上菜单运行资源；建议先 dry-run，正式执行复用相同参数并移除 `--dry-run`。
+仅在明确需要调整菜单资源时，平台页面才按菜单 ID/path 使用本命令。例如，自定义页面通过 [`page create`](rabetbase-page-create.md) 同时创建页面与菜单，后续按 pageId 使用 [`page custom-update`](rabetbase-page-custom-update.md)、[`page custom-publish`](rabetbase-page-custom-publish.md) 保存和发布，无需额外绑定 appName 或用 `menu sync` 注册菜单。前端子应用先用 `rabetbase menu subapp-assets-status --appcode <host-appcode> --app-name <name>` 核查，升级使用 `menu subapp-assets-update`；只有明确维护菜单自身的兜底配置时才使用本命令。
+
+> **风险等级：write** — 修改菜单自身的资源配置；建议先 dry-run，正式执行复用相同参数并移除 `--dry-run`。
 
 ## 命令
 
@@ -17,13 +19,13 @@ rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://.
 # 按菜单 ID 精确更新，并显式切换加载方式
 rabetbase menu asset-update --menu-ids "<menu-id>" --load-mode fetch --params '{"jsUrl":"https://...js"}' --dry-run --format compress
 
-# 明确需要全量发布时显式选择全部
+# 仅当明确要更新当前宿主所有已有 resources 的菜单时使用，不用于子应用版本升级
 rabetbase menu asset-update --all --params '{"jsUrl":"https://...js","cssUrl":"https://...css"}' --dry-run --format compress
 ```
 
 ## 高频 SOP：修改菜单资源 URL
 
-修改菜单中的 JS / CSS 资源 URL 是 `menu asset-update` 的主路径，不需要 `menu detail` 或其他配置更新命令。
+修改菜单自己的 JS / CSS 资源 URL 使用 `menu asset-update`：包括平台页面的正常资源配置，以及明确维护的子应用菜单兜底配置。不需要 `menu detail` 或其他配置更新命令。
 
 1. **先确认资源现状**，只看已配置资源的菜单：
 
@@ -73,7 +75,7 @@ rabetbase menu asset-update --paths "<menu-path>" --params '{"cssUrl":"https://c
 rabetbase menu asset-update --menu-ids "<menu-id>" --params '{"jsUrl":"https://cdn.example.com/app.js"}' --dry-run --format compress
 rabetbase menu asset-update --menu-ids "<menu-id>" --params '{"jsUrl":"https://cdn.example.com/app.js"}' --format compress
 
-# 显式更新全部菜单的 JS + CSS
+# 显式更新当前宿主全部已有 resources 的菜单，不限定为某个子应用
 rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/app.js","cssUrl":"https://cdn.example.com/app.css"}' --dry-run --format compress
 rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/app.js","cssUrl":"https://cdn.example.com/app.css"}' --format compress
 ```
@@ -113,7 +115,7 @@ rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/ap
 - 只有显式传 `--load-mode` 才修改加载方式
 - 默认 `patch`；使用 `replace` 时仍会阻止无意删除已有 JS
 - patch 被更新类型已有多个资源时会拒绝，不通过 `--force` 猜测替换目标
-- 典型场景：新版本构建后批量更新 CDN 地址
+- 典型场景：更新选定平台页面的 CDN 地址，或明确维护菜单兜底 URL；前端子应用升级优先更新共享资源
 - 交互模式会展示受影响菜单的摘要表
 
 ## 常见错误
@@ -124,7 +126,7 @@ rabetbase menu asset-update --all --params '{"jsUrl":"https://cdn.example.com/ap
 - 只想换 CSS 却显式使用 `replace`，导致已有 JS 被删除风险。
 - dry-run 已出现删除 JS warning，仍未取得用户明确确认就继续执行。
 - patch 报告同类型资源不唯一时尝试用 `--force` 绕过；应先确认完整资源集合，只有明确重写时才改用 `replace`。
-- 把资源 URL 修改误判为需要 `menu detail` / `config-update`；资源 URL 变更统一使用 `menu asset-update`。
+- 修改菜单自己的资源 URL 时误用 `menu detail` / `config-update`；此类变更使用 `menu asset-update`。同名子应用共享资源版本另行管理。
 
 ## 参考
 

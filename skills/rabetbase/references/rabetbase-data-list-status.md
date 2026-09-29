@@ -18,6 +18,7 @@ rabetbase page data-list-status --alias order --format json
   - 菜单事实
 - 它不返回异步任务的执行进度，也不负责表达 job 状态。
 - 这是 `page generate-start` 的前置判定与终态回查依据，属于事实接口，不是任务状态接口。
+- 数据列表页生成流程会自动创建菜单入口。生成后核对页面组及其对应的 `hasMenu`、`menuPath`、`menuVisible`：菜单存在与是否可见是不同事实，不要求每个辅助页面都有可见菜单。预期入口缺失时报告并核查，不自动使用 `menu sync` 补建或绑定子应用 appName。
 
 ## 适用场景
 

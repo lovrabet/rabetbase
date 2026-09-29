@@ -15,6 +15,8 @@
 - 审批、拒绝和转交已有运行态任务。
 - 验证流程实例、业务状态和任务权限。
 
+自定义页面代码可以通过页面注入的 `@lovrabet/sdk` client 查询和办理 `INDEPENDENT_FLOW + CUSTOM_PAGE`。这属于生成页面的运行时代码契约，不表示 `rabetbase flow` 命令本身可以办理任务；页面接入规则见 [`custom-page-flow-sdk.md`](../guides/custom-page-flow-sdk.md)。
+
 `rabetbase` 只调用已核实的运行态人员/角色只读接口来生成 FlowConfig，不查询或办理任务。需要办理待办时，显式交接到 Runtime CLI 仓库及其公开 Skill。
 
 ## 完成口径

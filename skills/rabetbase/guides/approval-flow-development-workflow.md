@@ -13,6 +13,13 @@
 
 先确定外层 `flowType`，再设计节点；不要根据是否出现审批节点反推流程类型。
 
+面向用户时按下列默认策略判定，不要先要求用户理解或选择 `flowType`：
+
+- 用户只说“创建审批流”“创建工作流”“设计业务流程”或“配置多级审批”时，默认推荐 `INDEPENDENT_FLOW`，并用“独立工作流”与用户沟通。
+- 需求包含填写、补充材料、执行业务、确认收货或其他人工办理步骤时，必须使用 `INDEPENDENT_FLOW`。
+- 只有用户明确说明是“已有数据集表单提交后的纯审批”，且没有上述办理步骤时，才选择 `FORM_FLOW`。
+- 业务信息不足时，可先说明推荐独立工作流及原因，再询问影响拓扑、办理人或数据绑定的必要业务信息。
+
 | `flowType` | 产品语义 | 人工节点 | 页面与数据边界 |
 |---|---|---|---|
 | `FORM_FLOW` | 表单审批流 | 只允许 `taskMode: APPROVAL`，禁止 `HANDLE` | 绑定 `datasetCode/pageId`；表单填写发生在发起前，驳回修改走重新提交 |
@@ -27,23 +34,36 @@
 
 用户要求 `PLATFORM_FORM` 时，直接返回 `NEEDS_DSL_EXTENSION`，说明当前版本只支持业务自定义页面；不要继续生成 FlowConfig，也不要执行 create/update。
 
-`pageMode` 不适用于 `FORM_FLOW`。自定义页面 SDK/OpenAPI 只查询和操作 `INDEPENDENT_FLOW + CUSTOM_PAGE`。
+`pageMode` 不适用于 `FORM_FLOW`。自定义页面 Flow SDK 只查询和操作 `INDEPENDENT_FLOW + CUSTOM_PAGE`；页面运行态调用遵循 [`custom-page-flow-sdk.md`](custom-page-flow-sdk.md)。
 
 `INDEPENDENT_FLOW + CUSTOM_PAGE` 可以选择性配置：
 
-- `flowJson.startPageId`：进入发起页面时使用。
-- 人工节点 `pageId`：待办、已办或任务详情进入当前节点页面时使用。
+- `flowJson.startPath`：进入发起页面时使用。
+- `APPROVAL.path`：待办、已办或任务详情进入当前节点页面时使用。
+- `END.path`：流程到达该结果节点后进入对应终态页面时使用。
 
-这两个字段只是导航元数据，不是业务字段，不参与分支、权限、办理人或流程状态计算；不配置时由业务应用自行选择页面。
+这些字段只是导航元数据，不是业务字段，不参与分支、权限、办理人或流程状态计算；不配置时由业务应用自行选择页面。
+
+### 页面导航绑定门禁
+
+导航字段的值必须是目标自定义页面的完整运行态地址 `runtimePageUrl`，例如 `https://app-demo.app.lovrabet.com/purchase/approve`；不得填写 `data.pages[].path`、`pageUrl`、`editPageUrl`，也不得根据 appCode、Domain 或菜单路径手工拼接。
+
+1. 先执行 `rabetbase page custom-list --format compress`，根据 `pageId`、`label` 和 `runtimePageUrl` 选择目标页面。列表中的 `runtimePageUrl` 只是候选运行态地址，不证明页面已经发布。
+2. 对每个准备绑定的页面执行 `rabetbase page custom-detail --id <pageId> --format compress`，以 `data.status` 判断当前保存内容是否已经发布。
+3. 只有 `data.status === "FORMAL"` 时，才允许把该页面返回的完整 `runtimePageUrl` 填入 `flowJson.startPath`、`APPROVAL.path` 或 `END.path`。
+4. `data.status` 不是 `FORMAL` 时，不得先填写候选 URL，也不得继续创建或更新包含该导航字段的 FlowConfig；返回 `NEEDS_USER_CONFIRMATION`，向用户说明页面尚未发布并询问是否先发布。
+5. 用户同意发布后，先执行 `page custom-publish --id <pageId> --dry-run` 并展示预览，取得明确确认后正式发布；只有回读 `data.after.status === "FORMAL"` 后，才使用发布响应中的 `runtimePageUrl` 填写导航字段。用户不同意发布时保持对应字段缺失。
+
+以上是 Skill 的远端事实门禁；本地 `flow validate` 只校验导航字段是否为非空字符串，不能替代页面发布状态检查。
 
 ## 标准流程
 
 1. 明确 `flowName`、业务描述、业务状态、办理步骤和通过/拒绝路径，并按上表显式选择 `flowType`。
-2. `FORM_FLOW` 配置外层 `datasetCode/pageId`；`INDEPENDENT_FLOW` 不配置这两个表单绑定字段，并使用显式或默认的 `pageMode: "CUSTOM_PAGE"`。用户要求 `PLATFORM_FORM` 时返回 `NEEDS_DSL_EXTENSION`。自定义页面可按需配置 `flowJson.startPageId` 和人工节点 `pageId`，自行查询和修改业务数据集，并按业务状态决定展示内容。
+2. `FORM_FLOW` 配置外层 `datasetCode/pageId`；`INDEPENDENT_FLOW` 不配置这两个表单绑定字段，并使用显式或默认的 `pageMode: "CUSTOM_PAGE"`。用户要求 `PLATFORM_FORM` 时返回 `NEEDS_DSL_EXTENSION`。自定义页面可按需配置 `flowJson.startPath` 以及 `APPROVAL` / `END` 节点 `path`；配置前必须完成上方页面导航绑定门禁，并使用已发布页面返回的完整 `runtimePageUrl`。页面自行查询和修改业务数据集，并按业务状态决定展示内容。
 3. 建立业务变量契约：逐项确认变量名、类型、初始来源、更新节点、消费节点以及是否用于待办/已办查询；区分顶层 `variables` 与 `formData`，禁止把 `approval_sys_*`、`approved` 当作业务变量。
 4. 根据业务逻辑直接生成完整的 `nodes + edges` 拓扑，不使用 `templateName` 或 SmartCode 模板表。
 5. 为每个人工节点确认 `taskMode`、`approvalMode`、`assignee.strategy` 和是否 `sequential`。决策用 `APPROVAL`；仅 `INDEPENDENT_FLOW` 可用 `HANDLE` 表达填写或确认数据后继续。办理完成后需要按业务变量分支时，按下方“HANDLE 后续路由”组合节点。
-6. 逐个人工节点确认可选配置：自定义页面 `pageId`、转交候选人 `transferCandidates`、超时动作 `timeout`、节点完成后默认抄送 `cc`；用户未提出时保持不配置，不自行推断人员、页面或超时时长。
+6. 逐个 `APPROVAL` 节点确认自定义页面 `path`、转交候选人 `transferCandidates`、超时动作 `timeout`、节点完成后默认抄送 `cc`；逐个 `END` 节点确认终态页面 `path` 和默认抄送 `cc`。页面导航只能取已发布页面的完整 `runtimePageUrl`；页面未发布时停止填写并询问是否先发布。用户未提出时保持不配置，不自行推断人员、页面或超时时长。
 7. 固定办理人、转交候选人和默认抄送人使用 `flow runtime-user-search` 查询运行态 `userId`；角色审批使用 `flow runtime-role-list` 查询运行态 `roleId`，必要时用 `flow runtime-role-user-list` 核对成员。不要把 `role *` 查询出的配置端人员/角色写入 FlowConfig。
 8. `SCRIPT` 节点和 `timeout.action: "EXECUTE_BFF"` 使用 `bff list --type ENDPOINT` 选择真实 `functionName`；同时确认同步/异步方式、重试配置和独立的 `resultVariable`。不要让多个脚本依赖默认的 `scriptResult`。
 9. `NOTIFICATION` 节点使用 `notification config-list --all` 选择真实 `configCode`，并确认 `failurePolicy`、模板内容、变量占位符和收件人来源。
@@ -51,7 +71,7 @@
 11. 执行 `rabetbase flow validate --file <path> --format compress`。
 12. 展示变量契约、拓扑、资源绑定、节点可选配置、warnings 和校验结果。只有 `valid=true` 才能进入远程写入。
 13. 用户确认后先执行 create/update 的 `--dry-run`，再正式提交。
-14. publish 属于 `high-risk-write`，先 `--dry-run`，正式执行必须显式 `--yes`。
+14. publish 属于普通 `write`，建议先 `--dry-run`审阅目标，再正式执行。
 
 ## 业务变量契约
 
@@ -72,21 +92,21 @@
 | 顶层 `variables.amount` | `${amount > 10000}` | `params.amount` | `${variables.amount}` |
 | `formData.amount` | `${formData.amount > 10000}` | `params.formData.amount` | `${variables.formData.amount}` |
 
-- `variables` 办理参数更新顶层流程变量；`formPatch` 增量增加、修改或删除 `formData` 字段。
+- `variables` 办理参数更新顶层流程变量；`formPatch` 按根级字段合并 `formData`，未传字段保留，传入字段替换，`null` 设为空值，嵌套对象和数组整字段替换。
 - 对象和数组可以作为流程变量供页面、脚本或通知读取，但当前待办/已办变量查询只支持字符串、数字和布尔值等值条件；需要查询的业务状态应单独保存为顶层标量变量。
 - `approval_sys_*`、`approved` 和平台维护的 `formData` 容器名属于保留范围，不作为业务变量名或 SCRIPT `resultVariable`。
 
 ## HANDLE 后续路由
 
 - `HANDLE` 只表示“填写或确认数据后继续”，自身必须且只能保留一条 `ALWAYS` 出边，不承担业务分支选择。
-- 自定义页面办理任务时，可以在办理请求中的 `variables` 更新业务变量，也可以用 `formPatch` 增量更新 `formData`；任务完成后，下游节点读取更新后的值。
+- 自定义页面办理任务时，可以在办理请求中的 `variables` 更新业务变量，也可以用 `formPatch` 按根级字段合并更新 `formData`；任务完成后，下游节点读取更新后的值。
 - 路由变量已由页面准备好时，生成 `HANDLE → CONDITION`，由条件网关表达多条业务路径。
 - 需要 Backend Function 先计算、校验或归一化路由变量时，生成 `HANDLE → SCRIPT → CONDITION`；不需要计算时不要为了分支强制插入 `SCRIPT`。
 - 不要给 `HANDLE` 直接配置多条出边，也不要让调用方传 `targetNodeId` 绕过流程图。办理节点存在多个业务结果不应判定为 `NEEDS_DSL_EXTENSION`；只有下游节点也无法表达需求时才进入 DSL 扩展判断。
 
 ## 候选确认
 
-- 不编造 `userId`、`roleId`、`datasetCode`、`pageId`、`scriptName` 或 `configCode`。
+- 不编造 `userId`、`roleId`、`datasetCode`、`pageId`、页面 `path`、`runtimePageUrl`、`scriptName` 或 `configCode`。
 - 多个候选必须展示稳定标识并请用户选择。
 - 唯一命中可作为推荐项，但人员身份、角色、拓扑和通知渠道仍需用户确认。
 - 无命中时继续询问关键词，不自动替换为相似资源。
@@ -131,7 +151,9 @@ rabetbase flow update --id 42 --file .rabetbase/flows/purchase.json --dry-run --
 rabetbase flow update --id 42 --file .rabetbase/flows/purchase.json --format compress
 
 rabetbase flow publish --id 42 --dry-run --format compress
-rabetbase flow publish --id 42 --yes --format compress
+rabetbase flow publish --id 42 --format compress
 ```
+
+`flow create` 和 `flow publish` 成功后都会返回当前环境对应的 `data.flowUrl`，并在成功消息中附上同一地址。Agent 应直接使用该字段交付可打开的设计态流程页面，不自行猜测域名或路径；daily、production、国家/地区节点及独立部署由 CLI 当前路由配置决定。
 
 不要根据本地文件中的遗留 `id` 或 `appCode` 决定提交目标。流程 ID 来自命令参数，应用编码来自当前工作区或显式 CLI app 选择。

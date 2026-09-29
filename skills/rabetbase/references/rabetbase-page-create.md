@@ -1,6 +1,6 @@
 # page create
 
-创建 JSX 自定义页面，并同时创建菜单入口。命令固定返回 `pageType=CUSTOM`。
+创建自定义页面，并同时创建菜单入口。命令固定返回 `pageType=CUSTOM`。
 
 该命令不接受 `--page-type`。工作台、看板、门户或复杂交互仍然属于 CUSTOM 页面；`rabetbase project` 管理独立子应用工程，不是页面类型或复杂页面的兜底入口。
 

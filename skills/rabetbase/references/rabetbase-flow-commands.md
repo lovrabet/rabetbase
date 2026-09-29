@@ -50,7 +50,9 @@ rabetbase flow create --file <path> --format compress
 
 调用 `POST /smartapi/flow/create`。提交前强制 normalize + validate。请求体只包含外层可写字段、当前工作区 `appCode` 和最小 `flowJson`；文件中的遗留 `id`、`appCode`、状态和部署字段不会提交。
 
-`flowType` 必填，支持 `FORM_FLOW`、`INDEPENDENT_FLOW`。`FORM_FLOW` 是表单审批流，禁止 `taskMode: HANDLE`；`INDEPENDENT_FLOW` 是工作流，可以同时包含 `APPROVAL` 和 `HANDLE`，且不能同时配置外层 `datasetCode` 或 `pageId`。`flowJson.pageMode` 只用于独立工作流，当前 CLI 只允许 `CUSTOM_PAGE`，缺省也按 `CUSTOM_PAGE`；`PLATFORM_FORM` 返回不支持错误。`INDEPENDENT_FLOW + CUSTOM_PAGE` 可选配置 `flowJson.startPageId` 和人工节点 `pageId`，两者仅用于导航。
+创建成功后返回 `data.flowUrl`，成功消息也会附上该地址。地址由当前 CLI 环境和 App Domain 自动生成，例如 daily 环境为 `https://daily.lovrabet.com/web-app/app/<appCode>/data/workflow?workflowId=<id>`；不要写死 daily 或 production 域名。
+
+`flowType` 必填，支持 `FORM_FLOW`、`INDEPENDENT_FLOW`。`FORM_FLOW` 是表单审批流，禁止 `taskMode: HANDLE`；`INDEPENDENT_FLOW` 是工作流，可以同时包含 `APPROVAL` 和 `HANDLE`，且不能同时配置外层 `datasetCode` 或 `pageId`。`flowJson.pageMode` 只用于独立工作流，当前 CLI 只允许 `CUSTOM_PAGE`，缺省也按 `CUSTOM_PAGE`；`PLATFORM_FORM` 返回不支持错误。`INDEPENDENT_FLOW + CUSTOM_PAGE` 可选配置 `flowJson.startPath` 以及 `APPROVAL` / `END` 节点 `path`，这些字段仅用于导航。Skill 填写这些字段时必须使用 `page custom-detail` 确认为 `FORMAL` 的自定义页面所返回的完整 `runtimePageUrl`；未发布页面需先询问用户是否发布，不得直接填写 `custom-list` 中的候选地址。
 
 Skill 直接提交完整 `nodes + edges` 拓扑，不读取或发送 `templateName`。旧本地文件中的该字段会在规范化时移除并产生 warning。
 
@@ -69,10 +71,12 @@ rabetbase flow update --id <flow-id> --file <path> --format compress
 
 ```bash
 rabetbase flow publish --id <flow-id> --dry-run --format compress
-rabetbase flow publish --id <flow-id> --yes --format compress
+rabetbase flow publish --id <flow-id> --format compress
 ```
 
-调用 `POST /smartapi/flow/publish`，风险为 `high-risk-write`。`--dry-run` 不发请求；正式执行必须确认或显式 `--yes`。SmartCode 同步返回发布结果，成功响应即为该命令的完成口径。
+调用 `POST /smartapi/flow/publish`，风险为普通 `write`。`--dry-run` 不发请求，建议正式执行前先审阅预演结果。SmartCode 同步返回发布结果，成功响应即为该命令的完成口径。
+
+发布成功后同样返回 `data.flowUrl` 并写入成功消息。Agent 应优先使用该结构化字段向用户提供流程页面地址。
 
 ## 风险与完成口径
 
@@ -81,6 +85,6 @@ rabetbase flow publish --id <flow-id> --yes --format compress
 | `validate` | `read` | 本地 `data.valid=true` |
 | `list` / `detail` | `read` | 服务端查询成功；detail 写文件时还需本地原子写入成功 |
 | `create` / `update` | `write` | 服务端返回创建或更新后的定义 |
-| `publish` | `high-risk-write` | 服务端返回发布成功 |
+| `publish` | `write` | 服务端返回发布成功 |
 
 本地 `READY` 不等于远程成功。服务端拒绝 create、update 或 publish 时返回 `REMOTE_VALIDATION_FAILED`，不得把 dry-run 或本地校验结果描述为已发布。

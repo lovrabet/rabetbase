@@ -8,8 +8,8 @@ FlowConfig 中的真实标识必须来自 CLI 查询，不得由 Agent 猜测。
 |---|---|---|
 | 外层 `datasetCode` | `dataset list`、`dataset detail` | Dataset `code` |
 | 外层 `pageId` | `menu list` | 与目标页面对应的 `pageId` |
-| `flowJson.startPageId` | `page custom-list`、`page custom-detail` | 自定义页面 `pageId` |
-| `APPROVAL.pageId` | `page custom-list`、`page custom-detail` | 自定义页面 `pageId` |
+| `flowJson.startPath` | `page custom-list` + `page custom-detail` | 已发布自定义页面的完整 `runtimePageUrl` |
+| `APPROVAL.path` / `END.path` | `page custom-list` + `page custom-detail` | 已发布自定义页面的完整 `runtimePageUrl` |
 | `APPROVAL.assignee.userIds` | `flow runtime-user-search` | 运行态 `users[].userId` |
 | `APPROVAL.assignee.roleId` | `flow runtime-role-list` | 运行态角色 `id` |
 | 角色成员核对 | `flow runtime-role-user-list` | 运行态只读成员清单 |
@@ -21,7 +21,7 @@ FlowConfig 中的真实标识必须来自 CLI 查询，不得由 Agent 猜测。
 | `NOTIFICATION.config.recipients[].value`（固定 USER） | `flow runtime-user-search` | 运行态 `users[].userId` |
 | `NOTIFICATION.config.recipients[].value`（固定 ROLE） | `flow runtime-role-list` | 运行态角色 `id` |
 
-`startPageId` 和节点 `pageId` 只选择自定义页面事实，不使用菜单名称、URL 或编辑器地址代替数值 `pageId`。占位符形式的通知收件人来自运行态变量，不需要资源查询；固定 EMAIL 收件人由用户明确提供，不推断邮箱地址。
+`page custom-list` 只用于筛选候选页面；填写 `startPath` 和节点 `path` 前必须再执行 `page custom-detail --id <pageId>`。只有 `data.status` 为 `FORMAL` 时，才使用详情返回的完整 `runtimePageUrl`；页面未发布时保持字段缺失并询问用户是否先发布。不得使用数值 `pageId`、菜单名称、菜单原始 `path`、`pageUrl`、`editPageUrl` 或手工拼接地址代替。占位符形式的通知收件人来自运行态变量，不需要资源查询；固定 EMAIL 收件人由用户明确提供，不推断邮箱地址。
 
 ## 搜索运行态应用用户
 

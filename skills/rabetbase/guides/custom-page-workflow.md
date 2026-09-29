@@ -8,11 +8,13 @@
 
 - 新建或修改 自定义页面、看板、门户、落地页或复杂交互页面
 - 使用 ECharts 实现图表、统计卡片和数据大屏
+- 为 `INDEPENDENT_FLOW + CUSTOM_PAGE` 实现发起、待办、详情和任务办理页面
 
 ## 前置上下文
 
 - 创建页面前确认 `appCode`；修改页面前确认 `pageId`
 - 确认页面目标，以及影响实现的布局、交互、数据和样式约束
+- 页面需要驱动独立工作流时，确认 `flowCode`、业务变量契约和页面承担的发起/办理阶段
 - 无法确定新建页面或目标页面时，先向用户确认
 
 ## 编排规则
@@ -44,7 +46,7 @@
 ### 查找或修改已有页面
 
 1. 未知页面 ID 时，先阅读 [`rabetbase-page-custom-list.md`](../references/rabetbase-page-custom-list.md)，执行 `page custom-list`；仅在跨应用或覆盖工作区默认应用时传 `--appcode <appCode>`
-2. 根据 `data.pages[].pageId` 与 `label` 与用户确认目标页面；`data.pages[].pageUrl` 用于查看最新保存内容，`data.pages[].editPageUrl` 用于打开页面编辑器
+2. 根据 `data.pages[].pageId` 与 `label` 与用户确认目标页面；`data.pages[].pageUrl` 用于查看最新保存内容，`data.pages[].runtimePageUrl` 是完整运行态地址、无论页面是否发布都会返回，但页面从未发布时打开会显示错误提示，`data.pages[].editPageUrl` 用于打开页面编辑器
 3. 阅读 [`rabetbase-page-custom-detail.md`](../references/rabetbase-page-custom-detail.md)，执行 `page custom-detail --id <pageId>`
 4. 只在返回的最新 `data.codeContent` 基础上编辑，不得根据旧缓存或猜测覆盖文件
 
@@ -73,6 +75,8 @@
 5. 从 `data.after.status` 确认 `FORMAL`，表示内容已发布
 
 `data.pageUrl` 用于查看最新保存内容，包含尚未发布的修改；`data.editPageUrl` 用于打开页面编辑器；`page custom-publish` 成功返回的 `data.runtimePageUrl` 用于查看已发布内容。不要将三者混用。
+
+将页面绑定到独立工作流时，`flowJson.startPath`、`APPROVAL.path` 和 `END.path` 填写完整 `runtimePageUrl`，不能填写菜单原始 `path` 或其他地址。绑定前必须用 `custom-detail` 确认 `status === "FORMAL"`；未发布时停止填写并询问用户是否先发布，发布成功并回读 `FORMAL` 后再绑定。
 
 ## 页面生命周期
 
@@ -109,7 +113,7 @@ page create --page-pattern <BLANK|ONEPAGE|DASHBOARD>
 | --- | --- | --- |
 | 创建/保存成功 | `pageUrl`、`editPageUrl` | `pageUrl` 查看最新保存内容，`editPageUrl` 打开页面编辑器 |
 | 发布成功 | `runtimePageUrl` | 查看最近一次已发布内容 |
-| 页面查询 | `pageUrl`、`editPageUrl` | 快速打开最新保存内容或页面编辑器 |
+| 页面查询 | `pageUrl`、`runtimePageUrl`、`editPageUrl` | 快速打开最新保存内容、运行态页面或页面编辑器 |
 
 ## 数据与服务契约
 
@@ -124,8 +128,9 @@ page create --page-pattern <BLANK|ONEPAGE|DASHBOARD>
 | 单一数据集请求 | 只涉及一个数据集的查询、详情、分页、筛选、创建、更新或删除 | 严格按照当前数据集 API-doc 返回的调用说明实现，不得自行推测或自由发挥调用标识、方法、字段、参数、返回值或异常处理 |
 | Custom SQL | 需要组合多个数据集，或需要数据库完成关联、聚合、分组、排序、计算和复杂筛选 | 先复用或按 SQL 工作流创建、校验并发布 Custom SQL，再通过 `client.sql.execute({ sqlCode, params })` 调用；不要把 CLI 的 `data.rows` 当作运行时返回结构 |
 | Backend Function | 需要按当前用户、角色、数据范围或业务规则额外鉴权，或需要数据转换、条件分支、多步编排和外部服务调用 | 将校验和编排放入已确认的 Backend Function，由页面通过 SDK 调用；前端只传业务参数，Backend Function 内按需执行已发布的 Custom SQL；简单查询不额外包装成 Backend Function |
+| Flow SDK | 页面发起、查询或办理已发布的独立自定义页面工作流 | 先完整阅读 [`custom-page-flow-sdk.md`](custom-page-flow-sdk.md) 的返回对象字段字典、状态映射和页面组合规则；使用页面注入的 `client.flow()`，不手动拼 Runtime URL、传 `appCode` 或根据字段名猜展示语义 |
 
-判断顺序：先确认单一数据集请求能否满足需求；数据组合和数据库计算是主要问题时选择 Custom SQL；当前用户、角色、数据范围或业务规则需要额外控制时选择 Backend Function。三种方式可以根据已确认的 SDK 契约配合使用，但不得自行推测方法、参数或返回结构。
+判断顺序：先确认单一数据集请求能否满足需求；数据组合和数据库计算是主要问题时选择 Custom SQL；当前用户、角色、数据范围或业务规则需要额外控制时选择 Backend Function；页面需要推进独立工作流时使用 Flow SDK。四种方式可以根据已确认的 SDK 契约配合使用，但不得自行推测方法、参数或返回结构。
 
 页面通过已发布 Custom SQL 的 `sqlCode` + `params` 执行查询；Backend Function 默认使用 `context.client.sql.byName(sqlName).execute({ params })`，`sql.execute({ sqlCode, params })` 仅作兼容路径。Dataset、Custom SQL 或 Backend Function 执行失败时，保留并报告原始错误，根据资源状态、参数与权限定位问题。
 
@@ -159,6 +164,9 @@ page create --page-pattern <BLANK|ONEPAGE|DASHBOARD>
 
 - 选择、组合或新增 UI 组件时，按需阅读 [`components.md`](../knowledge/components.md)
 - 调用页面上下文、国际化、路由或数据客户端时，按需阅读 `generation-standards.md` 中的“页面上下文内置能力”
+- 使用 `client.flow()` 时，先完整阅读 [`custom-page-flow-sdk.md`](custom-page-flow-sdk.md) 的全部固定返回对象与嵌套字段说明
+- 展示流程时间线时，再阅读 [`custom-page-flow-timeline-display.md`](custom-page-flow-timeline-display.md)，在页面内按节点、办理人状态、操作记录三层生成纵向视图
+- 使用 Ant Design 组件时，先确认页面实际使用的 Ant Design 版本，并严格按照该版本的公开文档和类型定义编写组件 API；不得沿用其他版本写法，也不得凭经验猜测组件属性、组合结构或事件签名
 - 未登记的组件、方法、参数和返回结构不得猜测，先补充确认后的规范再复用
 
 ## 页面文件与代码约束
@@ -218,3 +226,4 @@ CLI 当前不提供本地预览或独立删除命令。
 - [`generation-standards.md`](../knowledge/custom-page/generation-standards.md)
 - [`components.md`](../knowledge/components.md)
 - [`rabetbase-codegen-sdk.md`](../references/rabetbase-codegen-sdk.md)
+- [`custom-page-flow-sdk.md`](custom-page-flow-sdk.md)

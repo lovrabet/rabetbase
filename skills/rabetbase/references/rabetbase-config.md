@@ -129,7 +129,7 @@ rabetbase workspace remove product --yes
 | `pageSize` | number | — | 默认分页大小，用于 `sql list` 等分页命令 |
 | `riskLevel` | string | `"write"` | 允许执行的最高风险等级。可选值：`read`、`write`、`high-risk-write` |
 | `apiDir` | string | `"./src/api"` | `api pull` 生成代码的输出目录 |
-| `region` | string | `"cn"`（省略） | 官方节点快捷配置：当前开放 `cn`、`id`；历史 `global` 配置仅保留读取兼容。显式未知值会阻止业务命令回落默认节点，先用 `rabetbase doctor` 定位后修复 |
+| `region` | string | `"cn"`（省略） | 官方节点快捷配置：当前开放 `cn`、`id`、`global`。显式未知值会阻止业务命令回落默认节点，先用 `rabetbase doctor` 定位后修复 |
 | `template_base_url` | string | 平台默认 CDN | 模板 CDN 基础 URL，一般无需修改 |
 | `defaultApp` | string | — | 多应用模式下的默认应用名称；单应用省略 |
 | `apps` | object | — | 多应用配置。key 为应用名，value 为 AppProfile（见下方） |
@@ -137,7 +137,8 @@ rabetbase workspace remove product --yes
 | `userDomain` | string | 平台默认 | 自定义用户域名 |
 | `runtimeDomain` | string | 平台默认 | 自定义运行时域名 |
 | `skillDomain` | string | 节点默认 | SkillHub HTTPS origin 覆盖 |
-| `kbDomain` | string | 跟随 `apiDomain` / 节点 API 默认值 | 企业知识库管理与 `kb search` 的 SmartCode Java HTTPS origin；KB Service 下游地址由 Java 配置 |
+| `kbDomain` | string | 跟随 `apiDomain` / 节点 API 默认值 | 企业知识库管理的 SmartCode Java HTTPS origin |
+| `kbServiceDomain` | string | 官方目录（如有）；独立部署无 | KB Service V2 搜索 HTTPS origin；无法解析有效地址时搜索报错，可用 `--kb-service-url` 单次覆盖 |
 | `appDomain` | string | 节点默认 | 工作台、页面编辑器和发布页面域名 |
 | `localDomain` | string | 独立部署默认 `http://localhost` | 自定义 HTTPS 本地回调 origin；与 `certificateDomain` 同时配置 |
 | `certificateDomain` | string | 节点默认；独立部署无 | 本地 HTTPS 证书服务 origin；与 `localDomain` 同时配置 |
@@ -148,7 +149,8 @@ rabetbase workspace remove product --yes
 |------|------|------|
 | `appcode` | string | **必填**。该应用的 appcode |
 | `apiGroup` | string | 可选显式归并键。同一套业务 API 的多个部署使用相同值并共用一个 `apiDir`；普通单应用不配置 |
-| `region` | string | 覆盖顶层国家/地区；当前可写 `cn`、`id`。显式 `cn` 会保留，以便覆盖顶层 `id` |
+| `region` | string | 覆盖顶层国家/地区；当前可写 `cn`、`id`、`global`。显式 `cn` 会保留，以便覆盖顶层 `id` |
+| `kbServiceDomain` | string | 当前应用的 KB Service HTTPS origin，覆盖顶层同名字段；已导入的企业 `routing` 清单仍优先作为完整路由来源 |
 | `env` | string | 历史兼容字段；默认连接不落盘 |
 | `apiDir` | string | 覆盖顶层 `apiDir` |
 | `cookie` | string | 覆盖顶层 `cookie` |
@@ -343,4 +345,4 @@ rabetbase config set --key kbDomain --value https://your-kb.example.com --global
 rabetbase config set --key appDomain --value https://your-app.example.com --global
 ```
 
-官方模式：`region` 内置 Routing Profile，默认 `cn`，配置文件可省略；当前新配置只开放 `cn`、`id`，`id` 需保存对应 region。历史文件中的 `global` 仍可读取，但不能通过 `config init` 或 `config set` 新写入。每个官方节点直接配置最终 `cdn.libraries` 与 `cdn.lovrabet`，因此可按节点使用独立 CDN；中国大陆当前使用 AliCDN，印尼当前使用 Cloudflare cdnjs。企业独立部署模式保存显式 Domain 与 CDN。项目级配置可覆盖全局配置；默认项目合并会继承全局节点配置。
+官方模式：`region` 内置 Routing Profile，默认 `cn`，配置文件可省略；当前开放 `cn`、`id`、`global`，选择非默认节点时保存对应 region。每个官方节点直接配置最终 `cdn.libraries` 与 `cdn.lovrabet`，因此可按节点使用独立 CDN；中国大陆当前使用 AliCDN，印尼当前使用 Cloudflare cdnjs。企业独立部署模式保存显式 Domain 与 CDN。项目级配置可覆盖全局配置；默认项目合并会继承全局节点配置。

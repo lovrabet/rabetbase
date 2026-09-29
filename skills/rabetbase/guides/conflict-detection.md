@@ -1,121 +1,73 @@
 # 冲突检测与未完成写入处理
 
-**文档版本**: v4.0
-**适用于**: SQL / Backend Function 资源的远端写入与同步
+适用于 SQL / Backend Function 的远端写入与同步。通用查证、纠错、授权与交付原则遵循 [AI First 执行原则](../SKILL.md#ai-first-执行原则)；本指南说明如何根据实际返回结果恢复任务。
 
-> **与 SKILL.md 的关系**：[SKILL.md](../SKILL.md) 只保留硬性规则；本文件负责解释什么叫“远端未写入成功”，以及 AI 应该如何沟通。
+## 写入结果与恢复动作
 
----
+不能只根据 `ok=false` 或非零退出断言所有资源都未保存。结合逐项结果、错误发生阶段及远端回读判断：
 
-## 当前主工作流
+| 结果 | 判断与动作 |
+| --- | --- |
+| `--dry-run` 成功或 `bff create` 生成本地脚手架 | 只完成预览或本地准备，尚未写入远端；按对应工作流继续 |
+| 资源明确写入成功 | 报告成功项及其真实标识，继续任务需要的回读与运行验证 |
+| 批量操作部分成功 | 分别报告成功、跳过和失败项；保留成功项，只处理失败项，不盲目重提整批 |
+| 明确拒绝写入，如 `blocked: true` / `action: "blocked"` | 说明该资源未保存；核对事实并处理授权内可恢复的原因，不换参数或入口绕过权限、平台限制 |
+| 写入前的输入校验失败 | 查证并修复确认的内容或参数错误，再按命令工作流复验 |
+| 超时、响应丢失等结果未知 | 先回读远端，确认是否已生效；确认前不能声称成功或未保存，也不能直接重新提交 |
+| 用户取消 | 停止该操作，保留准备结果并继续其他已授权工作；不得用 `--yes` 或修改风险配置绕过取消 |
 
-当前推荐路径：
-
-- **SQL**
-  - 新建：`rabetbase sql create`
-  - 修改：编辑 `.rabetbase/sql/...` 下的同步文件后执行 `rabetbase sql push`
-  - 删除：`rabetbase sql delete`
-- **Backend Function**
-  - 新建本地脚手架：`rabetbase bff create`
-  - 推送远端：`rabetbase bff push`
-  - 删除远端：`rabetbase bff delete`
-
-## 什么时候算“没有写入成功”
-
-只要 CLI 返回结果表明**远端没有完成创建 / 更新 / 删除 / 同步**，就必须按失败处理。常见信号包括：
-
-- `blocked: true`
-- `action: "blocked"`
-- `success: false`
-- `ok: false`
-- 返回 message 明确表示冲突、被平台拦截、校验失败、未同步
-- 非零退出且错误原因发生在远端写入前后
-
-**核心原则**：
-
-- 本地文件已生成，不等于远端已保存
-- `--dry-run` 预览成功，不等于远端已执行
-- 命令执行失败时，不能用“已处理”“已保存”这类表述蒙混过去
-
-**BFF 同步分歧例外**：`bff pull` / `bff push` 的 `data.conflicts` 表示可恢复的本地与远端分歧，不是 `failed`。必须报告每项 `lockKey`、`code` 和 `nextAction`；`BFF_LOCAL_UNSYNCED` 经审阅后可精确 push 更新远端，`BFF_REMOTE_VERSION_CHANGED` / `BFF_REMOTE_VERSION_MISSING` 则先用其 `bff detail` 命令读取远端源码并合并。两类场景都不得自动 `--force` 或声称已完成同步。
-
----
-
-## AI 的沟通义务
-
-只要远端未写入成功，回复里必须同时做到：
-
-1. **明确状态**
-   - 直接说“未保存到平台”“未完成远端同步”“只完成了本地生成/预览”。
-2. **说明原因**
-   - 引用返回里的 `message`、`error.message`、`blocked`、或关键上下文。
-3. **给出下一步**
-   - 去平台处理
-   - 修改本地内容后重试
-   - 先 `--dry-run`
-   - 回到 `create + 本地编辑 + push` 主路径
-
----
-
-## 典型分支
-
-| 场景 | 是否算远端成功 | AI 应怎么说 |
-|------|----------------|-------------|
-| `sql create --dry-run` 成功 | 否 | 说明只是预览，尚未创建远端 SQL |
-| `bff create` 成功 | 否 | 说明本地脚手架已生成，尚未推送远端 |
-| `sql push` 成功 | 是 | 告知已同步远端，可附带 sqlCode / 路径 |
-| `bff push` 成功 | 是 | 告知已推送远端，可附带 lockKey / 名称 |
-| `blocked: true` / `action: blocked` | 否 | 明确说平台未保存，提示手动处理或联系相关人 |
-| 校验失败 / validation error | 否 | 说明未写入远端，先修内容或参数 |
-## blocked 场景
-
-当返回 `blocked: true` 或语义等价的“平台冲突 / 非本人资源 / 平台限制”时：
-
-- 必须明确说：**这次没有写入到 Lovrabet 平台**
-- 可以建议：去平台手动处理、联系上次提交人、或先保留本地草稿
-- 禁止：重试绕过、换参数偷偷再试、把失败包装成成功
-
-建议话术：
-
-```text
-这次没有同步到 Lovrabet 平台。平台返回了冲突/阻断提示：<message>。
-如果需要继续修改，请先到平台处理冲突，或联系上次提交人；本地内容可以先保留。
-```
-
----
-
-## 响应示例
+## 响应样例
 
 ### 仅预览成功
 
 ```json
-{
-  "ok": true,
-  "dryRun": true,
-  "data": {
-    "method": "POST"
-  }
-}
+{ "ok": true, "dryRun": true, "data": { "method": "POST" } }
 ```
 
-解释：**预览成功，不等于远端已执行**。
+`dryRun: true` 只说明预览通过，远端未执行；不能表述为已保存或已同步。
 
-### 冲突/阻断
+### 明确拒绝写入
+
+```json
+{ "ok": false, "blocked": true, "message": "Resource was blocked by platform" }
+```
+
+该资源未保存。引用 `message` 说明原因，处理授权内可恢复的部分；不得换参数或入口重试绕过，也不得粉饰为已保存。
+
+### 批量部分成功
 
 ```json
 {
   "ok": false,
-  "blocked": true,
-  "message": "Resource was blocked by platform"
+  "data": {
+    "pushed": [{ "sqlCode": "2305f915-dd48cd4c", "remoteId": 10241 }],
+    "skipped": [{ "sqlCode": "7b1e0c42-90aa31de", "reason": "unchanged" }],
+    "failed": [{ "sqlCode": "c48d21a7-51fe07bb", "error": "missing remote version" }]
+  }
 }
 ```
 
-解释：**远端未写入成功，必须明确告知用户**。
+此处 `ok: false` 只因存在 `failed` 项，`pushed` 里的资源确实已写入远端。逐项按 `sqlCode` 报告，只处理 `failed` 项，不重提已成功项。
 
----
+### 沟通参考
 
-## 相关文档
+`blocked` 或平台限制时可参考：
 
-- **SQL 工作流**: `sql-creation-workflow.md`
-- **Backend Function 工作流**: `bff-creation-workflow.md`
-- **最佳实践**: `best-practices.md`
+```text
+这次没有同步到 Lovrabet 平台。平台返回：<message>。
+已完成 <已做的检查/准备>；需要 <具体待办> 才能继续，本地修改已保留。
+```
+
+## 同步分歧
+
+- SQL 本地与远端漂移、缺少版本时，按 [SQL 冲突处理](sql-creation-workflow.md#冲突处理)保留修改、回读比较并恢复同步。
+- `bff pull` / `bff push` 的 `data.conflicts` 表示可恢复分歧，不等同于 `failed`。逐项报告 `lockKey`、`code` 和 `nextAction`：`BFF_LOCAL_UNSYNCED` 经审阅后可精确 push；`BFF_REMOTE_VERSION_CHANGED` / `BFF_REMOTE_VERSION_MISSING` 先按返回的 `bff detail` 命令回读源码并合并。不得自动 `--force` 或在分歧未解决时声称已同步。
+
+## 交付结果
+
+按资源列明实际状态、返回原因、已完成的处理与验证。仍需关键决策或人工操作时，提供具体差异、推荐方案、影响和最小待办；只完成本地准备或保存配置时，不宣称业务运行已验收。
+
+## 相关工作流
+
+- [SQL 工作流](sql-creation-workflow.md)
+- [Backend Function 工作流](bff-creation-workflow.md)

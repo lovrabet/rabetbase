@@ -134,4 +134,4 @@ export default async function(params: any, context: any) {
 
 ## 冲突处理底线
 
-硬性规则见 [SKILL.md](../SKILL.md)「冲突处理」；分支表、响应结构与沟通要求见 [`conflict-detection.md`](conflict-detection.md)。**禁止**捏造 `forceUpdate`、代用户强制覆盖；`blocked` 时引导平台操作或另存为新名称。
+硬性规则见 [SKILL.md](../SKILL.md)「冲突处理」；写入结果判定、恢复动作与交付要求见 [`conflict-detection.md`](conflict-detection.md)。**禁止**捏造 `forceUpdate`、代用户强制覆盖；`blocked` 时引导平台操作或另存为新名称。

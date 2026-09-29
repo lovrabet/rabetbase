@@ -11,7 +11,7 @@
   "flowType": "INDEPENDENT_FLOW",
   "flowJson": {
     "pageMode": "CUSTOM_PAGE",
-    "startPageId": 10001,
+    "startPath": "https://app-demo.app.lovrabet.com/purchase/start",
     "nodes": [],
     "edges": []
   }
@@ -41,7 +41,7 @@
 
 `FORM_FLOW` 不得配置 `pageMode`。自定义页面 SDK/OpenAPI 只返回 `INDEPENDENT_FLOW + CUSTOM_PAGE`。
 
-`INDEPENDENT_FLOW + CUSTOM_PAGE` 可选配置正整数 `flowJson.startPageId`，并在 `APPROVAL` 人工节点上可选配置正整数 `pageId`。二者只用于页面跳转，不参与流程执行或业务判断；缺失时调用方自行选择页面。其他流程类型、`PLATFORM_FORM` 或非人工节点不得配置这两个导航字段。
+`INDEPENDENT_FLOW + CUSTOM_PAGE` 可选配置非空字符串 `flowJson.startPath`，并在 `APPROVAL` 或 `END` 节点上可选配置非空字符串 `path`。Skill 必须填写 `page custom-detail` 确认为 `FORMAL` 的自定义页面所返回的完整 `runtimePageUrl`，不得填写菜单原始 `path`、最新保存内容地址 `pageUrl`、`editPageUrl` 或手工拼接地址；页面未发布时先保持字段缺失并询问用户是否发布。这些字段只用于页面跳转，不参与流程执行或业务判断；缺失时调用方自行选择页面。其他流程类型、`PLATFORM_FORM` 或其他节点类型不得配置这些导航字段。旧字段 `flowJson.startPageId` 和节点 `pageId` 不再支持。
 
 本地 FlowConfig 必须显式填写 `flowType`。CLI 不再利用服务端的历史默认值推断为 `FORM_FLOW`，避免表单审批流和独立工作流混用。
 
@@ -104,7 +104,7 @@ Skill 根据业务逻辑直接生成完整 `nodes + edges` 拓扑，不读取或
   "id": "managerApprove",
   "type": "APPROVAL",
   "name": "主管审批",
-  "pageId": 10002,
+  "path": "https://app-demo.app.lovrabet.com/customer-dashboard/approve",
   "position": { "x": 300, "y": 180 },
   "taskMode": "APPROVAL",
   "approvalMode": "SINGLE",
@@ -121,7 +121,7 @@ Skill 根据业务逻辑直接生成完整 `nodes + edges` 拓扑，不读取或
 ```
 
 - `taskMode` 支持 `APPROVAL`、`HANDLE`；省略时按 `APPROVAL`。`FORM_FLOW` 只能使用 `APPROVAL`，`HANDLE` 仅允许出现在 `INDEPENDENT_FLOW`。
-- `pageId` 可省略；仅 `INDEPENDENT_FLOW + CUSTOM_PAGE` 的 `APPROVAL` 人工节点可配置，用于待办、已办和任务详情跳转，不影响节点执行。
+- `path` 可省略；仅 `INDEPENDENT_FLOW + CUSTOM_PAGE` 的 `APPROVAL` 人工节点可配置非空字符串，用于待办、已办和任务详情跳转，不影响节点执行。
 - `approvalMode` 支持 `SINGLE`、`ALL`、`ANY`；省略时按 `SINGLE`。`sequential` 控制多办理人是否顺序执行，默认 `false`。
 - `FIXED` 需要非空有效 `userIds`；`SINGLE + FIXED` 只能有一个不同用户。
 - `ROLE` 需要正整数 `roleId`。
@@ -132,7 +132,7 @@ Skill 根据业务逻辑直接生成完整 `nodes + edges` 拓扑，不读取或
 
 ### HANDLE 后续路由
 
-- `HANDLE` 自身不选择业务分支。自定义页面可在办理请求中的 `variables` 更新业务变量，或通过 `formPatch` 增量更新 `formData`；任务完成后，下游节点读取更新后的值。
+- `HANDLE` 自身不选择业务分支。自定义页面可在办理请求中的 `variables` 更新业务变量，或通过 `formPatch` 按根级字段合并更新 `formData`；任务完成后，下游节点读取更新后的值。
 - 路由变量已准备好时使用 `HANDLE → CONDITION`，由 CONDITION 的表达式和默认边决定后续路径。
 - 需要 Backend Function 先计算、校验或归一化路由变量时使用 `HANDLE → SCRIPT → CONDITION`；不需要计算时可省略 SCRIPT。
 - 不允许给 HANDLE 配置多条出边，也不允许通过 `targetNodeId` 让调用方直接选择目标节点。办理节点存在多个业务结果不应判定为 `NEEDS_DSL_EXTENSION`，因为分支职责属于下游 CONDITION。
@@ -144,6 +144,22 @@ Skill 根据业务逻辑直接生成完整 `nodes + edges` 拓扑，不读取或
 - `AUTO_APPROVE`、`AUTO_REJECT` 必须中断当前任务，`interrupting` 省略时默认 `true`。
 - `EXECUTE_BFF` 必须配置 `scriptName`，不能中断当前任务，`interrupting` 省略时默认 `false`；可用 `resultVariable` 保存结果。
 - `HANDLE` 超时只支持 `EXECUTE_BFF`。
+
+## END
+
+```json
+{
+  "id": "approvedEnd",
+  "type": "END",
+  "name": "审批完成",
+  "result": "APPROVED",
+  "path": "https://app-demo.app.lovrabet.com/purchase/completed",
+  "position": { "x": 560, "y": 100 }
+}
+```
+
+- `path` 可省略；仅 `INDEPENDENT_FLOW + CUSTOM_PAGE` 的 `END` 节点可配置非空字符串，用于流程到达该结果节点后的终态页面导航，不影响流程结果。Runtime 会用实际到达的 `END.path` 追加 `processId`，生成已结束流程的 `detailUrl`。
+- `result` 的流程语义保持不变；`path` 不是任务页面地址，不会作为待办或已办任务的当前节点路径返回。
 
 ## CONDITION
 
@@ -283,7 +299,7 @@ ${variables.xxx}
 
 本地校验不能确认：
 
-- userId、roleId、datasetCode、pageId、scriptName、configCode 是否在目标环境真实存在。
+- userId、roleId、datasetCode、pageId、页面 path、runtimePageUrl、scriptName、configCode 是否在目标环境真实存在或页面是否已经发布。
 - `configCode` 对应的当前通知渠道是否支持指定模板或显式收件人。
 - 服务端保存、编译、部署和 Runtime 执行是否成功。
 

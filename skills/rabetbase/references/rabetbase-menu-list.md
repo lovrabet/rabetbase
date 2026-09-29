@@ -119,7 +119,7 @@ rabetbase menu list --verbose --format json
 - 修改菜单名称前确认 `id/label`；所有菜单类型统一使用 `menu rename`。
 - 显示或隐藏菜单前确认 `id/path/visible`；批量写入统一使用 `menu visibility-update`。
 - 修改 iframe/link 页面 URL 前确认 `id/url/parentId`；写入入口使用 `menu external-link-update`。
-- 修改微前端 JS/CSS 资源前确认当前 resources；写入入口使用 `menu asset-update`。
+- 前端子应用优先用 `menu subapp-assets-status` 核查共享资源，升级使用 `menu subapp-assets-update`；平台页面或明确维护的菜单兜底资源使用 `menu asset-update`。
 - 提供稳定的菜单事实入口，避免使用底层数据源查询菜单配置。
 
 ## 不负责
@@ -127,7 +127,7 @@ rabetbase menu list --verbose --format json
 - 不做本地 `src/pages` 与线上菜单 diff；这类对比使用 `menu sync`。
 - 不做数据列表页菜单审计；dataset-scoped 页面事实使用 `page data-list-status`。
 - 不修改外链 URL；使用 `menu external-link-update`，并带旧 URL 与父级断言。
-- 不修改菜单资源；更新 JS / CSS 资源 URL 使用 `menu asset-update`，并先执行 dry-run。
+- 不修改资源；共享子应用与独立菜单资源分别使用对应更新命令，并先执行 dry-run。
 - 不修改菜单；显示隐藏使用 `menu visibility-update`，改名使用 `menu rename`，空 folder 删除使用计划化的 `menu delete`，分组生命周期使用 `group-create/group-update/regroup-start`，写操作都必须先 dry-run。
 
 ## 参考

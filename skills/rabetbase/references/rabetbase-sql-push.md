@@ -24,6 +24,11 @@ rabetbase sql push --sqlcode 2305f915-dd48cd4c --force --format json
 
 ## 行为说明
 
+- 预演与正式推送检查文件、lock、目标连接绑定、版本是否具备及正文非空，不执行本地 SQL 方言或保存策略判定
+- SQL/XML 正文去除本地元信息后原样上传；不因 CLI 无法展开动态模板而拒绝提交
+- `sql validate` 是独立的本地辅助检查，不是推送前置条件；保存结果及权限由现有平台接口处理
+- 预演不保存 SQL、不更新 lock；全部提交失败且没有成功更新时保留原 lock
+
 - 以 `.rabetbase/sql.lock.json` 为准，读取本地同步目录中的当前文件
 - 上传前会自动剥离 `@lovrabet` 头注释，只把 SQL/XML 正文发到平台
 - 若本地文件名中的 `sqlName` 变化，推送时会同步更新远端 `sqlName`

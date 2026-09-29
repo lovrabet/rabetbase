@@ -23,4 +23,7 @@ rabetbase page custom-list --appcode <appCode> --format compress
 
 - `label`：页面名称
 - `pageUrl`：查看最新保存内容的页面地址，包含尚未发布的修改；基于当前 region 或显式 `appDomain`
+- `runtimePageUrl`：根据菜单路径生成的完整运行态页面地址；无论页面是否发布都会返回，页面从未发布时打开会显示错误提示
 - `editPageUrl`：打开当前节点或独立部署工作台中的页面编辑器
+
+`custom-list` 不读取页面详情，因此 `runtimePageUrl` 存在不代表页面已经发布。把页面绑定到独立工作流的 `flowJson.startPath`、`APPROVAL.path` 或 `END.path` 前，必须执行 `page custom-detail --id <pageId>` 检查 `data.status`。只有 `FORMAL` 页面才允许填写其完整 `runtimePageUrl`；否则保持导航字段未填写，并询问用户是否先发布。

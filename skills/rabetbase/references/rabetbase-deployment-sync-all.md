@@ -1,6 +1,6 @@
 # rabetbase deployment sync-all
 
-研发资源保存后的增量同步由服务端自动处理。`deployment sync` 已移除，`bff push` 与 `sql push` 也不再追加客户端同步请求。
+`sync-all` 提交应用范围的显式补偿任务。自动同步与项目后续发布步骤的区别见[独立部署指南](../guides/independent-deployment.md)。`deployment sync` 已移除，`bff push` 与 `sql push` 不追加客户端同步请求。
 
 `sync-all` 是管理员补偿工具，仅用于以下场景：
 
@@ -13,7 +13,9 @@
 ## 使用前确认
 
 - 已完成 rabetbase 认证，并明确目标应用的 `appCode`。
+- 已按[独立部署指南](../guides/independent-deployment.md)确认平台同步的实际目标及本次操作所处环节。
 - 已确认属于初始化、回填或恢复场景，而不是普通资源保存或发布。
+- [`app detail`](rabetbase-app-detail.md) 已确认 `vipDeploy=true`，并具备相应权限与执行授权；未确认能力时不提交任务。
 - 应用已停止编辑，当前处于安静窗口，避免全量任务与服务端自动增量同步并行。
 - 已准备在任务结束后执行独立的业务验收。
 
@@ -50,6 +52,8 @@ rabetbase deployment sync-all \
 rabetbase deployment sync-status --job-id <jobId> --format compress
 rabetbase deployment sync-jobs --appcode <appCode> --format compress
 ```
+
+这些查询用于显式提交的同步任务，不包含保存后自动产生的增量同步任务；不能用空列表判断自动同步是否运行或失败。
 
 只根据 `isTerminal` 判断是否为已知终态；若为 `null`，保留服务端状态并交给用户判断。逐项资源类型和 action 是服务端开放字符串，不建立枚举闭集，也不因新值自动重提。
 

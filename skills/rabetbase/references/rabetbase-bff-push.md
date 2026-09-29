@@ -63,8 +63,8 @@ rabetbase bff push --type HOOK --name beforeFilter --format json
 - 预演中无法确认目标的脚本显示 `status: failed` 与 `error`，不会上传或更改 lock
 - alias 与 Dataset code 命名空间碰撞、Dataset 映射漂移或同一 Dataset 出现多个本地目录会在首次远端写入前阻断
 - HOOK 可挂载 `DB_TABLE` 或 `METADATA` 数据集；METADATA 不支持 SQL / aggregate 路径，脚本中使用平台返回的标准数据操作
-- 推送成功只代表脚本配置已同步到平台；如需确认最终运行效果，使用运行验证（例如 `lovrabet bff exec --name <functionName> --params '<json>' --format compress`）
-- 管理态已同步但运行态仍旧版本时，按传播延迟 / 缓存延迟处理：等待后重试，必要时对目标脚本精确执行 `--force` 推送；仍不生效时记录平台运行态缓存风险
+- 推送成功只代表脚本配置已同步到平台；需要运行验证时，按[创建流程的运行验证步骤](../guides/bff-creation-workflow.md#9-运行态-smoke按需)确认目标、权限及函数副作用后执行
+- 已确认独立部署并需验证，或出现平台到业务环境的同步疑点时，读取[独立部署指南](../guides/independent-deployment.md)；普通 push 不额外查询部署标识
 
 ## 参考
 

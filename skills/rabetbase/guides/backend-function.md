@@ -193,15 +193,10 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 本地文件是主工作副本：
 
 * 新建时用 `rabetbase bff create`
-* 修改时直接编辑 `.rabetbase/bff/<appCode>/...`
+* 修改前按 [BFF 工作流](bff-creation-workflow.md#3-获取本轮平台基线)取得本轮最新平台基线、保留并合并本地改动，再编辑 `.rabetbase/bff/<appCode>/...`
 * 需要远端最新内容时先 `rabetbase bff pull`
 
-如果 Backend Function 行为与预期不符，或 `push` 显示 `unchanged` 但效果没变，先确认远端实际运行的是哪份代码：
-
-* `rabetbase bff detail --id <id> --format json`
-* 必要时再 `rabetbase bff pull --format json` 同步远端到本地
-
-先确认“远端现在是什么”，再决定是否继续改本地、查页面或查锁状态。
+如果 Backend Function 行为与预期不符，或 `push` 显示 `unchanged` 但效果没变，先区分平台保存事实与目标环境的运行事实。平台保存内容未知或出现远端变化证据时，用 `rabetbase bff detail --id <id> --format json` 核对；已有明确保存结果时不反复读取。`detail` 只返回平台保存的源码，不能证明业务环境实际执行了同一版本。独立部署或存在平台到业务环境同步疑点时，按[独立部署指南](independent-deployment.md)定位，运行验证按 [BFF 工作流](bff-creation-workflow.md#9-运行态-smoke按需)执行。
 
 需要定位运行时输入、分支或异常时，用只读日志查询缩小范围：
 

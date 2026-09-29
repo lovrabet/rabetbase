@@ -283,6 +283,23 @@ if (!dashboard || typeof dashboard.userCount !== "number") {
 - 不以 `result === undefined` 作为能力检测；根据个人函数已确认的返回契约校验必需字段和空态。
 - 接入页面前，先通过 `lovrabet personal-bff exec --id <id> --params '<json>' --format compress` 核对同一 `scriptId` 的字段、空态和错误形状。
 
+## 5. 自定义页面调用 Flow SDK
+
+自定义页面通过 `useSdkClient()` 获得平台已经注入的 Cookie 模式 client，然后调用无参数 `client.flow()`。页面不重新执行 `createClient()`，也不传 `appCode`、`operatorUserId`、AccessKey、Cookie 或 OpenAPI Token。
+
+```jsx
+import { useSdkClient } from "@/context/app-context";
+
+const client = useSdkClient();
+const flow = client.flow();
+
+const todoPage = await flow.listTodo({
+  variables: { businessId: "PUR-001" },
+});
+```
+
+Flow SDK 只面向 `INDEPENDENT_FLOW + CUSTOM_PAGE`。发起、查询、审批、转交、撤回、重提、退回、作废和抄送的完整契约见 [`custom-page-flow-sdk.md`](custom-page-flow-sdk.md)。
+
 ## 异常处理底线
 
 所有通过 `client` 发起的网络调用都可能抛出 HTTP 级别的错误，AI 必须养成使用 `try...catch` 包裹代码的习惯，并识别 `LovrabetError`。
@@ -310,5 +327,6 @@ try {
 * [ ] 处理 Backend Function 的返回值时，是不是直接使用了业务数据？
 * [ ] 调 Personal Backend Function 前，是否显式校验了 `client.personal.bff.execute`，且没有使用可选调用？
 * [ ] 浏览器代码是否只依赖登录 Cookie，没有写入 Client AK 或其他凭据？
+* [ ] 自定义页面调用 Flow 时，是否使用页面注入的无参数 `client.flow()`，且没有手动传 `appCode` 或用户身份？
 * [ ] 是否按已确认契约校验 Personal Backend Function 的返回形状，而不是用 `undefined` 猜测能力状态？
 * [ ] 加入了 `try...catch` 块防止整个应用崩溃吗？

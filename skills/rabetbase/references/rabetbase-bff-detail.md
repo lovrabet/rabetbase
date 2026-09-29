@@ -27,7 +27,7 @@ rabetbase bff detail --id 42 --verbose --format json
 
 ## 提示
 
-- 修改已有 Backend Function 前必须先用此命令拉取最新内容（平台是 source of truth）
+- 每轮修改已有 Backend Function 前必须取得平台最新基线；本轮已通过 detail 或 pull 获取时不重复读取，具体遵循 [BFF 工作流](../guides/bff-creation-workflow.md#3-获取本轮平台基线)
 - scriptContent 是完整的 JavaScript 源码
 - 需要落本地维护时，优先用 `rabetbase bff pull --format json` 同步到规范目录
 

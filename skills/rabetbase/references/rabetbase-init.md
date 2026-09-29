@@ -3,7 +3,7 @@
 首次使用、切换官方节点或切换企业独立部署地址时，重建 Lovrabet 连接配置。默认写入当前项目；显式传 `--global` 时写入全局配置。该命令只处理 region/Domain，不负责认证或项目应用绑定。
 
 ```bash
-# 交互选择 cn / id
+# 交互选择 cn / id / global
 rabetbase config init
 
 # 自动化选择官方节点
@@ -26,9 +26,9 @@ rabetbase config init \
 
 ## 交互与默认行为
 
-- 交互执行时选择 `Mainland China (cn)` 或 `Indonesia (id)`，默认选中 `cn`
-- 非交互执行时应显式传 `--region cn|id`；未传 region/Domain 时回退 `cn`
-- 当前只开放 `cn`、`id`；尚未发布的 `global` 不可选择
+- 交互执行时选择 `Mainland China (cn)`、`Indonesia (id)` 或 `Global (global)`，默认选中 `cn`
+- 非交互执行时应显式传 `--region cn|id|global`；未传 region/Domain 时回退 `cn`
+- 当前开放 `cn`、`id`、`global`；例如 `rabetbase config init --region global`
 - 已保存的 `region` 无法识别时，依赖连接配置的命令会在请求前停止；先用 `rabetbase doctor` 定位作用域，再执行对应作用域的 `config init` 或 `config delete region` 修复
 
 ## 写入行为
@@ -61,6 +61,7 @@ rabetbase config init \
       "rabetbase-cli": "https://kb-admin.customer.example.com",
       "lovrabet-cli": "https://kb.customer.example.com"
     },
+    "kbServiceDomain": "https://kb-service.customer.example.com",
     "appDomain": "https://app.customer.example.com"
   }
 }
@@ -75,6 +76,7 @@ rabetbase config init \
   "runtimeDomain": "https://runtime.customer.example.com",
   "skillDomain": "https://skills.customer.example.com",
   "kbDomain": "https://kb.customer.example.com",
+  "kbServiceDomain": "https://kb-service.customer.example.com",
   "appDomain": "https://app.customer.example.com",
   "localDomain": "https://local.customer.example.com",
   "certificateDomain": "https://cert.customer.example.com"
@@ -87,7 +89,7 @@ rabetbase config init \
 - 未提供 `localDomain` / `certificateDomain` 时，本地回调使用 `http://localhost`；自定义 HTTPS 本地回调时两者必须同时提供
 - 同名 `--*-domain` flag 仅覆盖旧扁平文件中的值
 - `--region` 与任意独立部署 Domain 互斥，不能混用
-- 只有旧扁平配置的未提供 Domain 会按默认节点回退
+- 旧扁平配置的其他未提供 Domain 保持既有默认节点回退；知识搜索在独立部署缺少 `kbServiceDomain` 时失败，不回退官方节点
 
 ## 结果语义
 
