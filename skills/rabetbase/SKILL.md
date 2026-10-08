@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.5.4
+version: 2.5.5
 description: "Use for Lovrabet development work through the rabetbase CLI: create or bind projects (including creating an AppCode project in the current folder), pull Dataset/API facts and maintain SDK clients, or manage datasets, Instant API access policies, database connections, pages, host frontend integration, frontend subapp resources, SQL, Backend Functions, approval flows and workflows, menus, notifications, knowledge bases and kb search, Agent Context Rules, roles, files, OCR, deployment metadata, platform issues, and 钉钉沙箱账号绑定. Trigger when the user mentions rabetbase, Lovrabet development, AppCode, Dataset, Instant API allow/deny/route policy, project creation, api pull/codegen, dblink, page, host frontend integration, subapp resource versions, SQL, BFF, creating or designing an approval flow, workflow, business process, or multi-step approval, menu, notification, knowledge base, kb search, Agent Context Rules, RULES.md, DATABASE.md, rule list/get/set, role, file/OCR, or related development workflows."
 metadata:
   requires:
@@ -85,7 +85,7 @@ Agent 负责把已授权的目标推进到可验证的结果：主动获取事�
    - `bff pull` / `bff push` 返回 `data.conflicts` 时，逐项报告 `lockKey` 和 `code`，并只在审阅后执行该项 `nextAction`；不得把同步冲突说成失败、自动使用 `--force`，或盲目重试整批脚本
    - 创建会发送消息通知的 Backend Function 时，先读取 [`backend-function.md`](guides/backend-function.md) 的“消息通知扩展”契约，再执行 [`rabetbase notification config-list --type EMAIL`](references/rabetbase-notification-config-list.md) 获取当前应用的 `configCode`；不得猜测渠道、收件人或把密钥写进脚本
    - 推送成功只证明平台保存；需要确认运行效果时，按 [BFF 运行验证](guides/bff-creation-workflow.md#9-运行态-smoke按需)执行，不把保存成功当作运行验证通过
-   - 已确认独立部署并需验证、出现平台到业务环境的同步疑点或明确需要独立部署同步功能时，读取[独立部署指南](guides/independent-deployment.md)；正常开发和 push 不查询或展示 `vipDeploy`
+   - 已确认独立部署并需验证或厘清业务环境与平台连接的对应关系、出现平台到业务环境的同步疑点或明确需要独立部署同步功能时，读取[独立部署指南](guides/independent-deployment.md)
 5. **页面体系选择**
    - 数据列表页（Data List Page）是数据集驱动的结构化页面组，用于数据查看、维护和模型验证，不等同于最终业务工作台
    - 自定义页面（Custom Page）是完整代码文件驱动的平台页面，用于工作台、看板、门户和复杂业务交互；当前 React JSX 只是渲染实现，不是页面产品类型
@@ -365,7 +365,7 @@ const result = await client.bff.execute<DashboardData>({
 | 设计、校验和发布表单审批流或独立工作流 | [`rabetbase flow validate/list/detail/create/update/publish`](references/rabetbase-flow-commands.md) | 先确定 `flowType`；本地 validate 后再 create/update 和 publish |
 | 查询审批流运行态人员和角色 | [`rabetbase flow runtime-user-search/runtime-role-list/runtime-role-user-list`](references/rabetbase-flow-resources.md) | 只读，结果标记 `scope: runtime`；用于填写 FlowConfig 的 userId/roleId |
 | 查看线上菜单事实 / 菜单异常审计 | [`rabetbase menu list`](references/rabetbase-menu-list.md) | 返回 DFS 事实、children/page、URL、最近更新人/时间和 snapshotHash；异常治理先读 [`menu-anomaly-manual-cleanup`](guides/menu-anomaly-manual-cleanup.md) |
-| 批量显示或隐藏菜单 | [`rabetbase menu visibility-update`](references/rabetbase-menu-visibility-update.md) | 用精确 ID/path 选择目标；先 dry-run，使用 `--expect-visible` / `--expected-count` 防漂移，正式执行必须 `--yes` |
+| 批量显示或隐藏菜单 | [`rabetbase menu visibility-update`](references/rabetbase-menu-visibility-update.md) | `write`；用精确 ID/path 选择目标；先 dry-run，使用 `--expect-visible` / `--expected-count` 防漂移 |
 | 创建外部网站链接菜单 | [`rabetbase menu external-link-create`](references/rabetbase-menu-external-link-create.md) | `write`；显式选择 `embedded` 或 `new-window`，仅接受 HTTPS；建议先 dry-run，正式执行不要求 `--yes` |
 | 原地更新既有外链 URL | [`rabetbase menu external-link-update`](references/rabetbase-menu-external-link-update.md) | `write`；精确单 ID、URL-only；必须带旧 URL 与父级断言，先 dry-run，再复用参数正式执行 |
 | 修改任意类型菜单名称 | [`rabetbase menu rename`](references/rabetbase-menu-rename.md) | 精确单 ID、label-only；使用 `--expect-label` 防漂移，先 dry-run 并检查 before/after |

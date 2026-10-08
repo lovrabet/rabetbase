@@ -2,7 +2,9 @@
 
 项目级配置文件，放在项目根目录。CLI 启动时自动读取，全局配置（`~/.rabetbase.json`）作为 fallback。
 
-这份文件描述的是**本地配置模型**：默认应用、应用名到 `appcode`/`env`/`apiDir` 的映射，以及输出格式、风险等级、认证信息等本地偏好。
+这份文件描述的是**本地配置模型**：默认应用、应用名到 `appcode`/`apiDir` 的映射，以及输出格式、风险等级、认证信息等本地偏好。
+
+独立部署应用需要确认业务环境与平台连接的对应关系时，读取[独立部署指南](../guides/independent-deployment.md#理解用户说的测试环境与线上环境)。
 
 它**不是**平台应用目录。若要查看当前登录账号在平台上能访问哪些应用，应使用 `rabetbase app list --remote`，而不是直接查看 `.rabetbase.json`。
 
@@ -24,8 +26,7 @@ rabetbase workspace init --appcode <code>
 {
   "apps": {
     "main": {
-      "appcode": "app-xxxxxxxx",
-      "env": "daily"
+      "appcode": "app-xxxxxxxx"
     }
   }
 }
@@ -33,16 +34,15 @@ rabetbase workspace init --appcode <code>
 
 CLI 对旧版顶层 `appcode` 仍兼容读取，但它已经不是推荐主模型。
 
-CLI 新写入或重写配置时不会持久化默认内部路由字段；历史文件仍保持读取兼容。若顶层存在非默认值，而某个应用显式回到默认值，写入时会把非默认值下沉到实际继承它的应用，再省略默认标记，确保配置精简且生效语义不变。
+CLI 新写入或重写配置时会省略平台环境等默认路由值；显式非默认值仍可配置并生效。若顶层存在非默认值，而某个应用显式回到默认值，写入时会把非默认值下沉到实际继承它的应用，再省略默认标记，确保配置精简且生效语义不变。
 
 ## 兼容读取的单应用模式
 
-兼容读取的最简配置只需 `appcode` 和 `env`：
+兼容读取的最简配置只需顶层 `appcode`：
 
 ```json
 {
-  "appcode": "app-xxxxxxxx",
-  "env": "daily"
+  "appcode": "app-xxxxxxxx"
 }
 ```
 
@@ -90,7 +90,6 @@ CLI 新写入或重写配置时不会持久化默认内部路由字段；历史�
   "apps": {
     "order": {
       "appcode": "app-yyyyyyyy",
-      "env": "daily",
       "riskLevel": "write"
     },
     "product": {
@@ -107,7 +106,7 @@ CLI 新写入或重写配置时不会持久化默认内部路由字段；历史�
 管理命令（声明式 flags，非位置参数）：
 
 ```bash
-rabetbase workspace add order --appcode app-order-001 --env daily
+rabetbase workspace add order --appcode app-order-001
 rabetbase workspace add product --appcode app-product-002 --region id
 rabetbase workspace use --app order
 rabetbase app list
@@ -121,7 +120,7 @@ rabetbase workspace remove product --yes
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `appcode` | string | — | 顶层单应用兼容字段。新写入优先使用 `apps`。兼容旧名 `app` |
-| `env` | string | — | 历史兼容字段；默认连接不落盘，读取旧配置时仍兼容 |
+| `env` | string | `"production"`（省略） | Lovrabet 平台自身产品研发迭代的环境：`daily` 为平台日常测试，`production` 为平台线上 |
 | `locale` | string | `"en-US"` | 应用本地化设置（不是 CLI 语言；目前命令尚未消费） |
 | `cookie` | string | — | 内联 session cookie。设置后优先于 `~/.lovrabet/cookie` 文件 |
 | `accessKey` | string | — | Access Key 认证（预留，未来替代 cookie） |
@@ -151,7 +150,7 @@ rabetbase workspace remove product --yes
 | `apiGroup` | string | 可选显式归并键。同一套业务 API 的多个部署使用相同值并共用一个 `apiDir`；普通单应用不配置 |
 | `region` | string | 覆盖顶层国家/地区；当前可写 `cn`、`id`、`global`。显式 `cn` 会保留，以便覆盖顶层 `id` |
 | `kbServiceDomain` | string | 当前应用的 KB Service HTTPS origin，覆盖顶层同名字段；已导入的企业 `routing` 清单仍优先作为完整路由来源 |
-| `env` | string | 历史兼容字段；默认连接不落盘 |
+| `env` | string | 覆盖顶层 Lovrabet 平台研发迭代环境，含义同顶层 `env`；默认值省略 |
 | `apiDir` | string | 覆盖顶层 `apiDir` |
 | `cookie` | string | 覆盖顶层 `cookie` |
 | `accessKey` | string | 覆盖顶层 `accessKey` |
@@ -185,7 +184,7 @@ CLI flag (--appcode, --format, --app ...)
 | 环境变量 | 对应配置项 | 说明 |
 |----------|-----------|------|
 | `RABETBASE_APPCODE` | — | 仅作为 shell 变量供脚本显式传给 `--appcode`；业务命令检测到冲突时会拒绝执行 |
-| `RABETBASE_ENV` | `env` | 无项目 env 时的环境 fallback |
+| `RABETBASE_ENV` | `env` | Lovrabet 平台自身研发迭代环境；无项目 env 时的 fallback |
 | `RABETBASE_COOKIE` | `cookie` | Session cookie |
 | `RABETBASE_ACCESS_KEY` | `accessKey` | Access Key |
 | `RABETBASE_FORMAT` | `format` | 输出格式 |
@@ -221,17 +220,17 @@ CLI flag (--appcode, --format, --app ...)
 
 ```bash
 export RABETBASE_APPCODE=app-xxx
-export RABETBASE_ENV=daily
 rabetbase dataset list --appcode "$RABETBASE_APPCODE"
 ```
 
-### 开发环境单应用
+### Lovrabet 平台自身研发测试示例
+
+连接 Lovrabet 平台日常测试环境 `daily`：
 
 ```json
 {
   "appcode": "app-xxxxxxxx",
-  "env": "daily",
-  "riskLevel": "high-risk-write"
+  "env": "daily"
 }
 ```
 
@@ -243,8 +242,7 @@ rabetbase dataset list --appcode "$RABETBASE_APPCODE"
   "defaultApp": "order",
   "apps": {
     "order": {
-      "appcode": "app-order-001",
-      "env": "daily"
+      "appcode": "app-order-001"
     },
     "product": {
       "appcode": "app-product-002",
@@ -268,7 +266,6 @@ rabetbase dataset list --app product
 ```bash
 # 写入项目级配置（默认；须在能解析到项目 .rabetbase.json 的目录下执行）
 rabetbase config set --key apiDomain --value https://custom-api.example.com
-rabetbase config set --key env --value daily
 
 # 写入全局配置（任意目录）
 rabetbase config set --key apiDomain --value https://custom-api.example.com --global

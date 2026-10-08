@@ -24,7 +24,7 @@ rabetbase workspace remove <name> [--global]
 | `--app <name>` | 工作空间里的应用名，如 `crm`、`order` |
 | `--appcode <code>` | 应用 App Code；不知道本地应用名时可直接使用 |
 | `--region <region>` | 写入该 app profile 的国家/地区：`cn` / `id` |
-| `--env <env>` | 历史兼容参数；默认内部路由值不会写入 app profile |
+| `--env <env>` | 仅显式传入时写入 app profile；平台环境定义见[配置参考](rabetbase-config.md#顶层字段)中的 `env` |
 | `--apiDir <dir>` | 写入该 app profile 的 API 目录 |
 | `--defaultFormat <format>` | 写入该 app profile 的默认输出格式 |
 | `--pageSize <n>` | 写入该 app profile 的分页大小 |
@@ -32,6 +32,8 @@ rabetbase workspace remove <name> [--global]
 | `--locale <locale>` | 写入该 app profile 的本地化设置（不是 CLI 语言；目前命令尚未消费） |
 
 `add` / `remove` 用位置参数 `<name>` 指定应用名；`add` 必带 `--appcode <code>`，两者都支持 `--global`（写/删全局清单，全局视作一个大工作空间），其余 profile flags 与上表一致。
+
+独立部署应用需要确认业务环境与平台连接的对应关系时，读取[独立部署指南](../guides/independent-deployment.md#理解用户说的测试环境与线上环境)。
 
 ## 行为
 
