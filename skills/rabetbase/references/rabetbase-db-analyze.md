@@ -1,5 +1,7 @@
 # db analyze-batch-plan / analyze-start / analyze-cancel / analyze-status
 
+多个连接之间的逻辑关联分析使用 [db cross-analyze-start/status/latest](rabetbase-db-cross-analyze.md)。本页用于单库 schema 分析，任务标识与完成证据按各自领域使用。
+
 规划并管理 **schema 分析任务**。`analyze-batch-plan` 是生成本地批次方案的 **read** 命令；它不需要登录或 appcode，也不会创建、预留或返回服务端 `planId`。`analyze-start` 与 `analyze-cancel` 为 **write**；`analyze-status` 为 **read**（仅按服务端 plan 查询；命令能解析到 appcode 时会返回页面确认链接）。
 
 ## 何时用

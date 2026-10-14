@@ -10,6 +10,7 @@
 | 改连接串 / 账号 | 更新已有连接，避免在界面点来点去 |
 | 验证网络与白名单 | **测连**确认研发环境能打到库 |
 | 同步结构到 Lovrabet | **分析任务**把表结构同步到平台；可看进度、取消 |
+| 分析跨库逻辑关联 | **cross-analyze-start/status/latest** 使用多个库已有的数据集与分析元数据推导跨库关系 |
 | 看全部表与差异 | **tables** 查询全部表，**diff** 只查询差异表 |
 
 **与 `dataset` 的区别**：`dataset detail` 里的 `dbId` 来自数据集绑定；**`db list` 的 `id` 是 dblink 主键**，二者数值上通常一致，但 **CLI 管连接用 `db *`，管模型用 `dataset *`**。
@@ -38,7 +39,15 @@ trace/plan  → 见下一节（分析任务专用）
 
 ## 推荐流程（Agent）
 
-### 差异读取策略（所有流程共用）
+### 跨库关联分析
+
+沿用当前平台节点、应用和连接 ID。
+
+先按 [跨库分析 reference](../references/rabetbase-db-cross-analyze.md) 确认至少两个同应用连接及各库单库分析结果；用 `cross-analyze-start --ids <id1,id2> --dry-run` 审阅范围，提交一次后保存 `data.planId`，只用 `cross-analyze-status --plan <原标识>` 查询。标识丢失时，`cross-analyze-latest` 只读取得应用最新候选；候选不是原请求的幂等证明，响应不确定时不自动重新提交。
+
+终态成功后检查实际参与库与跳过库，对实际参与库逐个执行 `dataset cross-relation-list --from-dblink-id <id>`；单库 `db diff` 和 `dataset relations` 不作为跨库关系分析的完成证据。下方的差异刷新、分批和取消流程用于单库 schema 分析。
+
+### 差异读取策略（单库 schema 分析流程共用）
 
 ```text
 用户明确要求不分析、不刷新或只看现有结果：
@@ -184,9 +193,9 @@ db delete --id <id> --expected-dataset-count 0 --confirm --yes
 ## 与其它命令的配合
 
 - **写 SQL 前要 `dbId`**：`dataset detail --code …` 里 `db.id`；或 `db list` 的 `id` 与数据集侧 `dbId` 对应。
-- **看模型关系**：用 `dataset relations`；物理库连接和表清单仍用 `db list` / `db tables` 对照。
+- **看模型关系**：同库用 `dataset relations`，跨库用 `dataset cross-relation-list`；物理库连接和表清单用 `db list` / `db tables` 对照。
 - **查看所有数据表**：使用 `db tables`，它自动聚合全部分页；`db diff` 只读取差异结果。
-- **给用户确认页面**：DB 更新或分析完成后返回 `data.links.erPage`；新建连接后返回 `data.links.databasePage`。
+- **给用户确认页面**：DB 更新或单库 schema 分析完成后检查并返回 `data.links.erPage`；新建连接后返回 `data.links.databasePage`。跨库分析按实际参与库回读跨库关系。
 - **不确定 flags**：`rabetbase schema`（无需登录）查契约。
 
 ## 输出格式

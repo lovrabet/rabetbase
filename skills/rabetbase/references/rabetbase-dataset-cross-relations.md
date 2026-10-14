@@ -1,5 +1,7 @@
 # 跨库数据集关系
 
+需要从多个库已有数据集推导跨库关系时，使用 [db cross-analyze-start/status/latest](rabetbase-db-cross-analyze.md)；分析完成后用本页 list 命令回读关系事实。
+
 使用 `dataset cross-relation-list/create/update/delete` 管理同一应用内、不同数据库连接的 DB_TABLE 逻辑关联。同库关系命令见 [数据集关系](rabetbase-dataset-relation-mutations.md)。跨库关系事实使用本页的 list 查询，不能用同库关系查询命令 `dataset relations` 或 `dataset detail` 的关系列表替代回读。
 
 需要实现跨库业务查询时，读取 [跨库 BFF 查询与拼接](../guides/cross-database-bff.md)，按目标字段用途确定查询顺序，并核对各端授权及结果完整性。业务关系清单不代表平台已登记；平台已有关系也需要与业务合同核对。
