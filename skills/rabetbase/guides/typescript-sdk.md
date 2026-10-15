@@ -298,7 +298,7 @@ const todoPage = await flow.listTodo({
 });
 ```
 
-Flow SDK 只面向 `INDEPENDENT_FLOW + CUSTOM_PAGE`。发起、查询、审批、转交、撤回、重提、退回、作废和抄送的完整契约见 [`custom-page-flow-sdk.md`](custom-page-flow-sdk.md)。
+Flow SDK 只面向 `INDEPENDENT_FLOW + CUSTOM_PAGE`。`FORM_FLOW` 使用 [表单创建与显式启动](form-flow-start.md)，普通数据集 create 不会自动启动审批。发起、查询、审批、转交、撤回、重提、退回、作废和抄送的完整契约见 [`custom-page-flow-sdk.md`](custom-page-flow-sdk.md)。
 
 ## 异常处理底线
 

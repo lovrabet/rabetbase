@@ -8,6 +8,8 @@
 - 页面承担流程发起、当前用户待办/已办/已发起查询、详情、审批、驳回、办理、转交、撤回、重提、退回、作废或抄送交互。
 - 不适用于 `FORM_FLOW`、`PLATFORM_FORM`，也不用于页面直接设计或发布 FlowConfig。
 
+表单审批的多页面绑定、先创建数据再显式启动，见 [表单发起指南](form-flow-start.md)。
+
 流程定义和发布仍由 `rabetbase flow validate/create/update/publish` 完成。本指南只描述生成到页面中的运行时调用。
 
 ## 身份、应用与权限边界

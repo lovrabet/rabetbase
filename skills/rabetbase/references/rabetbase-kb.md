@@ -29,12 +29,13 @@ rabetbase kb delete --id 60 --yes
 - `create --file` 必填，`update --file` 可选；输入必须是可读的普通 UTF-8 文本或 Markdown 文件。
 - CLI 保留解码后的文本，不解析 JSON、不重排段落，也不把路径映射转换成其他格式。
 - 空白文件、目录、无效 UTF-8、缺失或不可读文件都会在网络请求前拒绝。
-- 管理命令的结构化输出不包含知识库全文，只展示 `contentByteSize`、`contentHash`、`snapshotHash` 等安全元数据；`search` 会按检索用途返回命中的正文片段。
+- `detail` 的结构化输出在 `data.knowledgeBase.content` 返回完整正文，保留原始换行、空白与 Unicode；同时保留 `contentByteSize`、`contentHash`、`snapshotHash` 等元数据。`list`、写入回执和 dry-run 不输出全文；`search` 返回命中的正文片段。
 
 ## list / detail
 
 - `list` 自动读取全部分页，并强制过滤为精确 company scope 与当前 appCode；服务端的 appCode/title LIKE 结果不能扩大客户端作用域。
 - `detail` 使用正安全整数 ID 精确读取，并验证返回 ID、scope 和 appCode。
+- 追加更新必须使用 `detail` 的完整 `content`，不能用列表摘要或搜索片段重建原文。缺少 `content` 字段时停止更新，不能将其当作空正文。
 - 服务端 Long 字段即使序列化为十进制字符串，CLI 也只接受能安全转换的整数；超出 JavaScript 安全整数范围时失败关闭。
 
 ## search
@@ -62,6 +63,8 @@ rabetbase kb delete --id 60 --yes
 - 内容更新发送 `{id,content}` 与可选 title；回读必须匹配内容哈希且版本高于写前版本。
 - `--expected-version` 是非原子的 read-before-write 断言；服务端请求没有 version 条件，不能把它描述为 compare-and-set。
 - 响应不确定时只按同一 ID 回读；证据不足返回 outcome unknown，不自动重提。
+
+追加记录时先读取 `detail`，保留完整旧正文并在末尾追加，使用 `--file` 提交合并后的 UTF-8 文件。正式写入前再次读取详情，若版本或 `contentHash` 已变，基于新正文重新合并和 dry-run；使用最新 `--expected-version`。这仍不能消除检查到提交之间的并发覆盖，应避免同时编辑同一文档。写入后回读完整正文，核对旧内容、新增内容和版本。
 
 ## delete
 

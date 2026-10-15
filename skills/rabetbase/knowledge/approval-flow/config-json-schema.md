@@ -25,12 +25,22 @@
 - `flowJson.nodes`：非空节点数组。
 - `flowJson.edges`：非空连线数组。
 
-可选字段：`flowDesc`、`datasetCode`、`pageId`。
+可选字段：`flowDesc`、`pageIds`。旧输入 `pageId`（单个正整数）和 `datasetCode` 仍兼容读取。
 
 `flowType` 是产品语义分类，不由节点形状推断：
 
-- `FORM_FLOW`：表单审批流，可以配置 `datasetCode`、`pageId`；人工节点只允许 `taskMode: "APPROVAL"`，禁止 `HANDLE`。
-- `INDEPENDENT_FLOW`：独立工作流，不能配置外层 `datasetCode` 或外层 `pageId`；可以同时使用 `APPROVAL` 和 `HANDLE`。
+- `FORM_FLOW`：表单审批流，通过 `pageIds` 绑定一个或多个 CREATE 页面；`datasetCode` 是旧兼容参数，保存时被服务端忽略；人工节点只允许 `taskMode: "APPROVAL"`，禁止 `HANDLE`。
+- `INDEPENDENT_FLOW`：独立工作流，不能配置外层 `datasetCode` 或绑定外层 `pageId/pageIds`；可以同时使用 `APPROVAL` 和 `HANDLE`。
+
+`pageIds` 是完整页面 ID 数组，优先于兼容单值 `pageId`。CLI 接受正的 JavaScript 安全整数，去重保持首次顺序；超出安全整数的 ID 明确失败，不四舍五入。去重后的逗号分隔表示不得超过 2048 字符。更新时不传两个字段表示保留，传 `pageIds: []` 明确解绑全部页面；创建时省略表示不绑定。
+
+同应用每个页面最多绑定一个未删除 FORM_FLOW，草稿和停用流程也占用。编辑已有流程时用 `flow page-list --id <flow-id>` 查询可选 CREATE 页面，包含当前流程自身绑定并排除其他流程占用；新建尚无 id 时不传 `--id`，结果只是候选页面，保存时仍校验占用。
+
+已知页面 ID 可以直接创建并绑定，不要求先创建空草稿。需要先取得流程 ID 再筛可用页面时，草稿也必须有合法的 `nodes + edges`；空图不能保存。页面可来自不同数据集。未绑定草稿可保存和发布，但要交付能从表单发起的流程，必须补齐真实 CREATE 页面绑定及菜单入口。
+
+服务端响应的 `pageId` 是完整 CSV 字符串，`pageIds` 为完整数组；`flow detail --output` 优先导出数组，并兼容解析历史单值或 CSV。不能截取首项，也不能把 CSV 写入请求的旧 `pageId`。新表单流程不按数据集绑定；仅 `FORM_FLOW` 运行态发起时要求实际 `pageId` 和先创建的 `dataId`，`datasetCode` 可省略，由服务端从页面的标准主表单解析，也兼容显式传入已确认的数据集编码，见 [表单发起指南](../../guides/form-flow-start.md)。`INDEPENDENT_FLOW` 的启动契约保持不变。
+
+响应 `pageIds` 元素可能是 Long 序列化后的十进制数字字符串；CLI 回导和绑定预检兼容该形态，统一转换为安全整数。本地配置仍使用 JSON 数字数组；不安全或非法响应明确失败，不静默修改页面 ID。流程 `gmtCreate/gmtModified` 新响应为毫秒时间戳，CLI 兼容旧环境字符串并保留原值。
 
 独立工作流中出现审批节点不会把它变成表单审批流。需要填写、补充材料、执行或确认等人工办理步骤时使用 `INDEPENDENT_FLOW + HANDLE`。
 
@@ -39,13 +49,17 @@
 - `CUSTOM_PAGE`：业务自定义页面，缺省时按此值处理。
 - `PLATFORM_FORM`：服务端的平台表单页面语义；当前 Skill 和 CLI 不支持生成或提交。
 
-`FORM_FLOW` 不得配置 `pageMode`。自定义页面 SDK/OpenAPI 只返回 `INDEPENDENT_FLOW + CUSTOM_PAGE`。
+`FORM_FLOW` 不得配置 `pageMode`。本指南的自定义页面 Flow SDK 只面向 `INDEPENDENT_FLOW + CUSTOM_PAGE`；不得用旧 Flow OpenAPI 示例替代页面登录会话。
 
 `INDEPENDENT_FLOW + CUSTOM_PAGE` 可选配置非空字符串 `flowJson.startPath`，并在 `APPROVAL` 或 `END` 节点上可选配置非空字符串 `path`。Skill 必须填写 `page custom-detail` 确认为 `FORMAL` 的自定义页面所返回的完整 `runtimePageUrl`，不得填写菜单原始 `path`、最新保存内容地址 `pageUrl`、`editPageUrl` 或手工拼接地址；页面未发布时先保持字段缺失并询问用户是否发布。这些字段只用于页面跳转，不参与流程执行或业务判断；缺失时调用方自行选择页面。其他流程类型、`PLATFORM_FORM` 或其他节点类型不得配置这些导航字段。旧字段 `flowJson.startPageId` 和节点 `pageId` 不再支持。
 
 本地 FlowConfig 必须显式填写 `flowType`。CLI 不再利用服务端的历史默认值推断为 `FORM_FLOW`，避免表单审批流和独立工作流混用。
 
 Skill 根据业务逻辑直接生成完整 `nodes + edges` 拓扑，不读取或填写 SmartCode `templateName`。
+
+模板名不替调用方生成节点、审批人或业务绑定。START → END 的图可以保存但会直接结束，不能描述为已配置人工审批。每个人工节点的办理人由该节点 `assignee` 决定，创建者和发起者不会自动成为首个审批人；ROLE 的实际成员还需在运行态核对。
+
+更新已发布定义会回到草稿，必须重新发布后才用于发起。曾发布的定义禁止更改 `flowType`；停用或回到草稿不解除限制。更换类型应创建另一条定义，已有实例与页面迁移须单独明确。
 
 `appCode` 来自当前 CLI 工作区，远程定义 `id` 来自 `--id`。二者都不落本地文件。
 

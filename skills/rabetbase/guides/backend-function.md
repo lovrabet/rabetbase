@@ -348,6 +348,19 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 * `context.tenantCode`
 * `context.client`
 
+## 执行身份与数据集权限
+
+`context.userInfo`、`context.appRoles` 和当前应用来自服务端的可信执行上下文。普通用户调用 BFF 时，数据集操作使用该用户的应用角色；请求参数中的 `userInfo`、角色、`systemExecution` 或 `skipAuth` 不能改变身份或扩大权限。
+
+- `context.userInfo` 可以为 `null`；这不表示系统授权。需要用户身份的业务分支应明确拒绝缺失用户。
+- 读取当前应用启用的角色使用 `context.appRoles`（或有用户时的 `context.userInfo.roles`），通过数组 `some()` 匹配真实 `roleCode`，不要读取单值 `userInfo.role`。
+- `isAdmin` / `isOwner` 表示应用角色类型；业务是否允许它们跳过特定角色条件必须明确约定。
+- 普通 BFF 通过模型 code 或 `byTable` 实际操作数据集时，均校验目标应用、目标数据集和操作权限。拥有读取权限不代表可以创建、更新或删除；连续访问 A、B、A 时分别按各目标判断。
+- 后台工作流的系统执行作用域由服务端可信入口设置，仅适用于该应用。不能通过脚本参数申请系统执行，也不能通过无用户调用来模拟它。
+- 通过主数据集已配置的关系读取关联字段、选项标签、子表或子表单，遵循“有主默认有子”。独立调用子数据集模型或 `byTable` 仍校验子数据集自身权限。
+
+脚本中的业务角色判断或手动 `where` 是额外业务条件，不能代替平台数据集权限。“仅自己”由平台数据范围配置及对应操作能力决定；不要把一个手写创建人条件当作完整 SELF 实现。使用真实普通用户验证所需操作及返回范围。
+
 ## 数据集调用规范
 
 通过 `context.client.models` 调用数据集。有物理表的 `DB_TABLE` 默认按物理表名解析，避免把 Dataset code 写入业务代码：
@@ -523,16 +536,25 @@ const record = await models[TABLES.primary].findOne({ id });
 
 ```javascript
 export default async function beforeFilter(params, context) {
-  if (context.userInfo.role !== "admin") {
-    params.where = params.where || {};
-    const originalWhere = { ...params.where };
+  const user = context.userInfo;
+  if (!user) throw new Error("User context is required");
+
+  // 用已确认的业务角色编码和数据集业务字段替换示例值。
+  const canReadAll = (context.appRoles || []).some(
+    role => role.roleCode === "order_manager"
+  );
+  if (!canReadAll) {
+    const userId = user.userId != null ? String(user.userId) : user.id;
+    if (!userId) throw new Error("User identity is required");
     params.where = {
-      $and: [originalWhere, { created_by: { $eq: context.userInfo.id } }],
+      $and: [params.where || {}, { owner_user_id: { $eq: userId } }],
     };
   }
   return params;
 }
 ```
+
+上述 `owner_user_id` 是已核验的业务归属字段示例，需先确认字段名及用户标识格式；它不是平台自动维护的创建人字段，也不代表所有接口的 SELF 规则。
 
 ### After
 

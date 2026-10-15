@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.5.6
+version: 2.5.7
 description: "Use for Lovrabet development work through the rabetbase CLI: create or bind projects (including creating an AppCode project in the current folder), pull Dataset/API facts and maintain SDK clients, or manage datasets, Instant API access policies, database connections, pages, host frontend integration, frontend subapp resources, SQL, Backend Functions, approval flows and workflows, menus, notifications, knowledge bases and kb search, Agent Context Rules, roles, files, OCR, deployment metadata, platform issues, and 钉钉沙箱账号绑定. Trigger when the user mentions rabetbase, Lovrabet development, AppCode, Dataset, Instant API allow/deny/route policy, project creation, api pull/codegen, dblink, page, host frontend integration, subapp resource versions, SQL, BFF, creating or designing an approval flow, workflow, business process, or multi-step approval, menu, notification, knowledge base, kb search, Agent Context Rules, RULES.md, DATABASE.md, rule list/get/set, role, file/OCR, or related development workflows."
 metadata:
   requires:
@@ -52,7 +52,7 @@ Agent 负责把已授权的目标推进到可验证的结果：主动获取事�
 ## Agent 快速执行顺序
 
 1. **判断需求类型**
-   - 用户要创建或设计审批流、工作流、业务流程或多级审批 → 先读 [`approval-flow-development-workflow.md`](guides/approval-flow-development-workflow.md)。用户未明确限定类型时，默认推荐独立工作流 `INDEPENDENT_FLOW`；只有明确是已有数据集表单提交后的纯审批，且不包含填写、补材料、执行或确认等办理步骤时，才选择 `FORM_FLOW`；再使用 `flow validate/create/update/publish`
+   - 用户要创建或设计审批流、工作流、业务流程或多级审批 → 先读 [`approval-flow-development-workflow.md`](guides/approval-flow-development-workflow.md)。用户未明确限定类型时，默认推荐独立工作流 `INDEPENDENT_FLOW`；只有明确是已有数据集表单提交后的纯审批，且不包含填写、补材料、执行或确认等办理步骤时，才选择 `FORM_FLOW`；再使用 `flow validate/create/update/publish`；表单绑定与运行页面提交见 [表单发起指南](guides/form-flow-start.md)，可绑定页面用 `flow page-list` 查询
    - Instant API 标准数据记录操作 → SDK filter/getOne/create/batchCreate/update/delete；批量更新使用 `update({ id: [...] })`，不存在 `batchUpdate()`
    - 简单聚合且数据集是 DB_TABLE → SDK aggregate；聚合列用 `aggregate[].column`，不要用旧别名 `field`
    - 同库 DB_TABLE 的复杂 JOIN / 数据库函数 → 评估 Custom SQL；跨库查询 → 按 [跨库 BFF 指南](guides/cross-database-bff.md)分别读取并拼接
@@ -80,6 +80,7 @@ Agent 负责把已授权的目标推进到可验证的结果：主动获取事�
    - 先使用 `sql list/detail` 查找可复用的 Custom SQL；没有满足需求的资源时，按照 [`sql-creation-workflow.md`](guides/sql-creation-workflow.md) 与 [`sql-mybatis.md`](guides/sql-mybatis.md) 创建、校验、发布并验证
    - 页面执行已发布的 Custom SQL 时使用 `sqlCode` + `params`；Backend Function 默认使用 `context.client.sql.byName(sqlName).execute({ params })`，`sql.execute({ sqlCode, params })` 仅作兼容路径
 4. **Backend Function 工作流**
+   - 涉及用户、角色、数据权限或系统任务时，先读 [执行身份与数据集权限](guides/backend-function.md#执行身份与数据集权限)：服务端可信身份、多角色、逐数据集操作鉴权及主子关联边界
    - 跨数据库连接的业务查询、关联筛选或聚合，先读 [跨库 BFF 查询与拼接](guides/cross-database-bff.md)，确认完整键、执行顺序、各端授权和结果完整性
    - 创建或修改 Backend Function 时，按 [BFF 工作流](guides/bff-creation-workflow.md)复用有效事实、按需查询并完成必要验证；运行行为异常时用 `bff logs` 按时间、级别和关键字查询日志
    - `bff pull` / `bff push` 返回 `data.conflicts` 时，逐项报告 `lockKey` 和 `code`，并只在审阅后执行该项 `nextAction`；不得把同步冲突说成失败、自动使用 `--force`，或盲目重试整批脚本
@@ -120,10 +121,12 @@ Agent 负责把已授权的目标推进到可验证的结果：主动获取事�
 - 填写办理人、角色或转交候选人前，使用 `rabetbase flow runtime-user-search`、`runtime-role-list`、`runtime-role-user-list` 查询运行态真实 ID；这些命令只读，不办理待办。
 - FlowConfig 字段和校验规则以 [`knowledge/approval-flow/config-json-schema.md`](knowledge/approval-flow/config-json-schema.md) 为准；CLI 校验结果区分 `READY`、`NEEDS_USER_CONFIRMATION`、`NEEDS_DSL_EXTENSION`、`INVALID_CONFIG` 和 `REMOTE_VALIDATION_FAILED`。
 - `FORM_FLOW` 是表单审批流，人工节点只能使用 `taskMode: APPROVAL`，不得生成 `HANDLE`。
+- 表单流程用 `flow page-list` 发现 CREATE 页面并写完整 `pageIds`；新建无 ID 时结果只是候选，已有流程传 `--id` 筛除其他流程占用。绑定集合发生增删时必须先审阅 dry-run 原绑定变化，正式 update 传 `--expected-page-ids`。生成表单提交代码时阅读 [`form-flow-start.md`](guides/form-flow-start.md)，先保存业务记录，再以实际页面与已有 dataId 显式发起。
 - `INDEPENDENT_FLOW` 是工作流，可以组合 `APPROVAL` 和 `HANDLE`；包含审批节点也不会改变其工作流类型。
 - `pageMode` 只属于独立工作流：当前公开 Skill 只生成 `CUSTOM_PAGE`，由业务页面根据业务状态自行渲染并通过 SDK 驱动；缺省也按 `CUSTOM_PAGE`。用户要求 `PLATFORM_FORM` 时返回 `NEEDS_DSL_EXTENSION`，不生成或提交 FlowConfig。`CUSTOM_PAGE` 可选配置 `flowJson.startPath` 以及 `APPROVAL` / `END` 节点 `path` 作为纯导航信息；这些字段都不参与流程执行。配置时必须使用目标自定义页面返回的完整 `runtimePageUrl`，不得填写菜单原始 `path`、`pageUrl`、`editPageUrl` 或手工拼接地址。
 - 为独立工作流填写页面导航前，先用 `page custom-list` 找到目标页面，再用 `page custom-detail --id <pageId>` 检查 `data.status`。只有 `FORMAL` 页面才允许把 `runtimePageUrl` 写入 `startPath` 或节点 `path`；状态不是 `FORMAL` 时保持字段未填写，返回 `NEEDS_USER_CONFIRMATION` 并询问用户是否先发布。用户同意后按 `page custom-publish` 的 dry-run、确认、正式发布和 `FORMAL` 回读闭环执行，发布成功后再填写返回的 `runtimePageUrl`。
 - 自定义页面 Flow SDK 只面向 `INDEPENDENT_FLOW + CUSTOM_PAGE`，使用当前 Runtime 登录会话；不得把表单审批流或平台表单工作流混入该入口。生成页面前必须按 Flow SDK 指南的完整字段字典解释所有固定返回对象及嵌套字段，不能只知道方法名和 TypeScript 类型。
+- 发布后回读定义和完整页面绑定，启用状态通过平台或实际运行入口核验；已发布流程更新会回草稿，必须重新发布。曾发布的流程不能改类型。发布成功后仍按创建工作流完成运行态验收。
 
 ## 应用决议指引
 
@@ -360,7 +363,7 @@ const result = await client.bff.execute<DashboardData>({
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
 | 管理运行态 app-config | [`rabetbase app-config list/get/set/delete`](references/rabetbase-app-config.md) | 运行态 app-config 管理面；默认不输出明文 value；`set` 为 `write`，`delete` 保持 `high-risk-write` |
 | 管理 Instant API 数据集访问策略 | [`rabetbase instant-api-policy init/current/pull/validate/publish/revisions/revision/rollback`](references/rabetbase-instant-api-policy.md) | 固定文件 `.rabetbase/instant-api-policy/<appCode>/policy.json`；`version` 是 JSON 结构版本，`revision` 是发布历史版本；publish/rollback 为 high-risk-write |
-| 管理和检索当前研发应用的企业知识库 | [`rabetbase kb list/detail/search/create/update/delete`](references/rabetbase-kb.md) | 管理仅 company scope；search 仅V2，默认解析 `kbServiceDomain`，可用 `--kb-service-url` 单次覆盖，使用Cookie且仅 `public/company`；`create/update` 为 `write`，`delete` 保持 `high-risk-write` |
+| 管理和检索当前研发应用的企业知识库 | [`rabetbase kb list/detail/search/create/update/delete`](references/rabetbase-kb.md) | 管理仅 company scope；detail 返回完整正文，追加前必须读取；search 仅V2，默认解析 `kbServiceDomain`，可用 `--kb-service-url` 单次覆盖，使用Cookie且仅 `public/company`；`create/update` 为 `write`，`delete` 保持 `high-risk-write` |
 | 管理当前研发应用的 Agent context 规则 | [`rabetbase rule list/get/set`](references/rabetbase-rule.md) | `RULES.md` 供页面、API 等研发 Agent 使用且排除 DB Agent；`DATABASE.md` 仅供数据库分析时 DB Agent 使用；两者在各自流程全程参与 context；set 为 `write`，先 dry-run |
 | 查询或管理应用级通知配置 | [`rabetbase notification config-list`](references/rabetbase-notification-config-list.md) / [`rabetbase notification config-create`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-update`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-delete`](references/rabetbase-notification-config-mutations.md) | list 获取 Backend Function 所需 `configCode`；写入只接收单一敏感 JSON 源，先 dry-run；update/delete 必须 `--yes` |
 | 设计、校验和发布表单审批流或独立工作流 | [`rabetbase flow validate/list/detail/create/update/publish`](references/rabetbase-flow-commands.md) | 先确定 `flowType`；本地 validate 后再 create/update 和 publish |
@@ -561,6 +564,7 @@ const result = await client.bff.execute<DashboardData>({
 | SQL MyBatis 与动态 SQL | 写自定义 SQL、`<if>`/`<foreach>`、参数绑定                                                                            | [`sql-mybatis.md`](guides/sql-mybatis.md)                                   |
 | 前端页面开发约束       | React 页、表单、列表、与数据集绑定                                                                                    | [`frontend-development.md`](guides/frontend-development.md)                 |
 | 自定义页面 Flow SDK    | 页面发起、查询或办理 `INDEPENDENT_FLOW + CUSTOM_PAGE`，以及 appCode、Cookie、表单和流程变量边界                    | [`custom-page-flow-sdk.md`](guides/custom-page-flow-sdk.md)                 |
+| 表单页面发起审批 | `FORM_FLOW` 多页面绑定、先保存业务记录再显式启动及失败恢复 | [`form-flow-start.md`](guides/form-flow-start.md) |
 | 故障诊断               | CLI/登录/数据集/保存失败排障                                                                                          | [`troubleshooting.md`](guides/troubleshooting.md)                           |
 | Backend Function 脚本规范           | HOOK/ENDPOINT/COMMON、`context.client`、消息通知扩展、目录与注释模板                                                   | [`backend-function.md`](guides/backend-function.md)                         |
 | 数据接口访问           | 先 detail 再编码、外键/枚举、禁止 N+1、批量与关联查询；验证真实行数据时交接 `lovrabet data`（**`lovrabet` CLI ≥ 2.0**） | [`data-api-guidelines.md`](guides/data-api-guidelines.md)                   |
@@ -571,4 +575,4 @@ const result = await client.bff.execute<DashboardData>({
 | 质量与最佳实践         | 审查 SQL/Backend Function、命名、高危边界、描述字段                                                                                | [`best-practices.md`](guides/best-practices.md)                             |
 | 数据库连接与分析       | 接入/改连/测连、`traceId` 来源、`db analyze-*` 与 dataset 分工；子命令速查见上文 **「数据库连接（db）」**             | [`database-connection-workflow.md`](guides/database-connection-workflow.md) |
 | 菜单异常审计与安全修复 | 重复 path、根级菜单重名、空 folder 删除计划和平台处理后回查                                                          | [`menu-anomaly-manual-cleanup.md`](guides/menu-anomaly-manual-cleanup.md)   |
-| 表单审批流与独立工作流设计态开发 | 流程分类、资源发现、FlowConfig、校验、创建、发布和启停                                                   | [`approval-flow-development-workflow.md`](guides/approval-flow-development-workflow.md) |
+| 表单审批流与独立工作流设计态开发 | 流程分类、页面绑定、资源发现、FlowConfig、校验、创建、发布和运行验收 | [`approval-flow-development-workflow.md`](guides/approval-flow-development-workflow.md) |

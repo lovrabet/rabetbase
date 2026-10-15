@@ -6,8 +6,9 @@ FlowConfig 中的真实标识必须来自 CLI 查询，不得由 Agent 猜测。
 
 | FlowConfig 字段 | 发现命令 | 选中值 |
 |---|---|---|
-| 外层 `datasetCode` | `dataset list`、`dataset detail` | Dataset `code` |
-| 外层 `pageId` | `menu list` | 与目标页面对应的 `pageId` |
+| `FORM_FLOW` 外层 `pageIds` | `flow page-list`；已有流程传 `--id <flow-id>` | CREATE 页面的 `id`，保留所有选中项 |
+| 表单页面菜单核对 | `menu list` | 与选中页面对应的 `pageId`、有效 `path` 和菜单类型 |
+| 本次表单发起的 `datasetCode` | 实际页面配置、`dataset list/detail` | 当前业务记录的数据集 `code`，不写成流程定义绑定 |
 | `flowJson.startPath` | `page custom-list` + `page custom-detail` | 已发布自定义页面的完整 `runtimePageUrl` |
 | `APPROVAL.path` / `END.path` | `page custom-list` + `page custom-detail` | 已发布自定义页面的完整 `runtimePageUrl` |
 | `APPROVAL.assignee.userIds` | `flow runtime-user-search` | 运行态 `users[].userId` |
@@ -22,6 +23,23 @@ FlowConfig 中的真实标识必须来自 CLI 查询，不得由 Agent 猜测。
 | `NOTIFICATION.config.recipients[].value`（固定 ROLE） | `flow runtime-role-list` | 运行态角色 `id` |
 
 `page custom-list` 只用于筛选候选页面；填写 `startPath` 和节点 `path` 前必须再执行 `page custom-detail --id <pageId>`。只有 `data.status` 为 `FORMAL` 时，才使用详情返回的完整 `runtimePageUrl`；页面未发布时保持字段缺失并询问用户是否先发布。不得使用数值 `pageId`、菜单名称、菜单原始 `path`、`pageUrl`、`editPageUrl` 或手工拼接地址代替。占位符形式的通知收件人来自运行态变量，不需要资源查询；固定 EMAIL 收件人由用户明确提供，不推断邮箱地址。
+
+## 表单流程页面发现
+
+```bash
+# 新建前查候选；结果尚未过滤其他流程占用
+rabetbase flow page-list --name <keyword> --page 1 --page-size 20 --format compress
+# 编辑已有流程；ID 来自 flow create/list/detail，不是 flowCode
+rabetbase flow page-list --id <flow-id> --name <keyword> --page 1 --page-size 20 --format compress
+rabetbase menu list --format compress
+```
+
+- 使用 `data.pages[].id` 写入完整 `pageIds` 数组；HTTP 数字字符串先按十进制转换并确认是正的 JavaScript 安全整数，再写为 JSON 数字，不截断、不四舍五入。检查 `paging`，不能把一页结果当成全部页面。
+- 新建查询的 `availabilityChecked=false`，页面是否占用由保存时最终校验；草稿和停用的未删除 FORM_FLOW 仍占用页面。
+- 有 ID 时查询排除其他流程占用，保留自身绑定。仍需核对页面确实存在、类型为 CREATE 及菜单路由有效；筛选成功不表示运行态已经可发起。
+- 已知真实页面 ID 可直接 create。需要先取得 ID 再筛可用页面时，先保存有合法拓扑的未绑定草稿，再查询并 update；不得用空图占位。
+- 一个流程可以绑定不同数据集的 CREATE 页面。`datasetCode` 不决定定义绑定，也不能从数组首项代替本次实际页面。
+- 不用 `menu list` 代替绑定候选查询；菜单用于核对页面入口。发布只标记明确绑定页面已有菜单为 `process`，不会自动给同数据集其他页面绑定流程或创建菜单。
 
 ## 搜索运行态应用用户
 
@@ -73,7 +91,7 @@ rabetbase notification config-list --type EMAIL --format compress
 rabetbase bff list --type ENDPOINT --name <keyword> --format compress
 ```
 
-只把确认后的 Endpoint `functionName` 写入 `SCRIPT.scriptName` 或 `APPROVAL.timeout.scriptName`。COMMON、HOOK 或展示名称不能替代 Endpoint 函数名。
+只把确认后的同应用、非个人 Endpoint `functionName` 写入 `SCRIPT.scriptName` 或 `APPROVAL.timeout.scriptName`。COMMON、HOOK、WORKFLOW 脚本类型或展示名称不能替代 Endpoint 函数名。SCRIPT 节点不配置审批人；执行身份由服务端处理，不向脚本参数注入用户或系统标记。
 
 ## 确认规则
 
