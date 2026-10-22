@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.5.7
+version: 2.5.8
 description: "Use for Lovrabet development work through the rabetbase CLI: create or bind projects (including creating an AppCode project in the current folder), pull Dataset/API facts and maintain SDK clients, or manage datasets, Instant API access policies, database connections, pages, host frontend integration, frontend subapp resources, SQL, Backend Functions, approval flows and workflows, menus, notifications, knowledge bases and kb search, Agent Context Rules, roles, files, OCR, deployment metadata, platform issues, and 钉钉沙箱账号绑定. Trigger when the user mentions rabetbase, Lovrabet development, AppCode, Dataset, Instant API allow/deny/route policy, project creation, api pull/codegen, dblink, page, host frontend integration, subapp resource versions, SQL, BFF, creating or designing an approval flow, workflow, business process, or multi-step approval, menu, notification, knowledge base, kb search, Agent Context Rules, RULES.md, DATABASE.md, rule list/get/set, role, file/OCR, or related development workflows."
 metadata:
   requires:
@@ -363,7 +363,7 @@ const result = await client.bff.execute<DashboardData>({
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
 | 管理运行态 app-config | [`rabetbase app-config list/get/set/delete`](references/rabetbase-app-config.md) | 运行态 app-config 管理面；默认不输出明文 value；`set` 为 `write`，`delete` 保持 `high-risk-write` |
 | 管理 Instant API 数据集访问策略 | [`rabetbase instant-api-policy init/current/pull/validate/publish/revisions/revision/rollback`](references/rabetbase-instant-api-policy.md) | 固定文件 `.rabetbase/instant-api-policy/<appCode>/policy.json`；`version` 是 JSON 结构版本，`revision` 是发布历史版本；publish/rollback 为 high-risk-write |
-| 管理和检索当前研发应用的企业知识库 | [`rabetbase kb list/detail/search/create/update/delete`](references/rabetbase-kb.md) | 管理仅 company scope；detail 返回完整正文，追加前必须读取；search 仅V2，默认解析 `kbServiceDomain`，可用 `--kb-service-url` 单次覆盖，使用Cookie且仅 `public/company`；`create/update` 为 `write`，`delete` 保持 `high-risk-write` |
+| 管理和检索当前研发应用的企业知识库 | [`rabetbase kb list/detail/search/create/update/delete`](references/rabetbase-kb.md) | 管理仅 company scope，使用 kbServiceDomain 与 Cookie；rule 保留 kbDomain；detail 返回完整正文，追加前必须读取；search 仅V2，默认解析 `kbServiceDomain`，可用 `--kb-service-url` 单次覆盖，使用Cookie且仅 `public/company`；`create/update` 为 `write`，`delete` 保持 `high-risk-write` |
 | 管理当前研发应用的 Agent context 规则 | [`rabetbase rule list/get/set`](references/rabetbase-rule.md) | `RULES.md` 供页面、API 等研发 Agent 使用且排除 DB Agent；`DATABASE.md` 仅供数据库分析时 DB Agent 使用；两者在各自流程全程参与 context；set 为 `write`，先 dry-run |
 | 查询或管理应用级通知配置 | [`rabetbase notification config-list`](references/rabetbase-notification-config-list.md) / [`rabetbase notification config-create`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-update`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-delete`](references/rabetbase-notification-config-mutations.md) | list 获取 Backend Function 所需 `configCode`；写入只接收单一敏感 JSON 源，先 dry-run；update/delete 必须 `--yes` |
 | 设计、校验和发布表单审批流或独立工作流 | [`rabetbase flow validate/list/detail/create/update/publish`](references/rabetbase-flow-commands.md) | 先确定 `flowType`；本地 validate 后再 create/update 和 publish |
