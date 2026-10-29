@@ -9,7 +9,7 @@
 
 ## 服务端合同边界
 
-- 只使用现有 KB 域接口：`GET /smartapi/knowledge-base/get-by-app` 与 `POST /smartapi/knowledge-base/save`。
+- 使用 `kbServiceDomain` 与开发者 Cookie：`POST /api/knowledge-base/company/rules/get-by-title`，JSON body 为 `{appCode,title:"RULES"|"DATABASE"}`，随后 POST /api/knowledge-base/company/rules/create 或 update；写入携带 CSRF marker，只明确 404/306 NOT_FOUND 表示未配置。
 - 文件名映射为 `scope=rules` 下的规范标题：`rules -> RULES`、`database -> DATABASE`。
 - 不开放任意 scope、标题、重命名或删除，也不调用 admin 列表接口模拟规则管理。
 - CLI 验证持久化结果；规则运行时只在互斥的 context scope 中消费。DB Agent 只消费 `DATABASE.md`、不消费 `RULES.md`；页面、API 等研发 Agent 只消费 `RULES.md`、不消费 `DATABASE.md`。
@@ -34,10 +34,10 @@ rabetbase rule set --type database --file ./DATABASE.md --dry-run
 ## set
 
 - `--type rules|database` 与 `--file` 必填。
-- 输入必须是可读普通文件、有效 UTF-8、非空且不超过服务端 5 MiB 限制；CLI 逐字发送解码后的内容。
+- 输入必须是可读普通文件、有效 UTF-8、非空且DATABASE 不超过 5242880 个 UTF-16 单元、RULES 不超过 2000 个 UTF-16 单元；CLI 逐字发送解码后的内容。
 - `set` 是普通 `write`，建议先 dry-run；正式执行不要求额外 `--yes`。
-- 写前精确回读当前状态；`--expected-version` 可选，只是非原子 read-before-write 断言。服务端保存合同没有 version 条件，不能描述为 compare-and-set。
-- 请求最多提交一次。正常或不确定响应之后都只做一次精确回读；正文哈希必须一致，已有记录还必须证明版本推进。
+- 写前精确回读当前状态，已有记录使用 id/scope/expectedVersion 做原子 compare-and-set；未配置且预期为 0 时仅 create（不发送 expectedVersion），已有记录 update 传正版本。可选 `--expected-version` 额外检查本地预期，409 冲突停止。
+- 请求最多提交一次。正常响应必须验证 Result.data 的 VO 并按其 ID 回读；仅真正传输未知允许只读对账，已收到的身份/版本错误直接失败；正文哈希必须一致，已有记录实际修改须推进一版，原样写入保持版本。
 - 响应丢失但回读可证明结果时返回 verified 并标记恢复；证据不足时返回 outcome unknown，禁止自动重提。
 - dry-run 和正式结构化输出都不包含新正文，只包含 `contentByteSize`、`contentHash` 等安全元数据。
 
@@ -52,7 +52,7 @@ rabetbase rule set --type database --file ./DATABASE.md --dry-run
 
 四个二级标题已经提供分类语义，不要在每条规则前重复 `[BUSINESS_DOMAIN]`、`[ENTITY_DICTIONARY]`、`[COLUMN_SEMANTIC]` 或 `[RELATION_RULE]` 标签。准入标准是“当前应用特有且无法可靠推断”，不以某个 LLM 版本是否声称知道该知识为判断依据。
 
-完整 `DATABASE.md` 建议不超过 5000 个 Unicode 字符，并把影响范围最大的规则放在前面。这是控制 Agent context 的编写建议，不是 `rule set` 的硬校验；CLI 仍遵循服务端现有的 5 MiB 文件限制。字符数也不应换算为固定 token 数，因为不同语言和模型的分词结果不同。
+完整 `DATABASE.md` 建议不超过 5000 个 Unicode 字符，并把影响范围最大的规则放在前面。这是控制 Agent context 的编写建议，不是 `rule set` 的硬校验；CLI 按上述 UTF-16 单元限制及 32 MiB JSON 请求预算校验。字符数也不应换算为固定 token 数，因为不同语言和模型的分词结果不同。
 
 不要重复普通主外键、字段类型等可直接推断的信息，也不要写入凭证、连接串、样例业务数据或短期排障结论。`one-to-one` 必须有主键或唯一索引依据；多态引用、ID 列表、快照文本和外部标识应放入 `RELATION_RULE` 下的“禁止关联”小节，明确排除普通外键推断。
 
@@ -60,5 +60,7 @@ rabetbase rule set --type database --file ./DATABASE.md --dry-run
 
 1. 先执行 `rule list`，确认目标文件是否存在及当前版本。
 2. 已存在时优先带 `--expected-version` 做写前漂移检查。
-3. 使用相同参数先执行 `--dry-run`，检查 appCode、type、大小、哈希和非原子警告。
+3. 使用相同参数先执行 `--dry-run`，检查 appCode、type、大小、哈希和 expectedVersion。
 4. 正式执行后以返回的 `verification.status=verified` 为准；若为 outcome unknown，不要再次 set，先执行精确 `rule get` 人工核对。
+
+规则资源由 company/rules 路径选择，body 不发送 scope。回读仍使用原应用级规则 VO（scope=rules），不将 owner 改为当前用户。

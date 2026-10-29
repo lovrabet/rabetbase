@@ -1,6 +1,6 @@
 ---
 name: rabetbase
-version: 2.5.8
+version: 2.5.9
 description: "Use for Lovrabet development work through the rabetbase CLI: create or bind projects (including creating an AppCode project in the current folder), pull Dataset/API facts and maintain SDK clients, or manage datasets, Instant API access policies, database connections, pages, host frontend integration, frontend subapp resources, SQL, Backend Functions, approval flows and workflows, menus, notifications, knowledge bases and kb search, Agent Context Rules, roles, files, OCR, deployment metadata, platform issues, and 钉钉沙箱账号绑定. Trigger when the user mentions rabetbase, Lovrabet development, AppCode, Dataset, Instant API allow/deny/route policy, project creation, api pull/codegen, dblink, page, host frontend integration, subapp resource versions, SQL, BFF, creating or designing an approval flow, workflow, business process, or multi-step approval, menu, notification, knowledge base, kb search, Agent Context Rules, RULES.md, DATABASE.md, rule list/get/set, role, file/OCR, or related development workflows."
 metadata:
   requires:
