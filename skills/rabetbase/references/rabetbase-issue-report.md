@@ -1,6 +1,6 @@
 # issue report
 
-向平台 Issue 采集链路上报一个问题。description 的核心是完整组织客观事实，供平台侧复现和排查；该入口不负责代替平台侧判断根因或设计解决方案。
+提交问题日志，供后续排查。description 的核心是完整组织客观事实，包括复现步骤、实际结果、期望结果和可用证据。
 
 > **前置条件：** 已通过 `rabetbase auth login` 完成认证；未登录时命令返回 `auth_required`。
 
@@ -98,6 +98,9 @@ rabetbase issue report --title "page push 保存失败" --description-file /tmp/
 | `--format <fmt>` | string | 否 | `compress` | 输出格式 |
 
 ## 行为说明
+
+- `Issue log submitted` 表示问题日志已提交
+- `--dry-run` 不发送日志、不查询当前用户信息；标题和自动附带上下文也执行脱敏
 
 - 命令会自动补充 CLI 宿主公共上下文，不需要手动重复传入环境或用户字段
 - `--description-file` 只是本地输入来源；命令会先读取文件内容，最终上报的是 `issue.description` 的 Markdown 文本，不是本机文件路径

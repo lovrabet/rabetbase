@@ -1,11 +1,11 @@
 ---
 name: rabetbase
-version: 2.5.9
+version: 2.5.10
 description: "Use for Lovrabet development work through the rabetbase CLI: create or bind projects (including creating an AppCode project in the current folder), pull Dataset/API facts and maintain SDK clients, or manage datasets, Instant API access policies, database connections, pages, host frontend integration, frontend subapp resources, SQL, Backend Functions, approval flows and workflows, menus, notifications, knowledge bases and kb search, Agent Context Rules, roles, files, OCR, deployment metadata, platform issues, and 钉钉沙箱账号绑定. Trigger when the user mentions rabetbase, Lovrabet development, AppCode, Dataset, Instant API allow/deny/route policy, project creation, api pull/codegen, dblink, page, host frontend integration, subapp resource versions, SQL, BFF, creating or designing an approval flow, workflow, business process, or multi-step approval, menu, notification, knowledge base, kb search, Agent Context Rules, RULES.md, DATABASE.md, rule list/get/set, role, file/OCR, or related development workflows."
 metadata:
   requires:
     bins: ["rabetbase"]
-    node: ">=22.20"
+    node: ">=24.0.0"
   cliHelp: "rabetbase --help"
 ---
 
@@ -352,7 +352,7 @@ const result = await client.bff.execute<DashboardData>({
 | 绑定当前用户的飞书账号 | [`rabetbase user-account feishu-bind`](references/rabetbase-user-account.md) | `write`；先 `--dry-run` 核对 union_id；不需要 appCode；仅声明绑定，不验证账号归属 |
 | 绑定当前用户的钉钉沙箱账号 | [`rabetbase user-account dingding-sandbox-bind`](references/rabetbase-user-account.md) | `write`；先 `--dry-run` 核对 ID，正式执行不要求 `--yes`；不需要 appCode |
 | 诊断配置问题 | [`rabetbase doctor`](references/rabetbase-doctor.md) | Built-in Skill 一致性、合并配置、各侧 JSON 语法、域名、认证状态 |
-| 上报平台问题 | [`rabetbase issue report`](references/rabetbase-issue-report.md) | 由 Skill 组织完整客观事实，禁止代替平台侧做根因判断或方案设计 |
+| 上报问题日志 | [`rabetbase issue report`](references/rabetbase-issue-report.md) | 整理复现步骤、错误信息等完整客观事实并提交问题日志 |
 | 上传应用文件 | [`rabetbase file upload`](references/rabetbase-file.md) | 返回可持久保存的 `filePath` |
 | 获取文件访问链接 | [`rabetbase file query-url`](references/rabetbase-file.md) | 默认短效；Markdown/HTML URL-only 内容显式加 `--long-term` |
 | 提取票证类业务材料的文字与结构化字段 | [`rabetbase ocr recognize`](references/rabetbase-ocr.md) | 发票、票据、证照等；不用于通用图片理解 |
