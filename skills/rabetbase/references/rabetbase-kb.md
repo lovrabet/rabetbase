@@ -4,7 +4,7 @@
 
 企业知识库管理与搜索都使用当前官方节点或独立部署配置中的 `kbServiceDomain`，复用当前开发者 Cookie。管理只接受可信 HTTPS origin，create/update/delete 携带 `X-CSRF-Token: kb-browser-v1`；单次命令的预读、写入、回读固定同一地址。`--kb-service-url` 只覆盖本次搜索且不落盘，不改变管理地址。`rule` 同样使用 `kbServiceDomain`。
 
-中国大陆 production、daily 与印尼 production 已有官方 KB 地址，正常调用无需填写 URL。印尼未单独设置 daily 层级，daily 按现有节点规则使用印尼 production 地址；Global 当前没有官方 KB 地址，不会借用其他节点。
+中国大陆 production、daily，印尼 production 与 Global production 均有官方 KB 地址，正常调用无需填写 URL。印尼未单独设置 daily 层级，daily 按现有节点规则使用印尼 production 地址；Global daily/development 没有内置 KB 地址，需要显式配置，不会借用 production 或其他地区地址。
 
 > 边界：`lovrabet kb` 使用运行态 AK/当前应用/当前用户，面向个人知识库和可见知识搜索；`rabetbase kb` 使用开发者登录态，面向公司知识库管理以及公司/公共知识检索。不要用其中一个替代另一个。
 
