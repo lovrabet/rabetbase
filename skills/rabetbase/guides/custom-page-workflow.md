@@ -158,6 +158,36 @@ page create --page-pattern <BLANK|ONEPAGE|DASHBOARD>
 - `page custom-*` 页面与 `project create` 微前端模板是不同运行环境；前者不得因为模板示例使用了包装库，就引入白名单外依赖。
 - 图表查询使用 Dataset、`client.sql.execute({ sqlCode, params })` 或受控 Backend Function，并完整处理加载、空态、失败和重试行为。
 
+## 使用 Agent 侧边栏
+
+自定义页面可通过页面上下文的 `useAgent()` 唤起应用内置的 Agent 侧边栏：打开、关闭、指定会话、预填输入框和订阅事件。侧边栏由平台常驻挂载，页面无需初始化，也无需判断就绪状态，不得自行创建实例。
+
+适合承接的场景是“页面负责收集与确认，Agent 负责执行”：例如页面正在展示某条审批单、工单或客户记录时，把记录 id、关键字段摘要和期望结果预填给 Agent，由它在侧边栏中查询明细、生成文档或推进后续动作，用户可以继续追问和修正；页面只做筛选与勾选时，也可以把选中对象交给 Agent 批量处理。不要把一个完整的多步业务流程压缩成按钮回调，页面只负责提供上下文和触发时机。
+
+```jsx
+import { useAgent } from "@/context/app-context";
+
+const App = () => {
+  const agent = useAgent();
+
+  return (
+    <Button
+      onClick={() =>
+        agent.call("setSenderInput", {
+          text: "请根据当前审批单（id: xxx）核对附件完整性，并给出需要补充的材料清单",
+        })
+      }
+    >
+      让 Agent 处理
+    </Button>
+  );
+};
+```
+
+方法、`setSenderInput` 载荷字段、事件名与使用边界统一见 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md) 的“使用 Agent 侧边栏”；只使用其中已登记的调用方式，不传未登记参数。需要用户确认后再执行时省略 `autoSubmit`，只预填并聚焦输入框；同一业务对象建议复用同一 `sessionId`，便于用户下次回到该上下文。
+
+调用会改变用户可见的侧边栏并写入输入框，`autoSubmit` 会立即向 Agent 发送消息，只能在用户明确操作后触发；`/chat` 路由下侧边栏不可用。`agent.call` 返回的 Promise 需 `await` 并捕获异常。
+
 ## 页面开发参考
 
 编写页面内容前，先阅读 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md)。
@@ -183,7 +213,7 @@ src/components/*.jsx
 代码遵循以下约束：
 
 - 仅导入 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md)“依赖白名单”中的包及其子路径
-- 使用页面上下文时，从 `@/context/app-context` 导入 `useSdkClient`、`useI18n`、`useNavigate`、`useLocation`、`useAppTheme`
+- 使用页面上下文时，从 `@/context/app-context` 导入 `useSdkClient`、`useI18n`、`useNavigate`、`useLocation`、`useAppTheme`、`useAgent`
 - 数据读取或写入前，先确认数据集及 SDK 用法；接口或字段无法从现有事实确认时，不得猜测请求协议
 - 所有用户可见文案通过 `$i18n.t("key")` 获取，并在 `src/locales/index.js` 提供有效翻译
 - 路由跳转使用 `navigate`，读取地址信息使用 `location`；关联页面优先使用 `navigate("/pagecode", { onePage: true })`
@@ -199,7 +229,7 @@ src/components/*.jsx
 1. 先用 `page custom-detail --id <pageId>` 读取最新页面文件，避免覆盖其他尚未发布的修改
 2. 确认提交内容包含全部需要保留的文件，入口、样式、词包和组件之间的导入路径一致
 3. 对照 [`generation-standards.md`](../knowledge/custom-page/generation-standards.md) 检查依赖白名单、国际化、路由、样式和数据契约
-4. 使用组件或内置方法时，分别对照 `components.md` 和 `generation-standards.md` 中的“页面上下文内置能力”，确认不存在未登记的属性、方法或返回结构假设
+4. 使用组件或内置方法时，分别对照 `components.md` 和 `generation-standards.md` 中的“页面上下文内置能力”，确认不存在未登记的属性、方法或返回结构假设；涉及 Agent 侧边栏时，对照本指南“Agent 侧边栏”中的方法、载荷字段与事件
 5. 先完成“页面生成规范”中的静态自检，再执行 `page custom-update --dry-run`。CLI 会阻止缺少 React 源码或存在基础 JS/JSX/TS/TSX 语法错误的内容，但不推断变量引用、模块导出、数据契约或运行时行为
 6. 更新后再次执行 `page custom-detail --id <pageId>`，确认最新保存的 `codeContent` 与提交内容一致
 7. 需要让用户查看已发布页面时，先检查最新 `data.status`。状态为 `FORMAL` 时跳过发布；否则执行 `page custom-publish --dry-run`、取得确认后发布，并确认 `data.after.status` 为 `FORMAL` 和 `data.runtimePageUrl` 已返回

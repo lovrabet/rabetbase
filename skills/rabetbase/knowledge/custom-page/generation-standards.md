@@ -147,16 +147,116 @@ import {
   useI18n,
   useNavigate,
   useLocation,
+  useAgent,
 } from "@/context/app-context";
 ```
 
-| 能力           | 已确认用途               | 使用前应确认                          | 详细规则       |
-| -------------- | ------------------------ | ------------------------------------- | -------------- |
+| 能力 | 已确认用途 | 使用前应确认 | 详细规则 |
+| --- | --- | --- | --- |
 | `useSdkClient` | 获取当前页面的数据客户端 | 目标数据集、字段、操作和 SDK 调用方式 | 与 `@lovrabet/sdk` 客户端行为一致（见“数据客户端”） |
-| `useI18n`      | 获取页面国际化实例       | 词条 key 和词包翻译                   | 见“国际化”     |
-| `useNavigate`  | 获取页面路由跳转方法     | 目标页面 code 和跳转方式              | 见“导航”       |
-| `useLocation`  | 获取当前地址信息         | 需要读取的地址信息                    | 见“导航”       |
-| `useAppTheme`  | 获取当前主题             | 主题是否可用与组件兼容性              | 见“主题配置”   |
+| `useI18n` | 获取页面国际化实例 | 词条 key 和词包翻译 | 见“国际化” |
+| `useNavigate` | 获取页面路由跳转方法 | 目标页面 code 和跳转方式 | 见“导航” |
+| `useLocation` | 获取当前地址信息 | 需要读取的地址信息 | 见“导航” |
+| `useAppTheme` | 获取当前主题 | 主题是否可用与组件兼容性 | 见“主题配置” |
+| `useAgent` | 控制应用内置 Agent 侧边栏 | 目标会话、预填内容和用户触发时机 | 见“使用 Agent 侧边栏” |
+
+### 使用 Agent 侧边栏
+
+页面通过 `useAgent()` 控制应用内置的 Agent 侧边栏：打开、关闭、指定会话、预填输入框以及订阅事件。侧边栏由平台常驻挂载，无需初始化，也无需判断就绪状态；不得自行创建实例。同一应用内所有页面共享同一个侧边栏和会话状态。
+
+适合放在页面里的场景是：页面负责收集、筛选和确认业务上下文，Agent 负责承接需要多步执行、跨数据组合或持续追问的任务。
+
+#### 典型场景
+
+- **承接当前页面的业务对象**：页面已展示某条记录（审批单、合同、工单、客户、报表等），用户点击“让 Agent 处理”后，把记录标识、关键字段摘要和期望结果预填给 Agent，由它查询明细、补充数据、生成文档或推进后续操作；过程中用户可在侧边栏继续追问、修正条件、确认结果。
+- **页面只做选择，Agent 做执行**：页面完成筛选和勾选后，把选中对象与约束交给 Agent，避免在页面里堆叠复杂的分支操作和二次确认流程；执行结果回到页面后由用户复核。
+- **需要跨数据源或多步推理**：页面只能展示单一数据集，但用户还要组合多个数据集、做汇总对比或生成分析结论时，引导到侧边栏，用同一会话持续迭代。
+- **回到既有会话继续处理**：用户从待办列表重新进入某个业务对象时，用 `sessionId` 恢复上次会话，延续上下文，而不是重新描述一遍需求。
+- **需要持续推进的长任务**：页面触发一次后即可离开当前区块，用户稍后在侧边栏查看进度、补充信息或调整目标。
+
+#### 编写建议
+
+- `text` 中写清业务对象标识（如记录 id）、关键字段摘要和期望产出；不要只传“帮我处理一下”，否则 Agent 无法定位数据。
+- 大段或敏感数据先做摘要、传标识，由 Agent 在权限范围内读取，不要把整表数据拼接进 `text`。
+- 需要立即执行用 `autoSubmit: true`；需要用户补全或确认时省略该字段，只做预填并聚焦输入框。
+- 同一业务对象建议固定复用同一 `sessionId`，并通过 `sessionChanged` 记录会话归属，方便用户下次回到该上下文。
+
+#### 方法
+
+| 方法 | 用途 | 说明 |
+| --- | --- | --- |
+| `agent.open()` | 打开侧边栏 | 不改变当前会话；`/chat` 路由下忽略 |
+| `agent.close()` | 关闭侧边栏 | 保留当前会话和 URL 中的 `chat_info`，再次 `open()` 或 `call()` 即可恢复 |
+| `agent.destroy()` | 还原侧边栏状态 | 清空当前会话与显隐，并从 URL 中移除 `chat_info`；下次调用从新会话开始 |
+| `agent.isOpen()` | 读取侧边栏是否展示 | 返回 `boolean` |
+| `agent.call(action, payload?)` | 向侧边栏发送命令 | 返回 `Promise`；侧边栏关闭时会自动打开 |
+| `agent.on(action, handler)` | 订阅侧边栏事件 | 返回退订函数；`action="*"` 订阅全部事件 |
+| `agent.onMessageLinkClick(handler, options?)` | 接管消息内链接点击 | 注册即开启接管，默认阻止链接默认跳转 |
+
+`call("setSenderInput", payload)` 在输入框中预填内容，可选自动提交：
+
+| 字段 | 类型 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| `text` | `string` | — | 预填的纯文本 |
+| `files` | `File[]` | — | 本地文件，先上传沙箱再作为文件引用插入输入框 |
+| `autoSubmit` | `boolean` | `false` | 预填后立即提交输入框当前内容 |
+| `newSession` | `boolean` | `false` | 在新会话中执行；默认复用当前会话 |
+| `sessionId` | `string \| null` | — | 目标会话 id，优先于 `newSession`；传 `null` 表示新会话 |
+
+- `text` 与 `files` 至少提供一个；只传 `sessionId` 时表示仅切换会话，不预填内容。
+- 返回值为 `{ ok: true, sessionId, files }`；参数不合法或发送器未就绪时返回 `{ ok: false, error }`。
+- `sessionId` 与当前会话不同时，会先切换会话再预填或提交；以返回的 `sessionId` 为准，不假设指定会话一定存在或有权访问。
+
+其他命令：
+
+| 命令 | 载荷 | 用途 |
+| --- | --- | --- |
+| `call("focusSender")` | 无 | 聚焦侧边栏输入框 |
+| `call("clearSenderInput")` | 无 | 清空侧边栏输入框 |
+| `call("interceptMessageLinks", { preventDefault })` | `preventDefault?: boolean` | 开启消息内链接点击上报；通常直接使用 `onMessageLinkClick` |
+
+可订阅事件：
+
+| 事件 | 载荷 | 触发时机 |
+| --- | --- | --- |
+| `sessionChanged` | `{ sessionId: string \| null }` | 侧边栏切换或新建会话；`destroy()` 时上报 `null` |
+| `senderPrefilled` | `{ text, files, sessionId }` | `setSenderInput` 完成预填后 |
+| `messageLinkClick` | 链接详情对象 | 已接管消息内链接点击时，用户点击消息中的链接 |
+| `"*"` | 原事件载荷 | 任一事件发生时；回调第二个参数为事件名 |
+
+```jsx
+const App = () => {
+  const agent = useAgent();
+
+  useEffect(() => {
+    const off = agent.on("sessionChanged", ({ sessionId }) => {
+      console.log("当前会话", sessionId);
+    });
+    return off;
+  }, [agent]);
+
+  return (
+    <Button
+      onClick={() =>
+        agent.call("setSenderInput", {
+          text: "帮我总结当前页面的数据",
+          autoSubmit: false,
+        })
+      }
+    >
+      询问 Agent
+    </Button>
+  );
+};
+```
+
+使用边界：
+
+- 这些调用会直接改变用户可见的侧边栏、写入输入框，`autoSubmit` 还会立即向 Agent 发送消息。只能在用户明确操作（如按钮点击）后调用，不得在模块加载、渲染过程或 `useEffect` 中自动触发。
+- `agent.call` 返回的 Promise 可能 reject（例如 `/chat` 路由下不可用）。必须 `await` 并捕获异常，向用户给出明确反馈。
+- `/chat` 路由及其子路由下侧边栏不展示，`agent.call` 会 reject；在这些页面中不要提供唤起侧边栏的入口。
+- 只使用本节登记的 action、载荷字段和事件名，不传未登记参数，不依赖未返回的字段。
+- `files` 必须是浏览器 `File` 对象；从接口获取或自行构造的文件内容需先转换为 `File` 再传入。
 
 ### 主题配置
 
