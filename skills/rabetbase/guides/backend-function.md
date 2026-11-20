@@ -601,6 +601,8 @@ export default async function afterFilter(params) {
 
 公共函数建议统一加 `common` 前缀（如 `commonGetUserInfo`），便于与普通 ENDPOINT 区分，也方便人和 AI 识别。
 
+指标专用函数的命名与定义关联使用 [指标开发指引](metric-development.md#新建指标-bff-与页面-vo) 的约定；脚本类型仍由 COMMON/ENDPOINT 决定，命名前缀不决定调用能力或权限。
+
 ### 在其他 Backend Function 中调用公共函数
 
 通过 `context.client.bff.execute` 调用：
@@ -624,7 +626,7 @@ const userInfo = await context.client.bff.execute({
 * `scriptName` 必须与公共函数名称精确匹配（大小写敏感）
 * 调用必须使用 `await`
 * `params` 会被深拷贝，调用方的原始对象不会被修改
-* 公共函数不可循环调用（A 调 B，B 又调 A）
+* 此调用只定位 COMMON，不用于 ENDPOINT 互调；COMMON 内不能继续通过此能力调用其他 COMMON，需要编排时由 ENDPOINT 分别调用
 * 公共函数抛出的异常会向上传播到调用方，需在调用方做 try-catch
 * 修改公共函数的出入参会影响所有引用方；如需改动，建议新建 V2 版本逐步切换
 

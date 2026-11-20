@@ -43,7 +43,7 @@ rabetbase db create \
 `data.links.databasePage` 会按当前环境生成：
 
 ```text
-daily      https://daily.lovrabet.com/web-app/app/<appCode>/data/database
+daily      https://app.daily.lovrabet.com/web-app/app/<appCode>/data/database
 production https://app.lovrabet.com/app/<appCode>/data/database
 ```
 

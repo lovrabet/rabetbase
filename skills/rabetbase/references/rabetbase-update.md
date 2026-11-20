@@ -22,8 +22,8 @@ rabetbase update --help
 1. 显示当前版本。
 2. 默认解析 npm `latest`；`--beta` 解析 `beta`；`--version` 使用指定完整 semver。
 3. 通过当前包管理器全局安装目标 npm 包。
-4. 新 npm 包的 `postinstall` 调用最新版官方 Skills CLI，以包内本地路径安装同版本 Built-in Skill。
-5. 安装目录由官方 Skills CLI 按已安装 Agent 决定，发起更新的进程验证实际生效路径和版本。
+4. 按目标安装路径启动新版 CLI 的 `cli-skill install`，调用固定版本的本地官方 Skills CLI，以新包内文件安装同版本 Built-in Skill。
+5. 安装目录由官方 Skills CLI 按已安装 Agent 决定，新版安装命令验证实际生效路径、版本及内容摘要，通过后才报告升级成功。
 6. CLI 已是目标版本时，仍以当前 npm 包内文件检查并修复 Skill。
 
 ## Flags
@@ -38,7 +38,7 @@ rabetbase update --help
 ## 前置条件
 
 - CLI 通过 npm 或 bun 全局安装。
-- 能访问 npm registry，以安装 CLI 并获取最新版 `skills` 安装器；Skill 内容仍来自当前 Rabetbase npm 包，不访问外部 Skill 内容源。
+- 能访问 npm registry，以安装 CLI 及其固定版本的 `skills` 依赖；Skill 内容仍来自当前 Rabetbase npm 包，不访问外部 Skill 内容源。
 
 ## 修复
 
@@ -49,8 +49,10 @@ rabetbase cli-skill install
 rabetbase doctor
 ```
 
-如 update 命令本身失败，可精确安装 npm 包；其 `postinstall` 仍会自动安装同版本 Skill：
+如 update 命令本身失败，可安装目标 npm 包，再显式安装同版本 Skill。Skill 失败时 CLI 可能已升级，不会自动回滚；修复成功前不能报告完整升级成功：
 
 ```bash
-npm install -g @lovrabet/rabetbase-cli@latest
+npm install -g @lovrabet/rabetbase-cli@latest --ignore-scripts
+rabetbase cli-skill install
+rabetbase doctor
 ```

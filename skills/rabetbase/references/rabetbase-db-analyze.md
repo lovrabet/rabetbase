@@ -125,8 +125,8 @@ CLI 不通过固定格式或正则把 `errorMsg` 转换成机器协议；`data.s
 链接会按当前环境生成：
 
 ```text
-daily      https://daily.lovrabet.com/web-app/app/<appCode>/data/er?dbId=<id>
-daily      https://daily.lovrabet.com/web-app/app/<appCode>/data/database
+daily      https://app.daily.lovrabet.com/web-app/app/<appCode>/data/er?dbId=<id>
+daily      https://app.daily.lovrabet.com/web-app/app/<appCode>/data/database
 production https://app.lovrabet.com/app/<appCode>/data/er?dbId=<id>
 production https://app.lovrabet.com/app/<appCode>/data/database
 ```

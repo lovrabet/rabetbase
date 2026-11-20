@@ -83,7 +83,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 | 点 | 说明 |
 |----|------|
 | **结构 vs 行数据** | 结构用 `rabetbase dataset detail`。真实行数据必须用 `lovrabet data filter` / `data getOne`。 |
-| **未安装时** | 报告阻断，并提示安装 `lovrabet` Skill（`npx skills add lovrabet/lovrabet-cli`）和 CLI。不要由本 Skill 静默安装或修复。**`rabetbase sql exec` 只验证已发布 SQL 的可执行性与结果结构。** |
+| **未安装时** | 报告阻断，并提示安装 `lovrabet` Skill和 CLI（先安装 CLI，再执行 `lovrabet cli-skill install`）。不要由本 Skill 静默安装或修复。**`rabetbase sql exec` 只验证已发布 SQL 的可执行性与结果结构。** |
 | **≥ 2.0** | 本节 `data` 子命令以 **2.0+** 为准；版本不符时先升级。 |
 | **配置与认证** | `lovrabet` 与 `rabetbase` 的配置项、鉴权方式可能不完全相同，按各自 CLI 文档配置。 |
 | **详细用法** | 以 `lovrabet data --help`、`lovrabet data filter --help` 为准（参数多为 `--code` + `--params` JSON）。 |

@@ -1,7 +1,7 @@
 ---
 name: rabetbase
-version: 2.5.13
-description: "Use for Lovrabet development work through the rabetbase CLI: create or bind projects (including creating an AppCode project in the current folder), pull Dataset/API facts and maintain SDK clients, or manage datasets, Instant API access policies, database connections, pages, host frontend integration, frontend subapp resources, SQL, Backend Functions, approval flows and workflows, menus, notifications, knowledge bases and kb search, Agent Context Rules, roles, files, OCR, deployment metadata, platform issues, and 钉钉沙箱账号绑定. Trigger when the user mentions rabetbase, Lovrabet development, AppCode, Dataset, Instant API allow/deny/route policy, project creation, api pull/codegen, dblink, page, host frontend integration, subapp resource versions, SQL, BFF, creating or designing an approval flow, workflow, business process, or multi-step approval, menu, notification, knowledge base, kb search, Agent Context Rules, RULES.md, DATABASE.md, rule list/get/set, role, file/OCR, or related development workflows."
+version: 2.6.0
+description: "Use for Lovrabet development work through the rabetbase CLI: create or bind projects (including creating an AppCode project in the current folder), pull Dataset/API facts and maintain SDK clients, or manage datasets, Instant API access policies, database connections, pages, host frontend integration, frontend subapp resources, SQL, Backend Functions, application metrics, approval flows and workflows, menus, notifications, knowledge bases and kb search, Agent Context Rules, roles, files, OCR, deployment metadata, platform issues, and 钉钉沙箱账号绑定. Trigger when the user mentions rabetbase, Lovrabet development, AppCode, Dataset, Instant API allow/deny/route policy, project creation, api pull/codegen, dblink, page, host frontend integration, subapp resource versions, SQL, BFF, creating or designing an approval flow, workflow, business process, or multi-step approval, menu, notification, knowledge base, kb search, Agent Context Rules, RULES.md, DATABASE.md, rule list/get/set, role, file/OCR, or related workflows."
 metadata:
   requires:
     bins: ["rabetbase"]
@@ -45,18 +45,20 @@ Agent 负责把已授权的目标推进到可验证的结果：主动获取事�
 ## Skill Freshness
 
 - **本地 repo 与 CLI 契约优先** — 若已安装的全局 skill 描述与当前仓库 `skills/rabetbase/`、`rabetbase --help`、`rabetbase schema` 不一致，以**当前仓库内容和 CLI 实际输出**为准。
-- **发现 skill 过期时应主动刷新** — CLI 安装和升级会自动安装同版本 Skill；若不一致已经影响当前任务判断，应执行 `rabetbase cli-skill install`，由最新版官方 Skills CLI 从当前 npm 包内本地源重装。
+- **发现 skill 过期时应主动刷新** — 首次 npm 安装后须显式执行 `rabetbase cli-skill install`；`rabetbase update` 显式安装并验证新版包内 Skill；若不一致已经影响当前任务判断，应执行 `rabetbase cli-skill install`，由当前 CLI 固定依赖的本地官方 Skills CLI 从当前 npm 包内本地源重装。
 - **刷新后必须重新读取** — 刷新完成后，重新打开当前 `SKILL.md` 与所需 reference，再继续执行任务，避免沿用旧记忆。
 - **刷新失败也不能回退到旧结论** — 若安装失败，明确告诉用户“本地全局 skill 可能过期”，并继续以仓库内 `skills/rabetbase/` 和 `rabetbase schema` 作为 source of truth。
 
 ## Agent 快速执行顺序
+
+指标体系是应用级的：指标归属企业的具体应用，以 AppCode 和指标名定位，页面与业务 Skill 按权限复用；登记或发布不改变资产归属，也不授予跨应用或跨企业访问权限。
 
 1. **判断需求类型**
    - 用户要创建或设计审批流、工作流、业务流程或多级审批 → 先读 [`approval-flow-development-workflow.md`](guides/approval-flow-development-workflow.md)。用户未明确限定类型时，默认推荐独立工作流 `INDEPENDENT_FLOW`；只有明确是已有数据集表单提交后的纯审批，且不包含填写、补材料、执行或确认等办理步骤时，才选择 `FORM_FLOW`；再使用 `flow validate/create/update/publish`；表单绑定与运行页面提交见 [表单发起指南](guides/form-flow-start.md)，可绑定页面用 `flow page-list` 查询
    - Instant API 标准数据记录操作 → SDK filter/getOne/create/batchCreate/update/delete；批量更新使用 `update({ id: [...] })`，不存在 `batchUpdate()`
    - 简单聚合且数据集是 DB_TABLE → SDK aggregate；聚合列用 `aggregate[].column`，不要用旧别名 `field`
    - 同库 DB_TABLE 的复杂 JOIN / 数据库函数 → 评估 Custom SQL；跨库查询 → 按 [跨库 BFF 指南](guides/cross-database-bff.md)分别读取并拼接
-   - 图表、统计卡片或数据大屏 → 自定义页面 + ECharts；数据层根据查询复杂度选择 Dataset 或 Custom SQL
+   - 用户明确创建/修改应用级指标，或 Agent 判断已明确的业务目标需要补齐应用级统计能力 → 按宿主发现能力加载已安装的 `rabetbase-metrics-generation` Skill。配套缺失时说明并由研发环境维护者补齐；原子契约见 [应用级指标口径与查询开发](guides/metric-development.md)，不假设配套安装目录相邻。仅查询不进入开发；报告缺数先核对目标与既有能力，再由 Agent 判断技术路径，不默认让用户选择建设方式。工具按任务选择，不要求岗位证明，具体操作按当前账号实际权限和任务授权执行。图表、统计卡片或数据大屏仍先核对已有口径和执行入口；页面使用自定义页面 + ECharts，数据层按可信契约选择 Dataset、Custom SQL 或 BFF
    - 当前用户、角色、数据范围、外部系统、跨表事务或复杂业务编排 → Backend Function；Backend Function HOOK 可挂 DB_TABLE 或 METADATA，具体 operation 以后端返回为准
 2. **先拿元数据，再写代码**
    - 至少先查 `rabetbase dataset detail --code xxx --format compress`（或 `json`）获取表结构
@@ -347,7 +349,7 @@ const result = await client.bff.execute<DashboardData>({
 | 升级已有项目依赖与源码架构 | [`rabetbase project upgrade`](references/rabetbase-project-upgrade.md) | 先 `--dry-run`，标准旧脚手架自动备份迁移，业务定制写候选文件；不修改 Lovrabet 运行态配置 |
 | 老项目翻新蓝图 / Legacy Application Blueprint | [`guides/legacy-application-blueprint-workflow.md`](guides/legacy-application-blueprint-workflow.md) | 先输出 `.rabetbase/blueprint/<appCode>/application-blueprint.md`，把老代码逻辑与 Dataset / Relations 绑定后再生成迁移 Backlog |
 | 运行 package.json 脚本 | [`rabetbase run <script>`](references/rabetbase-run.md) | `write`；先审阅脚本命令体，嵌入式工具暂不开放 |
-| 安装 / 重装 / 刷新 CLI Built-in Skill | [`rabetbase cli-skill install`](references/rabetbase-cli-skill-install.md) | 由最新版官方 Skills CLI 从当前 npm 包内本地源重装同版本 Skill；发现本地 skill 过期时优先执行 |
+| 安装 / 重装 / 刷新 CLI Built-in Skill | [`rabetbase cli-skill install`](references/rabetbase-cli-skill-install.md) | 由当前 CLI 固定依赖的本地官方 Skills CLI 从当前 npm 包内本地源重装同版本 Skill；发现本地 skill 过期时优先执行 |
 | 退出登录 | [`rabetbase auth logout`](references/rabetbase-auth-logout.md) | 删除本地认证 cookie |
 | 绑定当前用户的飞书账号 | [`rabetbase user-account feishu-bind`](references/rabetbase-user-account.md) | `write`；先 `--dry-run` 核对 union_id；不需要 appCode；仅声明绑定，不验证账号归属 |
 | 绑定当前用户的钉钉沙箱账号 | [`rabetbase user-account dingding-sandbox-bind`](references/rabetbase-user-account.md) | `write`；先 `--dry-run` 核对 ID，正式执行不要求 `--yes`；不需要 appCode |
@@ -363,7 +365,7 @@ const result = await client.bff.execute<DashboardData>({
 | 列出配置 | [`rabetbase config list`](references/rabetbase-config.md) | 查看当前生效的配置 |
 | 管理运行态 app-config | [`rabetbase app-config list/get/set/delete`](references/rabetbase-app-config.md) | 运行态 app-config 管理面；默认不输出明文 value；`set` 为 `write`，`delete` 保持 `high-risk-write` |
 | 管理 Instant API 数据集访问策略 | [`rabetbase instant-api-policy init/current/pull/validate/publish/revisions/revision/rollback`](references/rabetbase-instant-api-policy.md) | 固定文件 `.rabetbase/instant-api-policy/<appCode>/policy.json`；`version` 是 JSON 结构版本，`revision` 是发布历史版本；publish/rollback 为 high-risk-write |
-| 管理和检索当前研发应用的企业知识库 | [`rabetbase kb list/detail/search/create/update/delete`](references/rabetbase-kb.md) | 管理仅 company scope，使用 kbServiceDomain 与 Cookie；rule 保留 kbDomain；detail 返回完整正文，追加前必须读取；search 仅V2，默认解析 `kbServiceDomain`，可用 `--kb-service-url` 单次覆盖，使用Cookie且仅 `public/company`；`create/update` 为 `write`，`delete` 保持 `high-risk-write` |
+| 管理和检索当前研发应用的企业知识库 | [`rabetbase kb list/detail/search/create/update/delete/import/import-status/import-resume`](references/rabetbase-kb.md) | 管理仅 company scope，使用 kbServiceDomain 与 Cookie；rule 保留 kbDomain；detail 返回完整正文，追加前必须读取；search 仅V2，默认解析 `kbServiceDomain`，可用 `--kb-service-url` 单次覆盖，使用Cookie且仅 `public/company`；`create/update` 为 `write`，`delete` 保持 `high-risk-write` |
 | 管理当前研发应用的 Agent context 规则 | [`rabetbase rule list/get/set`](references/rabetbase-rule.md) | `RULES.md` 供页面、API 等研发 Agent 使用且排除 DB Agent；`DATABASE.md` 仅供数据库分析时 DB Agent 使用；两者在各自流程全程参与 context；set 为 `write`，先 dry-run |
 | 查询或管理应用级通知配置 | [`rabetbase notification config-list`](references/rabetbase-notification-config-list.md) / [`rabetbase notification config-create`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-update`](references/rabetbase-notification-config-mutations.md) / [`rabetbase notification config-delete`](references/rabetbase-notification-config-mutations.md) | list 获取 Backend Function 所需 `configCode`；写入只接收单一敏感 JSON 源，先 dry-run；update/delete 必须 `--yes` |
 | 设计、校验和发布表单审批流或独立工作流 | [`rabetbase flow validate/list/detail/create/update/publish`](references/rabetbase-flow-commands.md) | 先确定 `flowType`；本地 validate 后再 create/update 和 publish |
@@ -475,7 +477,7 @@ const result = await client.bff.execute<DashboardData>({
 | Configuration | [`config set/get/list/delete`](references/rabetbase-config.md) |
 | Runtime App Config Management | [`app-config list/get/set/delete`](references/rabetbase-app-config.md) |
 | Instant API Policy | [`instant-api-policy init/current/pull/validate/publish/revisions/revision/rollback`](references/rabetbase-instant-api-policy.md) |
-| Company Knowledge Base | [`kb list/detail/search/create/update/delete`](references/rabetbase-kb.md) |
+| Company Knowledge Base | [`kb list/detail/search/create/update/delete/import/import-status/import-resume`](references/rabetbase-kb.md) |
 | Agent Context Rules | [`rule list/get/set`](references/rabetbase-rule.md) |
 | Menu | [`list`](references/rabetbase-menu-list.md) / [`external-link-create`](references/rabetbase-menu-external-link-create.md) / [`external-link-update`](references/rabetbase-menu-external-link-update.md) / [`rename`](references/rabetbase-menu-rename.md) / [`sync`](references/rabetbase-menu-sync.md) / [`asset-update`](references/rabetbase-menu-asset-update.md) / [`delete`](references/rabetbase-menu-delete.md) / [`group-create`](references/rabetbase-menu-group-create.md) / [`group-update`](references/rabetbase-menu-group-update.md) / [`move`](references/rabetbase-menu-move.md) / [`regroup-start`](references/rabetbase-menu-regroup-start.md) |
 | Async Tasks | [`task status`](references/rabetbase-task-status.md) |
@@ -562,6 +564,8 @@ const result = await client.bff.execute<DashboardData>({
 | SDK 完整参数与返回值   | 初始化 client、filter/create、sql.execute、bff.execute、personal.bff.execute、安全能力检测与错误处理                  | [`typescript-sdk.md`](guides/typescript-sdk.md)                             |
 | 生成 / 更新 api.ts 与 client.ts | `api pull` 之后、模型过期、脚手架缺失、或用户要求修复 SDK 客户端                                                         | [`sdk-client-generation.md`](guides/sdk-client-generation.md)               |
 | SQL MyBatis 与动态 SQL | 写自定义 SQL、`<if>`/`<foreach>`、参数绑定                                                                            | [`sql-mybatis.md`](guides/sql-mybatis.md)                                   |
+| 应用级指标定义 | metric list/detail/schema/example/validate/publish/delete；SQL/BFF 绑定、内嵌契约、发布与删除回读 | [`rabetbase-metric.md`](references/rabetbase-metric.md) |
+| 应用级指标口径与查询 | 统计对象、时间、精度、分母、覆盖与独立验收；页面和业务 Skill 共用数据入口 | [`metric-development.md`](guides/metric-development.md) |
 | 前端页面开发约束       | React 页、表单、列表、与数据集绑定                                                                                    | [`frontend-development.md`](guides/frontend-development.md)                 |
 | 自定义页面 Flow SDK    | 页面发起、查询或办理 `INDEPENDENT_FLOW + CUSTOM_PAGE`，以及 appCode、Cookie、表单和流程变量边界                    | [`custom-page-flow-sdk.md`](guides/custom-page-flow-sdk.md)                 |
 | 表单页面发起审批 | `FORM_FLOW` 多页面绑定、先保存业务记录再显式启动及失败恢复 | [`form-flow-start.md`](guides/form-flow-start.md) |

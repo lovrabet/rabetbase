@@ -133,7 +133,8 @@ rabetbase workspace remove product --yes
 | `defaultApp` | string | — | 多应用模式下的默认应用名称；单应用省略 |
 | `apps` | object | — | 多应用配置。key 为应用名，value 为 AppProfile（见下方） |
 | `apiDomain` | string | 节点默认 | 普通研发平台 API 域名 |
-| `userDomain` | string | 平台默认 | 自定义用户域名 |
+| `userDomain` | string | 平台默认 | 用户中心 API 的 HTTPS origin |
+| `userCenterDomain` | string | 当前地区与环境的官方页面 | 用户中心浏览器页面的 HTTPS origin，可与企业 API 清单一起使用 |
 | `runtimeDomain` | string | 平台默认 | 自定义运行时域名 |
 | `skillDomain` | string | 节点默认 | SkillHub HTTPS origin 覆盖 |
 | `kbDomain` | string | 跟随 `apiDomain` / 节点 API 默认值 | 企业知识库管理的 SmartCode Java HTTPS origin |

@@ -14,7 +14,8 @@ rabetbase config init --domain-config ./lovrabet-domains.json
 
 # 企业独立部署也可直接传 Domain flags
 rabetbase config init \
-  --user-domain https://user.customer.example.com \
+  --user-center-domain https://user.customer.example.com \
+  --user-domain https://accounts-api.customer.example.com \
   --api-domain https://api.customer.example.com \
   --runtime-domain https://runtime.customer.example.com \
   --skill-domain https://skills.customer.example.com \
@@ -53,7 +54,7 @@ rabetbase config init \
     "lovrabet": "https://g.lovrabet.com"
   },
   "domains": {
-    "userDomain": "https://user.customer.example.com",
+    "userDomain": "https://accounts-api.customer.example.com",
     "apiDomain": "https://api.customer.example.com",
     "runtimeDomain": "https://runtime.customer.example.com",
     "skillDomain": "https://skills.customer.example.com",
@@ -67,11 +68,12 @@ rabetbase config init \
 }
 ```
 
-新版清单要求完整服务拓扑和 `cdn.libraries` / `cdn.lovrabet`，不会把缺失服务回退到官方节点；不能再叠加单独的 `--*-domain` flag。`cdn.libraries` 是第三方库的完整基地址，可包含 `/code/lib` 或 `/ajax/libs`；`cdn.lovrabet` 是 Lovrabet 自有资源 origin。Domain 可写成所有消费者共用的 HTTPS 字符串；确有差异时写成带 `default` 或消费者键的对象。对象优先使用当前消费者键，其次使用 `default`，两者都没有时命令报错。旧扁平 JSON 继续兼容：
+新版清单要求完整服务拓扑和 `cdn.libraries` / `cdn.lovrabet`，不会把缺失服务回退到官方节点；服务地址的调整应写入清单。可同时传入 `--user-center-domain`，它作为 CLI 顶层页面配置保存。`cdn.libraries` 是第三方库的完整基地址，可包含 `/code/lib` 或 `/ajax/libs`；`cdn.lovrabet` 是 Lovrabet 自有资源 origin。Domain 可写成所有消费者共用的 HTTPS 字符串；确有差异时写成带 `default` 或消费者键的对象。对象优先使用当前消费者键，其次使用 `default`，两者都没有时命令报错。旧扁平 JSON 继续兼容：
 
 ```json
 {
-  "userDomain": "https://user.customer.example.com",
+  "userCenterDomain": "https://user.customer.example.com",
+  "userDomain": "https://accounts-api.customer.example.com",
   "apiDomain": "https://api.customer.example.com",
   "runtimeDomain": "https://runtime.customer.example.com",
   "skillDomain": "https://skills.customer.example.com",

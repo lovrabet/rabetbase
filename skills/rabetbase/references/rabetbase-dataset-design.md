@@ -8,7 +8,7 @@
 npx skills add /path/to/rabetbase-cli/skills/rabetbase-dataset-generation -g -y
 ```
 
-CLI postinstall、`cli-skill install` 与 `doctor` 只管理主 `rabetbase` Skill，此独立 Skill 需要显式安装或更新。
+`cli-skill install` 与 `doctor` 只管理主 `rabetbase` Skill，此独立 Skill 需要显式安装或更新。
 
 1. design-context：取得真实部署语言、版本及能力边界；引用已有实体前读取detail/relations。
 2. design-validate --file raw.json --output normalized.json：服务端确定性校验，无模型调用、不创建业务产物。

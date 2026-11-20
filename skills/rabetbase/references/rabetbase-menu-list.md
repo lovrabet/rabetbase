@@ -29,7 +29,7 @@ rabetbase menu list --format compress --jq '.data.menus[] | {id, label, path, up
 rabetbase menu list --verbose --format json
 ```
 
-如需找出重复 path、根级重名等异常菜单并生成平台手动删除清单，先按 [`menu-anomaly-manual-cleanup`](../guides/menu-anomaly-manual-cleanup.md) 执行。清单中的 `<appBaseUrl>` 由当前 `rabetbase` 环境解析：production 为 `https://app.lovrabet.com/app/<appCode>`，daily 为 `https://daily.lovrabet.com/web-app/app/<appCode>`。
+如需找出重复 path、根级重名等异常菜单并生成平台手动删除清单，先按 [`menu-anomaly-manual-cleanup`](../guides/menu-anomaly-manual-cleanup.md) 执行。清单中的 `<appBaseUrl>` 由当前 `rabetbase` 环境解析：production 为 `https://app.lovrabet.com/app/<appCode>`，daily 为 `https://app.daily.lovrabet.com/web-app/app/<appCode>`。
 
 ## 参数
 

@@ -16,6 +16,10 @@ rabetbase kb list --appcode app-xxxxx --title "业务规则" --format compress
 rabetbase kb detail --id 60 --format compress
 rabetbase kb search --query "怎么查订单？" --format compress
 rabetbase kb search --query "体育特长生的录取条件是什么？" --topk 5 --format compress
+rabetbase kb import --dir ./knowledge --checkpoint ./kb-import.json --dry-run
+rabetbase kb import --dir ./knowledge --checkpoint ./kb-import.json --yes
+rabetbase kb import-status --checkpoint ./kb-import.json --format compress
+rabetbase kb import-resume --checkpoint ./kb-import.json --yes
 rabetbase kb create --title "业务规则" --file ./knowledge.md --dry-run
 rabetbase kb create --title "业务规则" --file ./knowledge.md
 rabetbase kb update --id 60 --file ./knowledge.md --expected-version 2 --dry-run
@@ -47,6 +51,18 @@ rabetbase kb delete --id 60 --yes
 - `--query` 必填且不能是纯空白；`--topk` 可选，必须为 1–50 的整数。不传时沿用服务端缺省规则。
 - 结构化输出固定为 `data: { schemaVersion:2, profile:"development", total, strategyFingerprint, timingsMs, hits }`。`total` 等于命中数；每个命中完整保留 `documentId/revision/chunkId/scope/title/text/tags/rank/rawScore/finalScore/scoreKind` 的服务端顺序和值，无 legacy 别名。
 - 无命中是 `total:0/hits:[]` 的成功。HTTP、`no-store`、JSON、字段、rank、score、timing、TopK 或 scope 漂移均以脱敏结构化错误失败；错误不包含查询、正文或后端 body。
+
+## 批量导入
+
+- 使用 `kb import --dry-run` 审阅目录顶层 `.md` / `.txt` 文件的标题、哈希及已有标题冲突；正式导入必须带 `--yes` 和新的检查点路径。
+- CLI 逐条调用现有企业知识创建接口，复用权限和索引流程；检查点保存文件路径、哈希、状态和已知 ID，不保存正文或凭据。
+- `kb import-status` 只读检查记录；`kb import-resume --yes` 继续尚未提交的文件，对不确定的写入先只读回查，不自动重发。文件发生变化时停止该条提交。
+- 同名冲突不覆盖；不同文件夹或不同检查点并发操作时不保证全局请求幂等。检查点必须保存在可信位置并妥善保管。
+- 创建请求响应丢失后，按同应用和标题读取，只有单条记录的正文哈希匹配时才标记当前状态已保存；不能由此证明创建者身份。结果无法确定时保持 unknown，人工核对。
+- 只有传输结果不确定时才能自动只读对账；明确无效的写入响应保留失败状态。旧版检查点中原因不明的 unknown 项需人工核对。
+- 创建回执有效但详情暂不可读取时，检查点保存回执中的 ID 和版本；恢复时只按该 ID 回读并核对版本、标题与正文哈希，不重新创建。回读结果矛盾或无效时停止自动恢复。
+- 导入或恢复存在未处理、冲突、失败或结果不确定的条目时返回 `kb_import_incomplete`、非零退出码，并在结构化错误的 `data` 中保留逐项结果和检查点位置。
+- `saved` 仅表示已回读确认知识保存；索引状态为 READY 才表示对应索引就绪。
 
 ## create
 

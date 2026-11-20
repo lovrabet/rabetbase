@@ -59,7 +59,7 @@ rabetbase flow create --file <path> --format compress
 
 调用 `POST /smartapi/flow/create`。提交前强制 normalize + validate。请求体只包含外层可写字段、当前工作区 `appCode` 和最小 `flowJson`；文件中的遗留 `id`、`appCode`、状态和部署字段不会提交。
 
-创建成功后返回 `data.flowUrl`，成功消息也会附上该地址。地址由当前 CLI 环境和 App Domain 自动生成，例如 daily 环境为 `https://daily.lovrabet.com/web-app/app/<appCode>/data/workflow?workflowId=<id>`；不要写死 daily 或 production 域名。
+创建成功后返回 `data.flowUrl`，成功消息也会附上该地址。地址由当前 CLI 环境和 App Domain 自动生成，例如 daily 环境为 `https://app.daily.lovrabet.com/web-app/app/<appCode>/data/workflow?workflowId=<id>`；不要写死 daily 或 production 域名。
 
 `flowType` 必填，支持 `FORM_FLOW`、`INDEPENDENT_FLOW`。`FORM_FLOW` 是表单审批流，禁止 `taskMode: HANDLE`；`INDEPENDENT_FLOW` 是工作流，可以同时包含 `APPROVAL` 和 `HANDLE`，且不能绑定外层 `datasetCode` 或 `pageId/pageIds`。`flowJson.pageMode` 只用于独立工作流，当前 CLI 只允许 `CUSTOM_PAGE`，缺省也按 `CUSTOM_PAGE`；`PLATFORM_FORM` 返回不支持错误。`INDEPENDENT_FLOW + CUSTOM_PAGE` 可选配置 `flowJson.startPath` 以及 `APPROVAL` / `END` 节点 `path`，这些字段仅用于导航。Skill 填写这些字段时必须使用 `page custom-detail` 确认为 `FORMAL` 的自定义页面所返回的完整 `runtimePageUrl`；未发布页面需先询问用户是否发布，不得直接填写 `custom-list` 中的候选地址。
 

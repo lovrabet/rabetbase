@@ -27,11 +27,12 @@ rabetbase app-config list --key vectorengine.apiKey --format compress
 输出关注：
 
 - `data.configs[]`
-- `key`
+- `id`、`key`、`description`
+- `operatorId`、`operatorUsername`、`operatorNickname`
 - `tags`
 - `hasValue`
 - `valueRedacted`
-- `gmtModified`
+- `gmtCreate`、`gmtModified`（Unix 毫秒时间戳，可为 null）
 
 不会输出 `value`，也不展示服务端预留的 `encrypted` 字段。
 
@@ -78,7 +79,7 @@ rabetbase app-config delete vectorengine.apiKey --dry-run
 rabetbase app-config delete vectorengine.apiKey --yes
 ```
 
-删除同样以 key 定位，CLI 内部解析服务端 id 后调用 delete。缺失 key 会报 validation error。
+删除同样以 key 定位，CLI 内部解析服务端 id 后调用 delete。ID 保留服务端数字或字符串类型，不手工转换。更新、删除和对应 dry-run 都会拒绝缺失或无效 ID；缺失 key 会报 validation error。
 
 ## 安全边界
 
