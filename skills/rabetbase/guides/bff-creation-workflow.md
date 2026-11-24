@@ -79,6 +79,7 @@ rabetbase dataset detail --code <数据集编码> --format compress \
 * Backend Function 中 Custom SQL 默认使用 `context.client.sql.byName("<唯一 SQL 名>").execute({ params })`；名称不唯一时先处理 `SQL_NAME_AMBIGUOUS`，不要回退任意 `sqlCode`
 * 没有在 Backend Function 中使用前端 SDK 初始化能力，如 `createClient`、`registerModels`
 * 参数校验、错误处理、脱敏
+* 为指标 `target.functionName` 编写或修改 ENDPOINT 时，按[指标 ENDPOINT 契约](metric-development.md#编写指标-endpoint-契约)声明业务请求体和成功结果，并验证完整输出示例。
 * 中文 JSDoc 已写清根请求参数、实际 `params.<字段名>`、返回值；显式抛出异常时包含 `@throws`
 * 依赖数据集、调用 BF、执行 SQL、副作用维护项与实际代码一致，无依赖时明确填写“无”
 * 通知型 Backend Function 只传 `configCode` / `audiences` / `message`，并且没有 `${...}` 模板表达式、旧 MANUAL 参数或渠道密钥

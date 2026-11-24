@@ -19,7 +19,7 @@ rabetbase bff push --type HOOK --name beforeFilter --format json
 |------|------|------|------|------|
 | `--type <type>` | string | 否 | — | 仅推指定类型：`COMMON` / `ENDPOINT` / `HOOK` |
 | `--name <name>` | string | 否 | — | 仅推指定函数名；传时必须搭配 `--type` |
-| `--force` | boolean | 否 | — | 忽略 hash 保护强制推送 |
+| `--force` | boolean | 否 | — | 即使本地内容未变也提交，仍校验远端版本 |
 | `--dry-run` | boolean | 否 | — | 仅预览将要推送的本地脚本 |
 | `--format <fmt>` | string | 否 | `pretty` | 输出格式 |
 
@@ -36,9 +36,11 @@ rabetbase bff push --type HOOK --name beforeFilter --format json
 
 `--dry-run` 时返回预览对象，包含本地 `filePath`、`alias`、`datasetCode`、Hook operation/node、warning、目标模式（`create` / `update`）和预期状态（如 `unchanged` / `would_push`）。
 
-`conflicts[].code=BFF_REMOTE_VERSION_CHANGED` 或 `BFF_REMOTE_VERSION_MISSING` 表示本地 lock 不能安全更新远端脚本。保留本地脚本，先执行 `nextAction.command` 的 `bff detail` 取得远端源码，审阅并合并后再重试；只在明确放弃本地修改时才考虑 `--force`。这类同步分歧不进入 `failed`，其 `nextAction` 仅供审阅后执行。
+`conflicts[].code=BFF_REMOTE_VERSION_CHANGED` 或 `BFF_REMOTE_VERSION_MISSING` 表示本地 lock 不能安全更新远端脚本。先用 `nextAction.command` 读取远端源码。需要保留本地修改时，将该脚本移到同步目录外妥善保留，再在原应用执行 `rabetbase bff pull --type <脚本类型>`，确认该脚本已拉取。将保留的修改合并到拉回的版本后再推送。这类同步分歧不进入 `failed`，其 `nextAction` 仅供审阅后执行。
 
 ## 推送前检查
+
+预演和实际上传都先检查待上传 ENDPOINT 的文件名。只有文件名以小写 `metric` 开头（含 `metrics`）时，才按当前应用和完整注册名反查指标。查到直接绑定的指标时检查源码的契约声明；查到零个时跳过。查询失败会给出绑定未确认的 warning，上传仍可继续。可单独运行 `rabetbase metric list --appcode <appCode> --function-name <functionName>` 查看引用。
 
 `bff push` 负责同步脚本，不等价于业务逻辑验证。推送前按 [`backend-function.md`](../guides/backend-function.md) 自检，尤其确认：
 

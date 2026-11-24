@@ -27,7 +27,7 @@
 ## 核心原则
 
 * 先校验数据集和字段，再写脚本
-* 所有脚本统一使用 `export default async function`
+* ENDPOINT 入口必须声明为 `export default async function functionName(params, context)`，其中 `functionName` 为注册的函数名。函数体可以省略 `await`。
 * 前后端单条查询统一使用 `getOne({ id })`
 * Backend Function 中的 SQL 返回值与前端 SDK 不同，不能混用
 * 消息通知只引用当前应用中存在且未删除的 `configCode`，不接收 `appCode`、渠道地址或密钥
@@ -185,7 +185,7 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 脚本必须包含：
 
 * 顶部注释
-* `export default async function`
+* 使用命名的 `export default async function` 入口
 * 明确的输入输出
 * 数据集映射
 * 必要的错误处理
@@ -347,6 +347,20 @@ rabetbase dataset detail --code <datasetCode> --format compress \
 * `context.appCode`
 * `context.tenantCode`
 * `context.client`
+
+### ENDPOINT 的业务错误
+
+ENDPOINT 在业务检查失败时调用 `context.fail(code, message)`，中止执行并返回框架错误码。参数检查由脚本显式执行；`@inputSchema` 供调用方组装参数。错误码使用字符串，消息只写可公开的字段名或限制。
+
+| 错误码 | 使用场景 |
+| --- | --- |
+| `101` | 缺少必填字段 |
+| `102` | 格式无效，如时间戳缺少时区 |
+| `103` | 超出取值范围、区间限制或枚举 |
+| `106` | 类型不符，包括向不可空字段传入 null |
+| `202` | 当前身份无权执行；平台返回 HTTP 401 和统一权限提示 |
+
+例如，缺少 `tenantCode` 时调用 `context.fail("101", "缺少 tenantCode")`，显式传入数值时使用 `106`。参数错误返回 HTTP 200 和 `success: false`，调用方读取 `error` 和 `errorMsg`。调用 `fail` 的签名或错误码无效时返回 `530`。给普通异步 `Error` 添加 `code` 仍按 `531` 处理。
 
 ## 执行身份与数据集权限
 
